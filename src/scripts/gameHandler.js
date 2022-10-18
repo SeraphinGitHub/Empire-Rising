@@ -259,15 +259,15 @@ const mouse_Move = (event) => {
 }
 
 const mouse_LeftClick = () => {
-   
+
 }
 
 const mouse_RightClick = () => {
-   
+
 }
 
 const mouse_ScrollClick = () => {
-   
+
 }
 
 
@@ -276,6 +276,31 @@ const mouse_ScrollClick = () => {
 // ================================================================================================
 const Keyboard_Enter = () => {
 
+}
+
+
+// ================================================================================================
+// Events
+// ================================================================================================
+const initEvents = () => {
+
+   // Mouse move
+   CanvasObj.units.addEventListener("mousemove", (event) => mouse_Move(event));
+
+   // Mouse click
+   CanvasObj.units.addEventListener("mousedown", (event) => {
+
+      if(HoverCell) {
+         if(event.which === 1) mouse_LeftClick  ();
+         if(event.which === 2) mouse_ScrollClick();
+         if(event.which === 3) mouse_RightClick ();
+      }
+   });
+   
+   // Keyboard press key
+   window.addEventListener("keydown", (event) => {
+      if(event.key === "Enter") Keyboard_Enter();
+   });
 }
 
 
@@ -292,27 +317,10 @@ module.exports = {
          CanvasObj = setCanvas(document);
          Ctx       = setCtx(CanvasObj);
 
-         // Mouse move Event
-         CanvasObj.units.addEventListener("mousemove", (event) => mouse_Move(event));
-
-         // Mouse click
-         CanvasObj.units.addEventListener("mousedown", (event) => {
-
-            if(HoverCell) {
-               if(event.which === 1) mouse_LeftClick  ();
-               if(event.which === 2) mouse_ScrollClick();
-               if(event.which === 3) mouse_RightClick ();
-            }
-         });
-
-         // Keyboard press key
-         window.addEventListener("keydown", (event) => {
-
-            if(event.key === "Enter") Keyboard_Enter();
-         });
-         
          Grid.init();
          cycleCells((cell) => drawCellInfo(cell));
+         
+         initEvents();
       }
    }
 }
