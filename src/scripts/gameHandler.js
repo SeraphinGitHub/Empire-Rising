@@ -10,6 +10,7 @@ const GridClass = require("./classes/GridClass.js");
 const Debug = {
    showWallCol: false,
    showCellInfo: true,
+   hoverColor: "blue",
 };
 
 const GridParams = {
@@ -34,6 +35,11 @@ let HoverCell;
 // ================================================================================================
 // Functions
 // ================================================================================================
+document.body.oncontextmenu = (event) => {
+   event.preventDefault();
+   event.stopPropagation();
+}
+
 const clearCanvas = () => {
 
    for(let i in Ctx) {
@@ -249,12 +255,27 @@ const mouse_Move = (event) => {
    cycleCells((cell) => drawCellInfo(cell));
    
    // Redraw existing items after canvas cleared
-   if(HoverCell) HoverCell.drawHover(Ctx.isoSelect, GetCell, "blue");
+   if(HoverCell) HoverCell.drawHover(Ctx.isoSelect, GetCell, Debug.hoverColor);
 }
 
-document.body.oncontextmenu = (event) => {
-   event.preventDefault();
-   event.stopPropagation();
+const mouse_LeftClick = () => {
+   
+}
+
+const mouse_RightClick = () => {
+   
+}
+
+const mouse_ScrollClick = () => {
+   
+}
+
+
+// ================================================================================================
+// Keyboard Inputs
+// ================================================================================================
+const Keyboard_Enter = () => {
+
 }
 
 
@@ -273,6 +294,22 @@ module.exports = {
 
          // Mouse move Event
          CanvasObj.units.addEventListener("mousemove", (event) => mouse_Move(event));
+
+         // Mouse click
+         CanvasObj.units.addEventListener("mousedown", (event) => {
+
+            if(HoverCell) {
+               if(event.which === 1) mouse_LeftClick  ();
+               if(event.which === 2) mouse_ScrollClick();
+               if(event.which === 3) mouse_RightClick ();
+            }
+         });
+
+         // Keyboard press key
+         window.addEventListener("keydown", (event) => {
+
+            if(event.key === "Enter") Keyboard_Enter();
+         });
          
          Grid.init();
          cycleCells((cell) => drawCellInfo(cell));
