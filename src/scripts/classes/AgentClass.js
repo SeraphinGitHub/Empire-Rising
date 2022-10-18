@@ -5,10 +5,11 @@
 // Agent Class
 // =====================================================================
 class AgentClass {
-   constructor(startCell, endCell, isEuclidean) {
+   constructor(id, startCell, isEuclidean) {
 
+      this.id = id;
       this.startCell = startCell;
-      this.endCell = endCell;
+      this.endCell;
       this.openList = [startCell];
       this.closedList = [];
       this.pathArray = [];
@@ -163,4 +164,19 @@ class AgentClass {
 
       }, 100 *i);
    }
+
+   drawAgent(ctx, currentCell) {
+
+      ctx.fillStyle = "yellow";
+      ctx.beginPath();
+      ctx.arc(
+         currentCell.center.x,
+         currentCell.center.y,
+         currentCell.size /2, 0, Math.PI * 2
+      );
+      ctx.fill();
+      ctx.closePath();
+   }
 }
+
+module.exports = AgentClass;

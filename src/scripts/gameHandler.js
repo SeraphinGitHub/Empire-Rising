@@ -2,6 +2,7 @@
 "use strict"
 
 const GridClass = require("./classes/GridClass.js");
+const AgentClass = require("./classes/AgentClass");
 
 
 // ================================================================================================
@@ -21,8 +22,7 @@ const GridParams = {
 };
 
 const Grid = new GridClass(GridParams);
-const Cos_45deg = 0.707;
-const Cos_30deg = 0.866;
+const AgentsList = {};
 
 let DOM;
 let Viewport;
@@ -144,20 +144,20 @@ const screenPos_toGridPos = (mousePos) => {
 
    // Isometric <== Cartesian
    return {
-      x:  Math.floor( (mousePos.x -mousePos.y *2) /Cos_45deg /2 ) +Grid.width /2,
-      y:  Math.floor( (mousePos.x +mousePos.y *2) /Cos_45deg /2 ) -Grid.width /2,
+      x:  Math.floor( (mousePos.x -mousePos.y *2) /Grid.cos_45deg /2 ) +Grid.width /2,
+      y:  Math.floor( (mousePos.x +mousePos.y *2) /Grid.cos_45deg /2 ) -Grid.width /2,
    };
 }
 
 const gridPos_toScreenPos = (cellPos) => {
 
    // Cartesian <== Isometric
-   let TempX = Math.floor( (cellPos.x + cellPos.y) *Cos_45deg );
-   let TempY = Math.floor( (cellPos.y + Grid.width /2) *Cos_45deg *2 -TempX ) /2;
+   let TempX = Math.floor( (cellPos.x + cellPos.y) *Grid.cos_45deg );
+   let TempY = Math.floor( (cellPos.y + Grid.width /2) *Grid.cos_45deg *2 -TempX ) /2;
 
    return {
-      x: Math.floor( Viewport.width  /2 - Cos_45deg /2 *(Grid.height +Grid.width) +TempX ),
-      y: Math.floor( Viewport.height /2 - Cos_45deg /4 *(Grid.height +Grid.width) +TempY +Cos_30deg *Grid.cellSize /2 ),
+      x: Math.floor( Viewport.width  /2 - Grid.cos_45deg /2 *(Grid.height +Grid.width) +TempX ),
+      y: Math.floor( Viewport.height /2 - Grid.cos_45deg /4 *(Grid.height +Grid.width) +TempY +Grid.cos_30deg *Grid.cellSize /2 ),
    };
 }
 
@@ -223,6 +223,15 @@ const cycleCells = (callback) => {
    }
 }
 
+const cycleAgents = (callback) => {
+
+   for(let i in AgentsList) {
+      let agent = AgentsList[i];
+
+      callback(agent);
+   }
+}
+
 
 // ================================================================================================
 // Draw Functions
@@ -256,6 +265,7 @@ const mouse_Move = (event) => {
    
    // Redraw existing items after canvas cleared
    if(HoverCell) HoverCell.drawHover(Ctx.isoSelect, GetCell, Debug.hoverColor);
+   cycleAgents((agent) => agent.drawAgent(Ctx.isoSelect, agent.startCell));
 }
 
 const mouse_LeftClick = () => {
@@ -264,6 +274,12 @@ const mouse_LeftClick = () => {
 
 const mouse_RightClick = () => {
 
+   cycleAgents((agent) => {
+      agent.endCell = Grid.cellsList[GetCell.id];
+      agent.searchPath();
+      agent.displayPath(Ctx.isoSelect, true);
+      // agent.startCell = agent.endCell;
+   });
 }
 
 const mouse_ScrollClick = () => {
@@ -276,6 +292,15 @@ const mouse_ScrollClick = () => {
 // ================================================================================================
 const Keyboard_Enter = () => {
 
+   if(Object.keys(AgentsList).length === 0) {
+      
+      const cellID = "2-2";
+      let id = 0;
+      let startCell = Grid.cellsList[cellID];
+      
+      AgentsList[id] = new AgentClass(id, startCell, Grid.isEuclidean);
+      AgentsList[id].drawAgent(Ctx.isoSelect, startCell);
+   }
 }
 
 
