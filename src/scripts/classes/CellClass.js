@@ -31,6 +31,7 @@ class CellClass {
       this.gCost = 0;
       this.hCost = 0;
       
+      this.zIndex;
       this.isBlocked = false;
    }
 

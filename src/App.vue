@@ -18,14 +18,12 @@
 
    // Scripts 
    import GameHandler  from "./scripts/gameHandler.js"
-   import global  from "./scripts/_gVar.js"
 
    export default {
       name: "App",
 
       mixins: [
          GameHandler,
-         global
       ],
 
       components: {

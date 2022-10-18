@@ -1,36 +1,55 @@
 
 "use strict"
 
-const debugVar = require("./_debugVar.js");
-const gVar = require("./_gVar.js");
-
 const GridClass = require("./classes/GridClass.js");
-const Grid = new GridClass(gVar.Grid.width, gVar.Grid.height, gVar.Grid.cellSize);
+
+
+// ================================================================================================
+// Game Handler Variables
+// ================================================================================================
+const Debug = {
+   showWallCol: false,
+   showCellInfo: true,
+};
+
+const GridParams = {
+   cellSize: 80,
+   height: 960,
+   width: 960,
+   isEuclidean: true,
+};
+
+const Grid = new GridClass(GridParams);
+const Cos_45deg = 0.707;
+const Cos_30deg = 0.866;
+
+let DOM;
+let Viewport;
+let CanvasObj;
+let Ctx;
+let GetCell;
+let HoverCell;
 
 
 // ================================================================================================
 // Functions
 // ================================================================================================
-const clearCanvas = (state) => {
+const clearCanvas = () => {
 
-   const ctxWidth = gVar.Viewport.width;
-   const ctxHeight = gVar.Viewport.height;
-
-   if(state === 0) gVar.Ctx.isoSelect.clearRect(0, 0, ctxWidth, ctxHeight);
-   if(state === 1) gVar.Ctx.terrain.clearRect(  0, 0, ctxWidth, ctxHeight);
-   if(state === 2) gVar.Ctx.buildings.clearRect(0, 0, ctxWidth, ctxHeight);
-   if(state === 3) gVar.Ctx.units.clearRect(    0, 0, ctxWidth, ctxHeight);
+   for(let i in Ctx) {
+      Ctx[i].clearRect(0, 0, Viewport.width, Viewport.height);
+   }
 }
 
-const updateDOM = (DOM) => {
+const updateDOM = () => {
 
-   DOM.cartX.textContent =   `x : ${gVar.GetCell.cartMouse.x}`;
-   DOM.cartY.textContent =   `y : ${gVar.GetCell.cartMouse.y}`;
-   DOM.isoX.textContent =    `x : ${gVar.GetCell.isoMouse.x}`;
-   DOM.isoY.textContent =    `y : ${gVar.GetCell.isoMouse.y}`;
-   DOM.cellX.textContent =   `x : ${gVar.GetCell.position.x}`;
-   DOM.cellY.textContent =   `y : ${gVar.GetCell.position.y}`;
-   DOM.cellID.textContent = `id : ${gVar.GetCell.id}`;
+   DOM.cartX.textContent =   `x : ${GetCell.cartMouse.x}`;
+   DOM.cartY.textContent =   `y : ${GetCell.cartMouse.y}`;
+   DOM.isoX.textContent =    `x : ${GetCell.isoMouse.x}`;
+   DOM.isoY.textContent =    `y : ${GetCell.isoMouse.y}`;
+   DOM.cellX.textContent =   `x : ${GetCell.position.x}`;
+   DOM.cellY.textContent =   `y : ${GetCell.position.y}`;
+   DOM.cellID.textContent = `id : ${GetCell.id}`;
 }
 
 const setDOM = (document) => {
@@ -95,8 +114,8 @@ const setCanvas = (document) => {
          canvas.height = Grid.height;
       }
       else {
-         canvas.width = gVar.Viewport.width;
-         canvas.height = gVar.Viewport.height;
+         canvas.width = Viewport.width;
+         canvas.height = Viewport.height;
       }
    });
 
@@ -119,27 +138,27 @@ const screenPos_toGridPos = (mousePos) => {
 
    // Isometric <== Cartesian
    return {
-      x:  Math.floor( (mousePos.x -mousePos.y *2) /gVar.Cos_45deg /2 ) +gVar.Grid.width /2,
-      y:  Math.floor( (mousePos.x +mousePos.y *2) /gVar.Cos_45deg /2 ) -gVar.Grid.width /2,
+      x:  Math.floor( (mousePos.x -mousePos.y *2) /Cos_45deg /2 ) +Grid.width /2,
+      y:  Math.floor( (mousePos.x +mousePos.y *2) /Cos_45deg /2 ) -Grid.width /2,
    };
 }
 
 const gridPos_toScreenPos = (cellPos) => {
 
    // Cartesian <== Isometric
-   let TempX = Math.floor( (cellPos.x + cellPos.y) *gVar.Cos_45deg );
-   let TempY = Math.floor( (cellPos.y + gVar.Grid.width /2) *gVar.Cos_45deg *2 -TempX ) /2;
+   let TempX = Math.floor( (cellPos.x + cellPos.y) *Cos_45deg );
+   let TempY = Math.floor( (cellPos.y + Grid.width /2) *Cos_45deg *2 -TempX ) /2;
 
    return {
-      x: Math.floor( gVar.Viewport.width  /2 - gVar.Cos_45deg /2 *(gVar.Grid.height +gVar.Grid.width) +TempX ),
-      y: Math.floor( gVar.Viewport.height /2 - gVar.Cos_45deg /4 *(gVar.Grid.height +gVar.Grid.width) +TempY +gVar.Cos_30deg *gVar.Grid.cellSize /2 ),
+      x: Math.floor( Viewport.width  /2 - Cos_45deg /2 *(Grid.height +Grid.width) +TempX ),
+      y: Math.floor( Viewport.height /2 - Cos_45deg /4 *(Grid.height +Grid.width) +TempY +Cos_30deg *Grid.cellSize /2 ),
    };
 }
 
 const getCellPos = (event) => {
    
-   let screenBound = gVar.CanvasObj.units.getBoundingClientRect();
-   let isoGridBound = gVar.CanvasObj.isoSelect.getBoundingClientRect();
+   let screenBound = CanvasObj.units.getBoundingClientRect();
+   let isoGridBound = CanvasObj.isoSelect.getBoundingClientRect();
 
    const cartMouse = {
       screen: {
@@ -154,7 +173,7 @@ const getCellPos = (event) => {
    }
 
    const isoMouse = screenPos_toGridPos(cartMouse.isoGrid);
-   let cellSize = gVar.Grid.cellSize;
+   let cellSize = Grid.cellSize;
 
    const cellPos = {
       x: isoMouse.x - (isoMouse.x % cellSize),
@@ -181,9 +200,9 @@ const getCellPos = (event) => {
 const withinTheGrid = (callback) => {
 
    if(GetCell.isoMouse.x > 0
-   && GetCell.isoMouse.x < gVar.Grid.width
+   && GetCell.isoMouse.x < Grid.width
    && GetCell.isoMouse.y > 0
-   && GetCell.isoMouse.y < gVar.Grid.height) {
+   && GetCell.isoMouse.y < Grid.height) {
 
       callback();
    }
@@ -204,8 +223,8 @@ const cycleCells = (callback) => {
 // ================================================================================================
 const drawCellInfo = (cell) => {
 
-   if(debugVar.showCellInfo) {
-      let ctxIsoSelect = gVar.Ctx.isoSelect;
+   if(Debug.showCellInfo) {
+      let ctxIsoSelect = Ctx.isoSelect;
       
       cell.drawFrame(ctxIsoSelect);
       cell.drawCenter(ctxIsoSelect);
@@ -219,21 +238,18 @@ const drawCellInfo = (cell) => {
 // ================================================================================================
 const mouse_Move = (event) => {
 
-   clearCanvas(0);
-   clearCanvas(1);
-   clearCanvas(2);
-   clearCanvas(3);
+   clearCanvas();
 
    // Set hover cell & DOM
-   gVar.GetCell = getCellPos(event);
-   gVar.HoverCell = Grid.cellsList[gVar.GetCell.id];
-   updateDOM(gVar.DOM);
+   GetCell = getCellPos(event);
+   HoverCell = Grid.cellsList[GetCell.id];
+   updateDOM(DOM);
    
    // Render cell data
    cycleCells((cell) => drawCellInfo(cell));
    
    // Redraw existing items after canvas cleared
-   if(gVar.HoverCell) gVar.HoverCell.drawHover(gVar.Ctx.isoSelect, gVar.GetCell, "blue");
+   if(HoverCell) HoverCell.drawHover(Ctx.isoSelect, GetCell, "blue");
 }
 
 document.body.oncontextmenu = (event) => {
@@ -250,16 +266,15 @@ module.exports = {
 
       initGameHandler(document) {
 
-         gVar.DOM       = setDOM(document);
-         gVar.Viewport  = setViewport(document);
-         gVar.CanvasObj = setCanvas(document);
-         gVar.Ctx       = setCtx(gVar.CanvasObj);
+         DOM       = setDOM(document);
+         Viewport  = setViewport(document);
+         CanvasObj = setCanvas(document);
+         Ctx       = setCtx(CanvasObj);
 
-         // Mouse move
-         gVar.CanvasObj.units.addEventListener("mousemove", (event) => mouse_Move(event));
+         // Mouse move Event
+         CanvasObj.units.addEventListener("mousemove", (event) => mouse_Move(event));
          
-         // loadImages();
-         Grid.init(debugVar.isEuclidean);
+         Grid.init();
          cycleCells((cell) => drawCellInfo(cell));
       }
    }
