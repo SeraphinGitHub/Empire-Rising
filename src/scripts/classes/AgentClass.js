@@ -10,16 +10,16 @@ class AgentClass {
       this.id = id;
       this.startCell = startCell;
       this.endCell;
-      this.openList = [startCell];
+      this.openList = [];
       this.closedList = [];
-      this.pathArray = [];
+      this.path = [];
       this.isEuclidean = isEuclidean; // Can move diagonally if "true"
    }
 
-   calcHeuristic(cell) {
+   calcHeuristic(currentCell) {
       
-      let distX = Math.abs(this.endCell.center.x -cell.center.x);
-      let distY = Math.abs(this.endCell.center.y -cell.center.y);
+      let distX = Math.abs(this.endCell.center.x -currentCell.center.x);
+      let distY = Math.abs(this.endCell.center.y -currentCell.center.y);
       let hypotenuse = Math.floor(Math.sqrt(distX * distX + distY * distY));
 
       if(!this.isEuclidean) return distX + distY;
@@ -27,6 +27,11 @@ class AgentClass {
    }
 
    searchPath() {
+
+      this.openList = [this.startCell];
+      this.closedList = [];
+      this.path = [];
+
       while(this.openList.length > 0) {
 
          let lowestIndex = 0;
@@ -58,25 +63,35 @@ class AgentClass {
                neighbor.cameFromCell = currentCell;
             }
          }
-         
-         // If reached destination
-         if(currentCell.id === this.endCell.id) {
-   
-            let temporyCell = currentCell;
-            this.pathArray.push(temporyCell);
-   
-            while(temporyCell.cameFromCell) {
-               this.pathArray.push(temporyCell.cameFromCell);
-               temporyCell = temporyCell.cameFromCell;
-            }
-
-            this.pathArray.reverse();
-            return this.pathArray;
-         }
 
          // Transfert currentCell to closedList
          this.openList.splice(lowestIndex, 1);
          this.closedList.push(currentCell);
+
+
+         // If reached destination
+         if(currentCell.id === this.endCell.id) {
+            
+            let temporyCell = currentCell;
+            this.path.push(temporyCell);
+            
+            // Set found path
+            while(temporyCell.cameFromCell) {
+               this.path.push(temporyCell.cameFromCell);
+               temporyCell = temporyCell.cameFromCell;
+            }
+
+            // Reset neighbors data
+            this.closedList.forEach(cell => {
+               cell.hCost = 0;
+               cell.gCost = 0;
+               cell.fCost = 0;
+               cell.cameFromCell = undefined;
+            });
+
+            this.path.reverse();
+            return this.path;
+         }
       }
 
       return [];
@@ -117,13 +132,13 @@ class AgentClass {
          });
    
          // Display path
-         for(let i = 0; i < this.pathArray.length; i++) {
+         for(let i = 0; i < this.path.length; i++) {
    
-            let currentCell = this.pathArray[i];
+            let currentCell = this.path[i];
             this.drawHitbox(ctx, i, currentCell);
             
-            if(i +1 < this.pathArray.length) {
-               let nextCell = this.pathArray[i +1];
+            if(i +1 < this.path.length) {
+               let nextCell = this.path[i +1];
                this.drawPath(ctx, currentCell, nextCell);
             }
          }

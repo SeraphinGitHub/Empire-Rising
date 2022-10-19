@@ -20,9 +20,10 @@ const GridParams = {
    width: 960,
    isEuclidean: true,
 };
-
 const Grid = new GridClass(GridParams);
+
 const AgentsList = {};
+let Population = 0;
 
 let DOM;
 let Viewport;
@@ -232,6 +233,16 @@ const cycleAgents = (callback) => {
    }
 }
 
+const createNewAgent = () => {
+
+   Population++;
+   let id = Population;
+   let startCell = Grid.cellsList[GetCell.id];
+   
+   AgentsList[id] = new AgentClass(id, startCell, Grid.isEuclidean);
+   AgentsList[id].drawAgent(Ctx.isoSelect, startCell);
+}
+
 
 // ================================================================================================
 // Draw Functions
@@ -274,11 +285,13 @@ const mouse_LeftClick = () => {
 
 const mouse_RightClick = () => {
 
-   cycleAgents((agent) => {
+   if(Object.keys(AgentsList).length === 0) createNewAgent();
+
+   else cycleAgents((agent) => {      
       agent.endCell = Grid.cellsList[GetCell.id];
       agent.searchPath();
       agent.displayPath(Ctx.isoSelect, true);
-      // agent.startCell = agent.endCell;
+      agent.startCell = agent.endCell;
    });
 }
 
@@ -292,15 +305,6 @@ const mouse_ScrollClick = () => {
 // ================================================================================================
 const Keyboard_Enter = () => {
 
-   if(Object.keys(AgentsList).length === 0) {
-      
-      const cellID = "2-2";
-      let id = 0;
-      let startCell = Grid.cellsList[cellID];
-      
-      AgentsList[id] = new AgentClass(id, startCell, Grid.isEuclidean);
-      AgentsList[id].drawAgent(Ctx.isoSelect, startCell);
-   }
 }
 
 
