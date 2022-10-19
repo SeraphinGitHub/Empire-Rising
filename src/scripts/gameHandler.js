@@ -218,9 +218,7 @@ const withinTheGrid = (callback) => {
 const cycleCells = (callback) => {
 
    for(let i in Grid.cellsList) {
-      let cell = Grid.cellsList[i];
-
-      callback(cell);
+      callback(Grid.cellsList[i]);
    }
 }
 
@@ -289,7 +287,7 @@ const mouse_RightClick = () => {
 
    else cycleAgents((agent) => {      
       agent.endCell = Grid.cellsList[GetCell.id];
-      agent.searchPath();
+      agent.searchPath(Grid.cellsList);
       agent.displayPath(Ctx.isoSelect, true);
       agent.startCell = agent.endCell;
    });

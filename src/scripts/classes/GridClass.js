@@ -39,9 +39,8 @@ class GridClass {
 
       // Set cells neighborsList
       for(let i in this.cellsList) {
-         let cell = this.cellsList[i];
-
-         cell.initNeighborsList(this.cellsList);
+         
+         this.cellsList[i].initNeighborsList();
       }
    }
 }

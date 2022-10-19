@@ -26,7 +26,7 @@ class AgentClass {
       else return hypotenuse;
    }
 
-   searchPath() {
+   searchPath(cellsList) {
 
       this.openList = [this.startCell];
       this.closedList = [];
@@ -44,17 +44,17 @@ class AgentClass {
          }
 
          let currentCell = this.openList[lowestIndex];
-         let nebList = currentCell.neighborsList;         
+         let nebList = currentCell.neighborsList;
 
          // Scan cell neighbors
          for(let i in nebList) {
-            let neighbor = nebList[i];
+            let neighbor = cellsList[ nebList[i] ];
             
             // If this neighbor hasn't been scanned yet
             if(!this.closedList.includes(neighbor) && !neighbor.isBlocked) {
                let possibleG = currentCell.gCost +1;
                
-               if(!this.openList.includes(neighbor)) this.checkWallDiag(nebList, neighbor);
+               if(!this.openList.includes(neighbor)) this.checkBlockedDiag(nebList, neighbor);
                else if(possibleG >= neighbor.gCost) continue;
                
                neighbor.hCost = this.calcHeuristic(neighbor);
@@ -63,6 +63,7 @@ class AgentClass {
                neighbor.cameFromCell = currentCell;
             }
          }
+
 
          // Transfert currentCell to closedList
          this.openList.splice(lowestIndex, 1);
@@ -97,17 +98,17 @@ class AgentClass {
       return [];
    }
 
-   checkWallDiag(nebList, neighbor) {
+   checkBlockedDiag(nebList, neighbor) {
       
-      let topNeb =    nebList["top"];
-      let rightNeb =  nebList["right"];
+      let topNeb    = nebList["top"];
+      let rightNeb  = nebList["right"];
       let bottomNeb = nebList["bottom"];
-      let leftNeb =   nebList["left"];
+      let leftNeb   = nebList["left"];
 
-      let topLeftNeb =     nebList["topLeft"];
-      let topRightNeb =    nebList["topRight"];
+      let topLeftNeb     = nebList["topLeft"];
+      let topRightNeb    = nebList["topRight"];
       let bottomRightNeb = nebList["bottomRight"];
-      let bottomLeftNeb =  nebList["bottomLeft"];
+      let bottomLeftNeb  = nebList["bottomLeft"];
 
       if( !(topNeb    && leftNeb  && topNeb.isBlocked    && leftNeb.isBlocked  && neighbor === topLeftNeb
          || topNeb    && rightNeb && topNeb.isBlocked    && rightNeb.isBlocked && neighbor === topRightNeb
