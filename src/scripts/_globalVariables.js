@@ -15,6 +15,17 @@ module.exports = {
       width: 960,
       isEuclidean: true,
    },
+   
+   SelectArea: {
+      startX: undefined,
+      startY: undefined,
+      endX:   undefined,
+      endY:   undefined,
+      borderColor:   "dodgerblue",
+      filledColor:   "rgba(30, 144, 255, 0.3)",
+      lineWidth:     2,
+      isSelectArea : false,
+   },
 
    Cos_45deg:  0.707,
    Cos_30deg:  0.866,

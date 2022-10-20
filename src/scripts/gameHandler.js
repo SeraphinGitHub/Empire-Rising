@@ -75,6 +75,7 @@ const setCanvas = (document) => {
       terrain:   document.querySelector(".canvas-terrain"),
       buildings: document.querySelector(".canvas-buildings"),
       units:     document.querySelector(".canvas-units"),
+      select:    document.querySelector(".canvas-select"),
    };
 
    // Set canvas sizes
