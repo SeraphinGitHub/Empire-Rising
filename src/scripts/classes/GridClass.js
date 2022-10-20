@@ -15,8 +15,6 @@ class GridClass {
       this.height = params.height;
       this.cellSize = params.cellSize;
       this.isEuclidean = params.isEuclidean;
-      this.cos_45deg = 0.707;
-      this.cos_30deg = 0.866;
       
       this.collums = (this.width  -(this.width  %this.cellSize)) /this.cellSize;
       this.rows    = (this.height -(this.height %this.cellSize)) /this.cellSize;
@@ -39,7 +37,7 @@ class GridClass {
 
       // Set cells neighborsList
       for(let i in this.cellsList) {
-         
+
          this.cellsList[i].initNeighborsList();
       }
    }
