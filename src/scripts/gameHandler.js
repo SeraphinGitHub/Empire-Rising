@@ -5,7 +5,9 @@
 // Scripts Import
 // ================================================================================================
 const GridClass       = require("./classes/GridClass.js");
+const AgentClass      = require("./classes/AgentClass.js");
 const glo             = require("./_globalVariables.js");
+const unitParam       = require("./unitParam.js");
 const mouseHandler    = require("./mouseHandler.js");
 const keyboardHandler = require("./keyboardHandler.js");
 
@@ -20,7 +22,9 @@ document.body.oncontextmenu = (event) => {
 
 const clearCanvas = () => {
 
-   glo.cycleList(glo.Ctx, (ctx) => ctx.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height));
+   glo.cycleList(glo.Ctx, (ctx) => {
+      if(ctx !== glo.Ctx.select) ctx.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
+   });
 }
 
 const setDOM = (document) => {
@@ -106,6 +110,16 @@ const setCtx = (canvasObj) => {
    return ctx;
 }
 
+const createNewAgent = (newUnit) => {
+
+   glo.Population += newUnit.popCost;
+   let id = glo.Population;
+   let startCell = glo.Grid.cellsList["3-3"]; // Tempory until buildings class created
+   
+   glo.AgentsList[id] = new AgentClass(id, startCell, glo.Grid.isEuclidean, newUnit);
+   glo.AgentsList[id].drawCollider(glo.Ctx.isoSelect, startCell);
+}
+
 
 // ================================================================================================
 // Draw Functions
@@ -130,7 +144,7 @@ const runAnimation = () => {
    clearCanvas();
    
    glo.cycleList(glo.Grid.cellsList, (cell) => drawCellInfo(cell));
-   glo.cycleList(glo.AgentsList, (agent) => agent.drawAgent(glo.Ctx.isoSelect, agent.startCell));
+   glo.cycleList(glo.AgentsList, (agent) => agent.drawCollider(glo.Ctx.isoSelect, agent.startCell));
    
    requestAnimationFrame(runAnimation);
 }
@@ -144,17 +158,22 @@ module.exports = {
 
       initGameHandler(document) {
          glo.Grid      = new GridClass(glo.GridParams);
-
+         
          glo.DOM       = setDOM(document);
          glo.Viewport  = setViewport(document);
          glo.CanvasObj = setCanvas(document);
          glo.Ctx       = setCtx(glo.CanvasObj);
          
+         runAnimation();
+
          glo.Grid.init();
          mouseHandler.init();
          keyboardHandler.init();
 
-         // runAnimation();
+
+         // --- Tempory ---
+         createNewAgent(unitParam.worker);
+         // --- Tempory ---
       }
    }
 }

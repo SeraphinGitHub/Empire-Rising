@@ -5,15 +5,36 @@
 // Agent Class
 // =====================================================================
 class AgentClass {
-   constructor(id, startCell, isEuclidean) {
+   constructor(id, startCell, isEuclidean, newUnit) {
 
       this.id = id;
-      this.startCell = startCell;
+
+      // Pathfinding
+      this.startCell   = startCell;
+      this.currentCell = startCell;
       this.endCell;
+      this.path = [];
       this.openList = [];
       this.closedList = [];
-      this.path = [];
-      this.isEuclidean = isEuclidean; // Can move diagonally if "true"
+      this.isEuclidean = isEuclidean;
+
+      // Unit params
+      this.type    = newUnit.type;
+      this.health  = newUnit.health;
+      this.damages = newUnit.damages;
+      this.popCost = newUnit.popCost;
+      this.walkSpeed   = newUnit.walkSpeed;
+      this.buildSpeed  = newUnit.buildSpeed;
+      this.attackSpeed = newUnit.attackSpeed;
+      this.colliderSize   = newUnit.colliderSize;
+      this.animationDelay = newUnit.animationDelay;
+
+      // Collider
+      this.collider = {
+         x: this.currentCell.center.x,
+         y: this.currentCell.center.y,
+         radius: this.currentCell.size /2 *this.colliderSize,
+      };
    }
 
    calcHeuristic(currentCell) {
@@ -136,7 +157,7 @@ class AgentClass {
          for(let i = 0; i < this.path.length; i++) {
    
             let currentCell = this.path[i];
-            this.drawHitbox(ctx, i, currentCell);
+            this.drawWalkPath(ctx, i, currentCell);
             
             if(i +1 < this.path.length) {
                let nextCell = this.path[i +1];
@@ -162,7 +183,7 @@ class AgentClass {
       ctx.stroke();
    }
 
-   drawHitbox(ctx, i, currentCell, showData) {
+   drawWalkPath(ctx, i, currentCell, showData) {
       
       let ratio = 0.7; // 70%
       
@@ -181,14 +202,16 @@ class AgentClass {
       }, 100 *i);
    }
 
-   drawAgent(ctx, currentCell) {
+   drawCollider(ctx, currentCell) {
+
+      this.currentCell = currentCell;
 
       ctx.fillStyle = "yellow";
       ctx.beginPath();
       ctx.arc(
-         currentCell.center.x,
-         currentCell.center.y,
-         currentCell.size /2, 0, Math.PI * 2
+         this.collider.x,
+         this.collider.y,
+         this.collider.radius, 0, Math.PI * 2
       );
       ctx.fill();
       ctx.closePath();

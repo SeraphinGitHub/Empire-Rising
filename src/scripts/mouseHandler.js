@@ -4,8 +4,8 @@
 // ================================================================================================
 // Scripts Import
 // ================================================================================================
-const AgentClass = require("./classes/AgentClass");
-const glo        = require("./_globalVariables.js");
+const glo       = require("./_globalVariables.js");
+const collision = require("./collision.js");
 
 
 // ================================================================================================
@@ -19,6 +19,10 @@ let HoverCell;
 // ================================================================================================
 // Functions
 // ================================================================================================
+const clearSelectCanvas = () => {
+   glo.Ctx.select.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
+}
+
 const updateDOM = () => {
 
    glo.DOM.cartX.textContent =   `x : ${ScreenPos.cartesian.x}`;
@@ -106,14 +110,37 @@ const withinTheGrid = (callback) => {
    }
 }
 
-const createNewAgent = () => {
+const unitSelection = () => {
 
-   glo.Population++;
-   let id = glo.Population;
-   let startCell = glo.Grid.cellsList[GetCell.id];
-   
-   glo.AgentsList[id] = new AgentClass(id, startCell, glo.Grid.isEuclidean);
-   glo.AgentsList[id].drawAgent(glo.Ctx.isoSelect, startCell);
+   glo.cycleList(glo.AgentsList, (agent) => {
+
+      const aze = {
+         x: agent.currentCell.center.x +glo.Grid.cellSize /2,
+         y: agent.currentCell.center.y -glo.Grid.cellSize /2,
+      };
+
+      const agentPos = gridPos_toScreenPos(aze);
+      
+      glo.Ctx.select.fillStyle = "blue";
+      glo.Ctx.select.beginPath();
+      glo.Ctx.select.arc(
+         agentPos.x,
+         agentPos.y,
+         8, 0, Math.PI * 2
+      );
+      glo.Ctx.select.fill();
+      glo.Ctx.select.closePath();
+
+      const circle = {
+         x: agentPos.x,
+         y: agentPos.y,
+         radius: agent.collider.radius,
+      };
+
+      if(collision.square_toCircle(glo.SelectArea, circle)) {
+         console.log(123); // ******************************************************
+      }
+   });
 }
 
 
@@ -121,27 +148,31 @@ const createNewAgent = () => {
 // Draw Functions
 // ================================================================================================
 const drawSelectArea = () => {
-   if(glo.SelectArea.isSelectArea) {
 
-      // Set end pos
-      glo.SelectArea.endX = ScreenPos.cartesian.x;
-      glo.SelectArea.endY = ScreenPos.cartesian.y;
+   let select = glo.SelectArea;
+
+   // Select area size
+   select.height = ScreenPos.cartesian.x -select.x;
+   select.width  = ScreenPos.cartesian.y -select.y;
+
+   // Select area borders
+   glo.Ctx.select.lineWidth = select.lineWidth;
+   glo.Ctx.select.strokeStyle = select.borderColor;
+   glo.Ctx.select.strokeRect(
+      select.x,
+      select.y,
+      select.height,
+      select.width
+   );
    
-      // Set area size & pos
-      let posX  = glo.SelectArea.startX;
-      let posY  = glo.SelectArea.startY;
-      let sizeX = glo.SelectArea.endX -glo.SelectArea.startX;
-      let sizeY = glo.SelectArea.endY -glo.SelectArea.startY;
-   
-      // Select area borders
-      glo.Ctx.select.lineWidth = glo.SelectArea.lineWidth;
-      glo.Ctx.select.strokeStyle = glo.SelectArea.borderColor;
-      glo.Ctx.select.strokeRect(posX, posY, sizeX, sizeY);
-      
-      // Select area filled
-      glo.Ctx.select.fillStyle = glo.SelectArea.filledColor;
-      glo.Ctx.select.fillRect(posX, posY, sizeX, sizeY);
-   }
+   // Select area filled
+   glo.Ctx.select.fillStyle = select.filledColor;
+   glo.Ctx.select.fillRect(
+      select.x,
+      select.y,
+      select.height,
+      select.width
+   );
 }
 
 
@@ -150,21 +181,21 @@ const drawSelectArea = () => {
 // ================================================================================================
 const mouse_Move = (event) => {
 
-   // --- Tempory in this file ---
-   clearCanvas();
-   glo.cycleList(glo.Grid.cellsList, (cell) => drawCellInfo(cell));
-   glo.cycleList(glo.AgentsList, (agent) => agent.drawAgent(glo.Ctx.isoSelect, agent.startCell));
-   // --- Tempory in this file ---
-
-
    ScreenPos = getScreenPos(event);
    GetCell   = getCellPos(event);
    updateDOM();
-   drawSelectArea();
+
+   if(glo.SelectArea.isSelectArea) {
+      clearSelectCanvas();
+      drawSelectArea();
+      unitSelection();
+   }
    
    withinTheGrid(() => {
+      // --- Became useless ---
       HoverCell = glo.Grid.cellsList[GetCell.id];
       HoverCell.drawHover(glo.Ctx.isoSelect, GetCell, glo.Debug.hoverColor);
+      // --- Became useless ---
    });
 }
 
@@ -172,24 +203,23 @@ const mouse_LeftClick = (state) => {
 
    if(state === "Down") {
       glo.SelectArea.isSelectArea = true;
-      glo.SelectArea.startX = ScreenPos.cartesian.x;
-      glo.SelectArea.startY = ScreenPos.cartesian.y;      
+      glo.SelectArea.x = ScreenPos.cartesian.x;
+      glo.SelectArea.y = ScreenPos.cartesian.y;      
    }
    
    if(state === "Up") {
       glo.SelectArea.isSelectArea = false;
-      glo.Ctx.select.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
+      clearSelectCanvas();
    }
 }
 
 const mouse_RightClick = () => {
 
-   withinTheGrid(() => {   
+   withinTheGrid(() => {
       if(HoverCell) {
-         
-         if(Object.keys(glo.AgentsList).length === 0) createNewAgent();
       
-         else glo.cycleList(glo.AgentsList, (agent) => {      
+         glo.cycleList(glo.AgentsList, (agent) => {
+
             agent.endCell = glo.Grid.cellsList[GetCell.id];
             agent.searchPath(glo.Grid.cellsList);
             agent.displayPath(glo.Ctx.isoSelect, true);
@@ -204,36 +234,11 @@ const mouse_ScrollClick = () => {
 }
 
 
-// ************************************************************
-// --- Tempory in mouse handler ---
-// ************************************************************
-const clearCanvas = () => {
-
-   glo.cycleList(glo.Ctx, (ctx) => ctx.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height));
-}
-
-const drawCellInfo = (cell) => {
-
-   if(glo.Debug.showCellInfo) {
-      let ctxIsoSelect = glo.Ctx.isoSelect;
-      
-      cell.drawFrame(ctxIsoSelect);
-      cell.drawCenter(ctxIsoSelect);
-      cell.drawID(ctxIsoSelect);
-   }
-}
-
-
 // ================================================================================================
 // Init Mouse Handler
 // ================================================================================================
 module.exports = {
    init() {
-
-      // --- Tempory in this file ---
-      glo.cycleList(glo.Grid.cellsList, (cell) => drawCellInfo(cell));
-      // --- Tempory in this file ---
-
       window.addEventListener("mousemove", (event) => mouse_Move(event));
       
       window.addEventListener("mousedown", (event) => {

@@ -17,10 +17,10 @@ module.exports = {
    },
    
    SelectArea: {
-      startX: undefined,
-      startY: undefined,
-      endX:   undefined,
-      endY:   undefined,
+      x: undefined,
+      y: undefined,
+      height: undefined,
+      width:  undefined,
       borderColor:   "dodgerblue",
       filledColor:   "rgba(30, 144, 255, 0.3)",
       lineWidth:     2,

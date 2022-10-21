@@ -16,7 +16,7 @@
    import IsoCanvas   from "./components/canvas/IsometricsCanvas.vue"
    import CartCanvas  from "./components/canvas/CartesiansCanvas.vue"
 
-   // Scripts 
+   // Scripts
    import GameHandler  from "./scripts/gameHandler.js"
 
    export default {
