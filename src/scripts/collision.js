@@ -2,6 +2,20 @@
 "use strict"
 
 module.exports = {
+   reverseSide(first, second) {
+      if(first > second) return [second, first];
+      else return [first, second];
+   },
+
+   square_toSquare(first, second) {
+
+      if(!(first.x > second.x + second.width
+         ||first.x + first.width < second.x
+         ||first.y > second.y + second.height
+         ||first.y + first.height < second.y)) {
+            return true;
+      }
+   },
 
    square_toCircle(square, circle) {
 
@@ -18,12 +32,15 @@ module.exports = {
          top:    square.y,
          bottom: square.y +square.height,
       }
-      
-      if(circ.right  > sqr.left
-      && circ.left   < sqr.right
-      && circ.bottom > sqr.top
-      && circ.top    < sqr.bottom) {
+
+      let axisX =  this.reverseSide(sqr.left, sqr.right);
+      let axisY =  this.reverseSide(sqr.top, sqr.bottom);
+
+      if(circ.right  > axisX[0]
+      && circ.left   < axisX[1]
+      && circ.bottom > axisY[0]
+      && circ.top    < axisY[1]) {
          return true;
       }
-   }
+   },
 }

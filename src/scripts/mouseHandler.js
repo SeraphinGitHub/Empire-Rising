@@ -14,7 +14,7 @@ const collision = require("./collision.js");
 let ScreenPos;
 let GetCell;
 let HoverCell;
-
+let SelectedUnitsList = {};
 
 // ================================================================================================
 // Functions
@@ -34,30 +34,9 @@ const updateDOM = () => {
    glo.DOM.cellID.textContent = `id : ${GetCell.id}`;
 }
 
-const screenPos_toGridPos = (mousePos) => {
-
-   // Isometric <== Cartesian
-   return {
-      x:  Math.floor( (mousePos.x -mousePos.y *2) /glo.Cos_45deg /2 ) +glo.Grid.width /2,
-      y:  Math.floor( (mousePos.x +mousePos.y *2) /glo.Cos_45deg /2 ) -glo.Grid.width /2,
-   };
-}
-
-const gridPos_toScreenPos = (cellPos) => {
-
-   // Cartesian <== Isometric
-   let TempX = Math.floor( (cellPos.x + cellPos.y) *glo.Cos_45deg );
-   let TempY = Math.floor( (cellPos.y + glo.Grid.width /2) *glo.Cos_45deg *2 -TempX ) /2;
-
-   return {
-      x: Math.floor( glo.Viewport.width  /2 - glo.Cos_45deg /2 *(glo.Grid.height +glo.Grid.width) +TempX ),
-      y: Math.floor( glo.Viewport.height /2 - glo.Cos_45deg /4 *(glo.Grid.height +glo.Grid.width) +TempY +glo.Cos_30deg *glo.Grid.cellSize /2 ),
-   };
-}
-
 const getScreenPos = (event) => {
 
-   let screenBound = glo.CanvasObj.units.getBoundingClientRect();
+   let screenBound = glo.CanvasObj.select.getBoundingClientRect();
    let isoGridBound = glo.CanvasObj.isoSelect.getBoundingClientRect();
 
    return {
@@ -71,6 +50,27 @@ const getScreenPos = (event) => {
          y: Math.floor( event.clientY -isoGridBound.top  ),
       },
    }
+}
+
+const screenPos_toGridPos = (screenPos) => {
+
+   // Isometric <== Cartesian
+   return {
+      x:  Math.floor( (screenPos.x -screenPos.y *2) /glo.Cos_45deg /2 ) +glo.Grid.width /2,
+      y:  Math.floor( (screenPos.x +screenPos.y *2) /glo.Cos_45deg /2 ) -glo.Grid.width /2,
+   };
+}
+
+const gridPos_toScreenPos = (gridPos) => {
+
+   // Cartesian <== Isometric
+   let TempX = Math.floor( (gridPos.x + gridPos.y) *glo.Cos_45deg );
+   let TempY = Math.floor( (gridPos.y +glo.Grid.width /2 -glo.Grid.cellSize *glo.Cos_45deg *glo.Cos_30deg) *glo.Cos_45deg *2 -TempX ) /2;
+   
+   return {
+      x: Math.floor( glo.Viewport.width  /2 - glo.Cos_45deg /2 *(glo.Grid.height +glo.Grid.width) +TempX ),
+      y: Math.floor( glo.Viewport.height /2 - glo.Cos_45deg /4 *(glo.Grid.height +glo.Grid.width) +TempY +glo.Cos_30deg *glo.Grid.cellSize /2 ),
+   };
 }
 
 const getCellPos = () => {
@@ -114,19 +114,19 @@ const unitSelection = () => {
 
    glo.cycleList(glo.AgentsList, (agent) => {
 
-      const aze = {
-         x: agent.currentCell.center.x +glo.Grid.cellSize /2,
-         y: agent.currentCell.center.y -glo.Grid.cellSize /2,
+      const agentIsoPos = {
+         x: agent.currentCell.center.x,
+         y: agent.currentCell.center.y,
       };
 
-      const agentPos = gridPos_toScreenPos(aze);
-      
-      glo.Ctx.select.fillStyle = "blue";
+      const agentPos = gridPos_toScreenPos(agentIsoPos);
+
+      glo.Ctx.select.fillStyle = "red";
       glo.Ctx.select.beginPath();
       glo.Ctx.select.arc(
          agentPos.x,
          agentPos.y,
-         8, 0, Math.PI * 2
+         30, 0, Math.PI * 2
       );
       glo.Ctx.select.fill();
       glo.Ctx.select.closePath();
@@ -134,13 +134,16 @@ const unitSelection = () => {
       const circle = {
          x: agentPos.x,
          y: agentPos.y,
-         radius: agent.collider.radius,
+         radius: 30,
       };
 
       if(collision.square_toCircle(glo.SelectArea, circle)) {
-         console.log(123); // ******************************************************
+         console.log("Colliding !"); // ******************************************************
+         SelectedUnitsList[agent.id] = agent;
       }
    });
+
+   console.log(SelectedUnitsList); // ******************************************************
 }
 
 
@@ -152,8 +155,8 @@ const drawSelectArea = () => {
    let select = glo.SelectArea;
 
    // Select area size
-   select.height = ScreenPos.cartesian.x -select.x;
-   select.width  = ScreenPos.cartesian.y -select.y;
+   select.width  = ScreenPos.cartesian.x -select.x;
+   select.height = ScreenPos.cartesian.y -select.y;
 
    // Select area borders
    glo.Ctx.select.lineWidth = select.lineWidth;
@@ -161,8 +164,8 @@ const drawSelectArea = () => {
    glo.Ctx.select.strokeRect(
       select.x,
       select.y,
-      select.height,
-      select.width
+      select.width,
+      select.height
    );
    
    // Select area filled
@@ -170,8 +173,8 @@ const drawSelectArea = () => {
    glo.Ctx.select.fillRect(
       select.x,
       select.y,
-      select.height,
-      select.width
+      select.width,
+      select.height
    );
 }
 
@@ -192,10 +195,8 @@ const mouse_Move = (event) => {
    }
    
    withinTheGrid(() => {
-      // --- Became useless ---
-      HoverCell = glo.Grid.cellsList[GetCell.id];
-      HoverCell.drawHover(glo.Ctx.isoSelect, GetCell, glo.Debug.hoverColor);
-      // --- Became useless ---
+      // HoverCell = glo.Grid.cellsList[GetCell.id];
+      // HoverCell.drawHover(glo.Ctx.isoSelect, GetCell, glo.Debug.hoverColor);
    });
 }
 
@@ -218,19 +219,19 @@ const mouse_RightClick = () => {
    withinTheGrid(() => {
       if(HoverCell) {
       
-         glo.cycleList(glo.AgentsList, (agent) => {
+         // glo.cycleList(glo.AgentsList, (agent) => {
 
-            agent.endCell = glo.Grid.cellsList[GetCell.id];
-            agent.searchPath(glo.Grid.cellsList);
-            agent.displayPath(glo.Ctx.isoSelect, true);
-            agent.startCell = agent.endCell;
-         });
+         //    agent.endCell = glo.Grid.cellsList[GetCell.id];
+         //    agent.searchPath(glo.Grid.cellsList);
+         //    agent.displayPath(glo.Ctx.isoSelect, true);
+         //    agent.startCell = agent.endCell;
+         // });
       }
    });
 }
 
 const mouse_ScrollClick = () => {
-
+   
 }
 
 

@@ -9,6 +9,12 @@ class AgentClass {
 
       this.id = id;
 
+      // Position
+      this.position = {
+         x: undefined,
+         y: undefined,
+      };
+
       // Pathfinding
       this.startCell   = startCell;
       this.currentCell = startCell;
