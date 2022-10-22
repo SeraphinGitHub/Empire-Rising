@@ -111,14 +111,33 @@ const setCtx = (canvasObj) => {
    return ctx;
 }
 
-const createNewAgent = (newUnit) => {
+const initAvailableID = () => {
 
-   glo.Population += newUnit.popCost;
-   let id = glo.Population;
-   let startCell = glo.Grid.cellsList["3-3"]; // Tempory until buildings class created
+   for(let i = 0; i < glo.MaxPop; i++) {
+      glo.AvailableIDArray.push(i +1);
+   }
+}
+
+const createNewAgent = (categoryName, typeName, cellID) => {
+
+   const avID     = glo.AvailableIDArray[0];
+   const category = unitParam[categoryName];
+   const type     = category.type[typeName];
+
+   glo.CurrentPop += category.popCost;
+   glo.AvailableIDArray.splice(0, category.popCost);
    
-   glo.AgentsList[id] = new AgentClass(id, startCell, glo.Grid.isEuclidean, newUnit);
-   glo.AgentsList[id].drawCollider(glo.Ctx.isoSelect, startCell);
+   const agentParams = {
+      id:          avID,
+      type:        type,
+      popCost:     category.popCost,
+      collider:    category.collider,
+      startCell:   glo.Grid.cellsList[cellID], // Tempory until buildings class created
+      isEuclidean: glo.Grid.isEuclidean,
+   };
+   
+   glo.AgentsList[avID] = new AgentClass(agentParams);
+   glo.AgentsList[avID].drawAgent(glo.Ctx.isoSelect, "yellow");
 }
 
 
@@ -129,9 +148,10 @@ const runAnimation = () => {
 
    clearCanvas();
    
-   glo.cycleList(glo.Grid.cellsList, (cell) => draw.cellInfo(cell));
-   glo.cycleList(glo.AgentsList, (agent) => agent.drawCollider(glo.Ctx.isoSelect, agent.startCell));
-   
+   glo.cycleList(glo.Grid.cellsList,    (cell ) => draw.cellInfo(cell));
+   glo.cycleList(glo.AgentsList,        (agent) => agent.drawAgent(glo.Ctx.isoSelect, "yellow"));
+   glo.cycleList(glo.SelectedUnitsList, (agent) => agent.drawAgent(glo.Ctx.isoSelect, "blue"  ));
+
    requestAnimationFrame(runAnimation);
 }
 
@@ -150,6 +170,7 @@ module.exports = {
          glo.CanvasObj = setCanvas(document);
          glo.Ctx       = setCtx(glo.CanvasObj);
          
+         initAvailableID();
          runAnimation();
 
          glo.Grid.init();
@@ -158,7 +179,9 @@ module.exports = {
 
 
          // --- Tempory ---
-         createNewAgent(unitParam.worker);
+         createNewAgent("infantry",  "worker",   "3-3");
+         createNewAgent("cavalry",   "bowman",   "7-4");
+         createNewAgent("machinery", "ballista", "4-8");
          // --- Tempory ---
       }
    }
