@@ -21,13 +21,16 @@ module.exports = {
 
    updateDOM() {
 
-      glo.DOM.cartX.textContent =   `x : ${glo.SelectArea.currentPos.cartesian.x}`;
-      glo.DOM.cartY.textContent =   `y : ${glo.SelectArea.currentPos.cartesian.y}`;
-      glo.DOM.isoX.textContent =    `x : ${glo.IsoGridPos.x}`;
-      glo.DOM.isoY.textContent =    `y : ${glo.IsoGridPos.y}`;
-      glo.DOM.cellX.textContent =   `x : ${glo.HoverCell.gridPos.x}`;
-      glo.DOM.cellY.textContent =   `y : ${glo.HoverCell.gridPos.y}`;
-      glo.DOM.cellID.textContent = `id : ${glo.HoverCell.id}`;
+      glo.DOM.cartX.textContent = `x : ${glo.SelectArea.currentPos.cartesian.x}`;
+      glo.DOM.cartY.textContent = `y : ${glo.SelectArea.currentPos.cartesian.y}`;
+      glo.DOM.isoX.textContent  = `x : ${glo.IsoGridPos.x}`;
+      glo.DOM.isoY.textContent  = `y : ${glo.IsoGridPos.y}`;
+      
+      this.withinTheGrid(() => {
+         glo.DOM.cellX.textContent  =  `x : ${glo.HoverCell.gridPos.x}`;
+         glo.DOM.cellY.textContent  =  `y : ${glo.HoverCell.gridPos.y}`;
+         glo.DOM.cellID.textContent = `id : ${glo.HoverCell.id}`;
+      });
    },
 
    cycleList(list, callback) {

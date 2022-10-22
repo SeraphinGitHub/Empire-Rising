@@ -17,7 +17,7 @@ const mouse_Move = (event) => {
    glo.SelectArea.currentPos = ext.getScreenPos(event);
    glo.IsoGridPos = ext.screenPos_toGridPos(glo.SelectArea.currentPos.isometric);
    glo.HoverCell  = ext.setHoverCell();
-
+   
    ext.updateDOM();
 
    if(glo.SelectArea.isSelectArea) {
