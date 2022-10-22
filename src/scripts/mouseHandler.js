@@ -14,7 +14,7 @@ const collision = require("./modules/mod_collisions.js");
 // ================================================================================================
 let GetCell;
 let HoverCell;
-let SelectedUnitsList = {};
+
 
 // ================================================================================================
 // Functions
@@ -110,6 +110,33 @@ const withinTheGrid = (callback) => {
    }
 }
 
+const unitSelection = () => {
+   glo.cycleList(glo.AgentsList, (agent) => {
+
+      const agentPos = gridPos_toScreenPos(agent.currentCell.center);
+      
+      const square = {
+         x: glo.SelectArea.oldPos.cartesian.x,
+         y: glo.SelectArea.oldPos.cartesian.y,
+         height: glo.SelectArea.height,
+         width:  glo.SelectArea.width,
+      };
+
+      const circle = {
+         x: agentPos.x,
+         y: agentPos.y,
+         radius: agent.collider.radius,
+      };
+
+      if(collision.square_toCircle(square, circle)) {
+         glo.SelectedUnitsList[agent.id] = agent;
+      }
+      else {
+         delete glo.SelectedUnitsList[agent.id];
+      }
+   });
+}
+
 
 // ================================================================================================
 // Mouse Inputs
@@ -123,18 +150,20 @@ const mouse_Move = (event) => {
    if(glo.SelectArea.isSelectArea) {
       clearSelectCanvas();
       draw.selectArea();
+      unitSelection();
    }
-   
-   withinTheGrid(() => {
-      // HoverCell = glo.Grid.cellsList[GetCell.id];
-      // HoverCell.drawHover(glo.Ctx.isoSelect, GetCell, glo.Debug.hoverColor);
-   });
+
+   // glo.cycleList(glo.AgentsList, (agent) => {
+   //    let gridPos = gridPos_toScreenPos(agent.position);
+   //    agent.drawCollider(glo.Ctx.selection, gridPos);
+   // });
 }
 
 const mouse_LeftClick = (state) => {
 
    if(state === "Down") {
-      glo.SelectArea.isSelectArea = true;      
+      glo.SelectArea.isSelectArea = true;
+      glo.SelectedUnitsList = {};
    }
    
    if(state === "Up") {
@@ -146,16 +175,16 @@ const mouse_LeftClick = (state) => {
 const mouse_RightClick = () => {
 
    withinTheGrid(() => {
-      if(HoverCell) {
+      // if(HoverCell) {
       
-         // glo.cycleList(glo.AgentsList, (agent) => {
+         // glo.cycleList(glo.SelectedUnitsList, (agent) => {
 
          //    agent.endCell = glo.Grid.cellsList[GetCell.id];
          //    agent.searchPath(glo.Grid.cellsList);
          //    agent.displayPath(glo.Ctx.isoSelect, true);
          //    agent.startCell = agent.endCell;
          // });
-      }
+      // }
    });
 }
 

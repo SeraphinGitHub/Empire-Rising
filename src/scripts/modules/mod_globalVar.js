@@ -39,10 +39,14 @@ module.exports = {
    Viewport:   undefined,
    CanvasObj:  undefined,
    Ctx:        undefined,
-
    Grid:       undefined,
-   AgentsList: {},
-   Population: 0,
+
+   AgentsList:        {},
+   SelectedUnitsList: {},
+   AvailableIDArray:  [],
+
+   MaxPop:    20,
+   CurrentPop: 0,
    
    cycleList(list, callback) {
 
