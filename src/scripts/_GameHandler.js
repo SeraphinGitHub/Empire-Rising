@@ -5,12 +5,11 @@
 // Scripts Import
 // ================================================================================================
 const GridClass       = require("./classes/GridClass.js");
-const AgentClass      = require("./classes/AgentClass.js");
 const mouseHandler    = require("./mouseHandler.js");
 const keyboardHandler = require("./keyboardHandler.js");
 const glo             = require("./modules/mod_globalVar.js");
-const draw            = require("./modules/mod_drawFunctions.js");
-const unitParam       = require("./modules/mod_unitsParams.js");
+const ext             = require("./modules/mod_extendedMethods.js");
+const draw            = require("./modules/mod_drawMethods.js");
 
 
 // ================================================================================================
@@ -19,13 +18,6 @@ const unitParam       = require("./modules/mod_unitsParams.js");
 document.body.oncontextmenu = (event) => {
    event.preventDefault();
    event.stopPropagation();
-}
-
-const clearCanvas = () => {
-
-   glo.cycleList(glo.Ctx, (ctx) => {
-      if(ctx !== glo.Ctx.selection) ctx.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
-   });
 }
 
 const setDOM = (document) => {
@@ -118,39 +110,24 @@ const initAvailableID = () => {
    }
 }
 
-const createNewAgent = (categoryName, typeName, cellID) => {
-
-   const avID     = glo.AvailableIDArray[0];
-   const category = unitParam[categoryName];
-   const type     = category.type[typeName];
-
-   glo.CurrentPop += category.popCost;
-   glo.AvailableIDArray.splice(0, category.popCost);
-   
-   const agentParams = {
-      id:          avID,
-      type:        type,
-      popCost:     category.popCost,
-      collider:    category.collider,
-      startCell:   glo.Grid.cellsList[cellID], // Tempory until buildings class created
-      isEuclidean: glo.Grid.isEuclidean,
-   };
-   
-   glo.AgentsList[avID] = new AgentClass(agentParams);
-   glo.AgentsList[avID].drawAgent(glo.Ctx.isoSelect, "yellow");
-}
-
 
 // ================================================================================================
 // Animation
 // ================================================================================================
 const runAnimation = () => {
 
-   clearCanvas();
-   
-   glo.cycleList(glo.Grid.cellsList,    (cell ) => draw.cellInfo(cell));
-   glo.cycleList(glo.AgentsList,        (agent) => agent.drawAgent(glo.Ctx.isoSelect, "yellow"));
-   glo.cycleList(glo.SelectedUnitsList, (agent) => agent.drawAgent(glo.Ctx.isoSelect, "blue"  ));
+   ext.clearCanvas("isoSelect");
+   // ext.clearCanvas("terrain"  );
+   // ext.clearCanvas("buildings");
+   // ext.clearCanvas("units"    );
+
+   ext.cycleList(glo.Grid.cellsList,    (cell ) => draw.cellInfo(cell));
+   ext.cycleList(glo.AgentsList,        (agent) => agent.drawAgent(glo.Ctx.isoSelect, "yellow"));
+   ext.cycleList(glo.SelectedUnitsList, (agent) => agent.drawAgent(glo.Ctx.isoSelect, "blue"  ));
+
+   ext.withinTheGrid(() => {
+      draw.hover();
+   });
 
    requestAnimationFrame(runAnimation);
 }
@@ -172,16 +149,15 @@ module.exports = {
          
          initAvailableID();
          runAnimation();
-
+         
          glo.Grid.init();
          mouseHandler.init();
          keyboardHandler.init();
 
-
          // --- Tempory ---
-         createNewAgent("infantry",  "worker",   "3-3");
-         createNewAgent("cavalry",   "bowman",   "7-4");
-         createNewAgent("machinery", "ballista", "4-8");
+         ext.createNewAgent("infantry",  "worker",   "3-3");
+         ext.createNewAgent("cavalry",   "bowman",   "7-4");
+         ext.createNewAgent("machinery", "ballista", "4-8");
          // --- Tempory ---
       }
    }

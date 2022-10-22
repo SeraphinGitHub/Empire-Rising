@@ -50,4 +50,18 @@ module.exports = {
       );
    },
 
+   hover() {
+
+      glo.Ctx.isoSelect.strokeStyle = "yellow";
+      glo.Ctx.isoSelect.lineWidth = 4;
+      
+      // Draw hovelCell frame
+      glo.Ctx.isoSelect.strokeRect(
+         glo.HoverCell.gridPos.x,
+         glo.HoverCell.gridPos.y,
+         glo.Grid.cellSize,
+         glo.Grid.cellSize,
+      );
+   },
+
 }

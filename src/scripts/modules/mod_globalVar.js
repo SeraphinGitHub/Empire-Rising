@@ -2,7 +2,7 @@
 "use strict"
 
 // ================================================================================================
-// Global Variables
+// thisbal Variables
 // ================================================================================================
 module.exports = {
 
@@ -41,17 +41,14 @@ module.exports = {
    Ctx:        undefined,
    Grid:       undefined,
 
+   IsoGridPos: undefined,
+   HoverCell:  undefined,
+   
    AgentsList:        {},
    SelectedUnitsList: {},
    AvailableIDArray:  [],
 
    MaxPop:    20,
    CurrentPop: 0,
-   
-   cycleList(list, callback) {
 
-      for(let i in list) {
-         callback(list[i]);
-      }
-   },
 }
