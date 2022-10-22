@@ -5,7 +5,7 @@
       <canvas class="flex canvas-terrain"></canvas>
       <canvas class="flex canvas-buildings"></canvas>
       <canvas class="flex canvas-units"></canvas>
-      <canvas class="flex canvas-select"></canvas>
+      <canvas class="flex canvas-selection"></canvas>
 
    </section>
 </template>
@@ -42,7 +42,7 @@
       /* background: dodgerblue; */
    }
 
-   .canvas-select {
+   .canvas-selection {
       z-index: 40;
       /* background: red; */
    }

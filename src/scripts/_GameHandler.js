@@ -6,10 +6,11 @@
 // ================================================================================================
 const GridClass       = require("./classes/GridClass.js");
 const AgentClass      = require("./classes/AgentClass.js");
-const glo             = require("./_globalVariables.js");
-const unitParam       = require("./unitParam.js");
 const mouseHandler    = require("./mouseHandler.js");
 const keyboardHandler = require("./keyboardHandler.js");
+const glo             = require("./modules/mod_globalVar.js");
+const draw            = require("./modules/mod_drawFunctions.js");
+const unitParam       = require("./modules/mod_unitsParams.js");
 
 
 // ================================================================================================
@@ -23,7 +24,7 @@ document.body.oncontextmenu = (event) => {
 const clearCanvas = () => {
 
    glo.cycleList(glo.Ctx, (ctx) => {
-      if(ctx !== glo.Ctx.select) ctx.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
+      if(ctx !== glo.Ctx.selection) ctx.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
    });
 }
 
@@ -79,7 +80,7 @@ const setCanvas = (document) => {
       terrain:   document.querySelector(".canvas-terrain"),
       buildings: document.querySelector(".canvas-buildings"),
       units:     document.querySelector(".canvas-units"),
-      select:    document.querySelector(".canvas-select"),
+      selection: document.querySelector(".canvas-selection"),
    };
 
    // Set canvas sizes
@@ -122,28 +123,13 @@ const createNewAgent = (newUnit) => {
 
 
 // ================================================================================================
-// Draw Functions
-// ================================================================================================
-const drawCellInfo = (cell) => {
-
-   if(glo.Debug.showCellInfo) {
-      let ctxIsoSelect = glo.Ctx.isoSelect;
-      
-      cell.drawFrame(ctxIsoSelect);
-      cell.drawCenter(ctxIsoSelect);
-      cell.drawID(ctxIsoSelect);
-   }
-}
-
-
-// ================================================================================================
 // Animation
 // ================================================================================================
 const runAnimation = () => {
 
    clearCanvas();
    
-   glo.cycleList(glo.Grid.cellsList, (cell) => drawCellInfo(cell));
+   glo.cycleList(glo.Grid.cellsList, (cell) => draw.cellInfo(cell));
    glo.cycleList(glo.AgentsList, (agent) => agent.drawCollider(glo.Ctx.isoSelect, agent.startCell));
    
    requestAnimationFrame(runAnimation);

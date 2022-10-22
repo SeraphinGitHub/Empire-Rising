@@ -1,6 +1,9 @@
 
 "use strict"
 
+// ================================================================================================
+// Global Variables
+// ================================================================================================
 module.exports = {
 
    Debug: {
@@ -15,12 +18,14 @@ module.exports = {
       width: 960,
       isEuclidean: true,
    },
-   
+
    SelectArea: {
-      x: undefined,
-      y: undefined,
+      oldPos:     undefined,
+      currentPos: undefined,
+
       height: undefined,
       width:  undefined,
+
       borderColor:   "dodgerblue",
       filledColor:   "rgba(30, 144, 255, 0.3)",
       lineWidth:     2,

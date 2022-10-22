@@ -1,7 +1,7 @@
 
 "use strict"
 
-const glo = require("./_globalVariables.js");
+const glo = require("./modules/mod_globalVar.js");
 
 // ================================================================================================
 // Keyboard Inputs
@@ -15,6 +15,7 @@ const Keyboard_Enter = () => {
 // Init Keyboard Handler
 // ================================================================================================
 module.exports = {
+   
    init() {
 
       // Keyboard press key

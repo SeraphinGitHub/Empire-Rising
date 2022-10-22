@@ -4,14 +4,14 @@
 // ================================================================================================
 // Scripts Import
 // ================================================================================================
-const glo       = require("./_globalVariables.js");
-const collision = require("./collision.js");
+const glo       = require("./modules/mod_globalVar.js");
+const draw      = require("./modules/mod_drawFunctions.js");
+const collision = require("./modules/mod_collisions.js");
 
 
 // ================================================================================================
 // Mouse Handler Variables
 // ================================================================================================
-let ScreenPos;
 let GetCell;
 let HoverCell;
 let SelectedUnitsList = {};
@@ -20,13 +20,13 @@ let SelectedUnitsList = {};
 // Functions
 // ================================================================================================
 const clearSelectCanvas = () => {
-   glo.Ctx.select.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
+   glo.Ctx.selection.clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
 }
 
 const updateDOM = () => {
 
-   glo.DOM.cartX.textContent =   `x : ${ScreenPos.cartesian.x}`;
-   glo.DOM.cartY.textContent =   `y : ${ScreenPos.cartesian.y}`;
+   glo.DOM.cartX.textContent =   `x : ${glo.SelectArea.currentPos.cartesian.x}`;
+   glo.DOM.cartY.textContent =   `y : ${glo.SelectArea.currentPos.cartesian.y}`;
    glo.DOM.isoX.textContent =    `x : ${GetCell.isoMouse.x}`;
    glo.DOM.isoY.textContent =    `y : ${GetCell.isoMouse.y}`;
    glo.DOM.cellX.textContent =   `x : ${GetCell.position.x}`;
@@ -36,7 +36,7 @@ const updateDOM = () => {
 
 const getScreenPos = (event) => {
 
-   let screenBound = glo.CanvasObj.select.getBoundingClientRect();
+   let screenBound  = glo.CanvasObj.selection.getBoundingClientRect();
    let isoGridBound = glo.CanvasObj.isoSelect.getBoundingClientRect();
 
    return {
@@ -75,7 +75,7 @@ const gridPos_toScreenPos = (gridPos) => {
 
 const getCellPos = () => {
    
-   const isoMouse  = screenPos_toGridPos(ScreenPos.isometric);
+   const isoMouse  = screenPos_toGridPos(glo.SelectArea.currentPos.isometric);
    const cellSize  = glo.Grid.cellSize;
 
    const cellPos = {
@@ -110,88 +110,19 @@ const withinTheGrid = (callback) => {
    }
 }
 
-const unitSelection = () => {
-
-   glo.cycleList(glo.AgentsList, (agent) => {
-
-      const agentIsoPos = {
-         x: agent.currentCell.center.x,
-         y: agent.currentCell.center.y,
-      };
-
-      const agentPos = gridPos_toScreenPos(agentIsoPos);
-
-      glo.Ctx.select.fillStyle = "red";
-      glo.Ctx.select.beginPath();
-      glo.Ctx.select.arc(
-         agentPos.x,
-         agentPos.y,
-         30, 0, Math.PI * 2
-      );
-      glo.Ctx.select.fill();
-      glo.Ctx.select.closePath();
-
-      const circle = {
-         x: agentPos.x,
-         y: agentPos.y,
-         radius: 30,
-      };
-
-      if(collision.square_toCircle(glo.SelectArea, circle)) {
-         console.log("Colliding !"); // ******************************************************
-         SelectedUnitsList[agent.id] = agent;
-      }
-   });
-
-   console.log(SelectedUnitsList); // ******************************************************
-}
-
-
-// ================================================================================================
-// Draw Functions
-// ================================================================================================
-const drawSelectArea = () => {
-
-   let select = glo.SelectArea;
-
-   // Select area size
-   select.width  = ScreenPos.cartesian.x -select.x;
-   select.height = ScreenPos.cartesian.y -select.y;
-
-   // Select area borders
-   glo.Ctx.select.lineWidth = select.lineWidth;
-   glo.Ctx.select.strokeStyle = select.borderColor;
-   glo.Ctx.select.strokeRect(
-      select.x,
-      select.y,
-      select.width,
-      select.height
-   );
-   
-   // Select area filled
-   glo.Ctx.select.fillStyle = select.filledColor;
-   glo.Ctx.select.fillRect(
-      select.x,
-      select.y,
-      select.width,
-      select.height
-   );
-}
-
 
 // ================================================================================================
 // Mouse Inputs
 // ================================================================================================
 const mouse_Move = (event) => {
 
-   ScreenPos = getScreenPos(event);
-   GetCell   = getCellPos(event);
+   glo.SelectArea.currentPos = getScreenPos(event);
+   GetCell = getCellPos(event);
    updateDOM();
 
    if(glo.SelectArea.isSelectArea) {
       clearSelectCanvas();
-      drawSelectArea();
-      unitSelection();
+      draw.selectArea();
    }
    
    withinTheGrid(() => {
@@ -203,9 +134,7 @@ const mouse_Move = (event) => {
 const mouse_LeftClick = (state) => {
 
    if(state === "Down") {
-      glo.SelectArea.isSelectArea = true;
-      glo.SelectArea.x = ScreenPos.cartesian.x;
-      glo.SelectArea.y = ScreenPos.cartesian.y;      
+      glo.SelectArea.isSelectArea = true;      
    }
    
    if(state === "Up") {
@@ -239,12 +168,13 @@ const mouse_ScrollClick = () => {
 // Init Mouse Handler
 // ================================================================================================
 module.exports = {
+
    init() {
       window.addEventListener("mousemove", (event) => mouse_Move(event));
       
       window.addEventListener("mousedown", (event) => {
          const state = "Down";
-         ScreenPos = getScreenPos(event);
+         glo.SelectArea.oldPos = getScreenPos(event);
       
          if(event.which === 1) mouse_LeftClick  (state);
          if(event.which === 2) mouse_ScrollClick();
