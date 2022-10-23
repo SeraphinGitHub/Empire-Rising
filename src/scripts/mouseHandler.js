@@ -6,42 +6,30 @@
 // ================================================================================================
 const glo  = require("./modules/mod_globalVar.js");
 const ext  = require("./modules/mod_extendedMethods.js");
-const draw = require("./modules/mod_drawMethods.js");
 
 
 // ================================================================================================
 // Mouse Inputs
 // ================================================================================================
 const mouse_Move = (event) => {
-
+   
    glo.SelectArea.currentPos = ext.getScreenPos(event);
    glo.IsoGridPos = ext.screenPos_toGridPos(glo.SelectArea.currentPos.isometric);
-   glo.HoverCell  = ext.setHoverCell();
+   glo.HoverCell  = ext.getHoverCell();
    
    ext.updateDOM();
-
-   if(glo.SelectArea.isSelectArea) {
-      ext.clearCanvas("selection");
-      draw.selectArea();
-      ext.unitSelection();
-   }
-
-   // ext.cycleList(glo.AgentsList, (agent) => {
-   //    let gridPos = ext.gridPos_toScreenPos(agent.position);
-   //    agent.drawCollider(glo.Ctx.selection, gridPos);
-   // });
+   ext.unitSelection();
 }
 
 const mouse_LeftClick = (state) => {
 
    if(state === "Down") {
-      glo.SelectArea.isSelectArea = true;
-      glo.SelectedUnitsList = {};
+      glo.SelectArea.isSelecting = true;
    }
    
    if(state === "Up") {
-      glo.SelectArea.isSelectArea = false;
-      ext.clearCanvas("selection");
+      glo.SelectArea.isSelecting = false;
+      ext.unitDiselection();
    }
 }
 

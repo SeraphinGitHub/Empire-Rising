@@ -29,7 +29,7 @@ module.exports = {
       borderColor:   "dodgerblue",
       filledColor:   "rgba(30, 144, 255, 0.3)",
       lineWidth:     2,
-      isSelectArea : false,
+      isSelecting : false,
    },
 
    Cos_45deg:  0.707,

@@ -5,9 +5,10 @@
 // Scripts Import
 // ================================================================================================
 const AgentClass = require("../classes/AgentClass.js");
-const glo        = require("./mod_globalVar.js");
 const unitParam  = require("./mod_unitsParams.js");
 const collision  = require("./mod_collisions.js");
+const glo  = require("./mod_globalVar.js");
+const draw = require("./mod_drawMethods.js");
 
 
 // ================================================================================================
@@ -79,7 +80,7 @@ module.exports = {
       };
    },
    
-   setHoverCell() {
+   getHoverCell() {
 
       let isoGridPos = glo.IsoGridPos;
       let cellSize   = glo.Grid.cellSize;
@@ -116,19 +117,36 @@ module.exports = {
          callback();
       }
    },
+
+   updateUnitsList(collideCallback, first, second, agent) {
+      
+      if(collideCallback(first, second)) glo.SelectedUnitsList[agent.id] = agent;
+      else if(!agent.isSelected)  delete glo.SelectedUnitsList[agent.id];
+   },
    
    unitSelection() {
-      this.cycleList(glo.AgentsList, (agent) => {
-   
-         const agentPos = this.gridPos_toScreenPos(agent.currentCell.center);
-         
-         // Selected area
-         const square = {
+      let isSelecting = glo.SelectArea.isSelecting;
+      let square;
+
+      if(isSelecting) {
+         this.clearCanvas("selection");
+         draw.selectArea();
+
+         square = {
             x: glo.SelectArea.oldPos.cartesian.x,
             y: glo.SelectArea.oldPos.cartesian.y,
             height: glo.SelectArea.height,
             width:  glo.SelectArea.width,
          };
+      }
+
+      const point = {
+         x: glo.SelectArea.currentPos.cartesian.x,
+         y: glo.SelectArea.currentPos.cartesian.y,
+      };
+
+      this.cycleList(glo.AgentsList, (agent) => {
+         const agentPos = this.gridPos_toScreenPos(agent.position);
          
          // Agent collider
          const circle = {
@@ -136,14 +154,67 @@ module.exports = {
             y: agentPos.y,
             radius: agent.collider.radius,
          };
-   
-         if(collision.square_toCircle(square, circle)) {
-            glo.SelectedUnitsList[agent.id] = agent;
+
+         if(isSelecting) {
+            this.updateUnitsList(collision.square_toCircle, square, circle, agent);
          }
-         else {
+         else this.updateUnitsList(collision.point_toCircle, point, circle, agent);
+      });
+   },
+
+   unitDiselection() {
+      this.clearCanvas("selection");
+      
+      this.cycleList(glo.SelectedUnitsList, (agent) => {
+         if(agent.isSelected) {
+            agent.isSelected = false;
             delete glo.SelectedUnitsList[agent.id];
          }
+         else agent.isSelected = true;
       });
+
+
+      // let isSelecting = glo.SelectArea.isSelecting;
+      // let square;
+      // this.clearCanvas("selection");
+      
+      // if(isSelecting) {
+
+      //    square = {
+      //       x: glo.SelectArea.oldPos.cartesian.x,
+      //       y: glo.SelectArea.oldPos.cartesian.y,
+      //       height: glo.SelectArea.height,
+      //       width:  glo.SelectArea.width,
+      //    };
+      // }
+
+      // const point = {
+      //    x: glo.SelectArea.currentPos.cartesian.x,
+      //    y: glo.SelectArea.currentPos.cartesian.y,
+      // };
+
+      // this.cycleList(glo.SelectedUnitsList, (agent) => {
+      //    const agentPos = this.gridPos_toScreenPos(agent.position);
+
+      //    const circle = {
+      //       x: agentPos.x,
+      //       y: agentPos.y,
+      //       radius: agent.collider.radius,
+      //    };
+
+      //    if(agent.isSelected) {
+      //       if(!collision.square_toCircle(square, circle)){
+
+      //          agent.isSelected = false;
+      //          delete glo.SelectedUnitsList[agent.id];
+      //       }
+      //    }
+      //    else agent.isSelected = true;
+
+      //    // console.log(agent.isSelected ); // ******************************************************
+      // });
+
+      // // console.log(glo.SelectedUnitsList); // ******************************************************
    },
 
    createNewAgent(categoryName, typeName, cellID) {
