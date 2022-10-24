@@ -20,6 +20,10 @@ module.exports = {
       glo.Ctx[canvas].clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
    },
 
+   isEmptyObj(obj) {
+      if(Object.keys(obj).length === 0) return true;
+   },
+
    updateDOM() {
 
       glo.DOM.cartX.textContent = `x : ${glo.SelectArea.currentPos.cartesian.x}`;
@@ -120,8 +124,8 @@ module.exports = {
 
    updateUnitsList(collideCallback, first, second, agent) {
       
-      if(collideCallback(first, second)) glo.SelectedUnitsList[agent.id] = agent;
-      else if(!agent.isSelected)  delete glo.SelectedUnitsList[agent.id];
+      if(collideCallback(first, second)) glo.CurrentSelectList[agent.id] = agent;
+      else delete glo.CurrentSelectList[agent.id];
    },
    
    unitSelection() {
@@ -145,6 +149,7 @@ module.exports = {
          y: glo.SelectArea.currentPos.cartesian.y,
       };
 
+      // If collide with mouse or select area ==> Add agent to CurrentList 
       this.cycleList(glo.AgentsList, (agent) => {
          const agentPos = this.gridPos_toScreenPos(agent.position);
          
@@ -165,56 +170,39 @@ module.exports = {
    unitDiselection() {
       this.clearCanvas("selection");
       
-      this.cycleList(glo.SelectedUnitsList, (agent) => {
+      // If OldList === Empty ==> Set OldList
+      if(this.isEmptyObj(glo.OldSelectList)) {
+         glo.OldSelectList = glo.CurrentSelectList;
+         glo.CurrentSelectList = {};
+         this.cycleList(glo.OldSelectList, (agent) => agent.isSelected = true);
+      }
+
+      // If OldList !== Empty && CurrentList !== Empty
+      else if(!this.isEmptyObj(glo.CurrentSelectList)) {
+
+         // Remove old selected agents
+         this.cycleList(glo.OldSelectList, (agent) => {
+            if(!Object.keys(glo.CurrentSelectList).includes(agent.id)) {
+               agent.isSelected = false;
+               delete glo.OldSelectList[agent.id];
+            }
+         });
+
+         // Add new selected agents
+         this.cycleList(glo.CurrentSelectList, (agent) => {
+            agent.isSelected = true;
+            glo.OldSelectList[agent.id] = agent;
+            delete glo.CurrentSelectList[agent.id];
+         });
+      }
+
+      // If OldList === Empty && CurrentList !== Empty
+      else this.cycleList(glo.OldSelectList, (agent) => {
          if(agent.isSelected) {
             agent.isSelected = false;
-            delete glo.SelectedUnitsList[agent.id];
+            delete glo.OldSelectList[agent.id];
          }
-         else agent.isSelected = true;
       });
-
-
-      // let isSelecting = glo.SelectArea.isSelecting;
-      // let square;
-      // this.clearCanvas("selection");
-      
-      // if(isSelecting) {
-
-      //    square = {
-      //       x: glo.SelectArea.oldPos.cartesian.x,
-      //       y: glo.SelectArea.oldPos.cartesian.y,
-      //       height: glo.SelectArea.height,
-      //       width:  glo.SelectArea.width,
-      //    };
-      // }
-
-      // const point = {
-      //    x: glo.SelectArea.currentPos.cartesian.x,
-      //    y: glo.SelectArea.currentPos.cartesian.y,
-      // };
-
-      // this.cycleList(glo.SelectedUnitsList, (agent) => {
-      //    const agentPos = this.gridPos_toScreenPos(agent.position);
-
-      //    const circle = {
-      //       x: agentPos.x,
-      //       y: agentPos.y,
-      //       radius: agent.collider.radius,
-      //    };
-
-      //    if(agent.isSelected) {
-      //       if(!collision.square_toCircle(square, circle)){
-
-      //          agent.isSelected = false;
-      //          delete glo.SelectedUnitsList[agent.id];
-      //       }
-      //    }
-      //    else agent.isSelected = true;
-
-      //    // console.log(agent.isSelected ); // ******************************************************
-      // });
-
-      // // console.log(glo.SelectedUnitsList); // ******************************************************
    },
 
    createNewAgent(categoryName, typeName, cellID) {

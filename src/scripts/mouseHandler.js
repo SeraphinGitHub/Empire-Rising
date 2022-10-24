@@ -37,7 +37,7 @@ const mouse_RightClick = (state) => {
 
    if(state === "Down") {
       // ext.withinTheGrid(() => {
-      //    ext.cycleList(glo.SelectedUnitsList, (agent) => {
+      //    ext.cycleList(glo.OldSelectList, (agent) => {
       
       //       agent.endCell = glo.Grid.cellsList[glo.HoverCell.id];
       //       agent.searchPath(glo.Grid.cellsList);

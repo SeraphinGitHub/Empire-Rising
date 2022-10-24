@@ -41,10 +41,8 @@ const runAnimation = () => {
       agent.drawCollider(glo.Ctx.units, gridPos);
    });
 
-   ext.cycleList(glo.SelectedUnitsList, (agent) => {
-      if(agent.isSelected) agent.drawAgent(glo.Ctx.isoSelect, "lime");
-      else agent.drawAgent(glo.Ctx.isoSelect, "blue");
-   });
+   ext.cycleList(glo.OldSelectList,     (agent) => agent.drawAgent(glo.Ctx.isoSelect, "lime"));
+   ext.cycleList(glo.CurrentSelectList, (agent) => agent.drawAgent(glo.Ctx.isoSelect, "blue"));
    
    ext.withinTheGrid(() => draw.hover());
    requestAnimationFrame(runAnimation);

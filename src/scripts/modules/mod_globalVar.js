@@ -44,9 +44,10 @@ module.exports = {
    IsoGridPos: undefined,
    HoverCell:  undefined,
    
-   AgentsList:        {},
-   SelectedUnitsList: {},
    AvailableIDArray:  [],
+   AgentsList:        {},
+   OldSelectList:     {},
+   CurrentSelectList: {},
 
    MaxPop:    20,
    CurrentPop: 0,
