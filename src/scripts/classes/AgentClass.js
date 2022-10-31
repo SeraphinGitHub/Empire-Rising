@@ -194,13 +194,13 @@ class AgentClass {
       }, 100 *i);
    }
 
-   drawCollider(ctx, gridPos) {
+   drawCollider(ctx, gridPos, offset) {
 
       ctx.fillStyle = "red";
       ctx.beginPath();
       ctx.arc(
-         gridPos.x,
-         gridPos.y + this.collider.offsetY,
+         gridPos.x +offset.x,
+         gridPos.y + this.collider.offsetY +offset.y,
          this.collider.radius, 0, Math.PI * 2
       );
       ctx.fill();

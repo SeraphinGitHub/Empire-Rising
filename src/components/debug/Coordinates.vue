@@ -2,6 +2,8 @@
 <template>
    <section class="coordinates flex">
 
+      <DebugMessage :message ="debugMessage"/>
+
       <CoordSpan :coordType ="screenCoord"/>
       <CoordSpan :coordType ="gridCoord"/>
       <CoordSpan :coordType ="cellCoord"/>
@@ -12,15 +14,19 @@
 
 
 <script>
-   import CoordSpan from "./CoordSpan.vue"
+   import CoordSpan    from "./CoordSpan.vue"
+   import DebugMessage from "./DebugMessage.vue"
 
    export default {
       components: {
          CoordSpan,
+         DebugMessage,
       },
 
       data() {
          return {
+            debugMessage: "- Empire Rising -",
+
             screenCoord: {
                name: "Screen Coord:",
                classX: "cartX",
@@ -64,7 +70,7 @@
 
       padding-bottom: 5px;
       height: 80px;
-      width: 50%;
+      width: 60%;
       background: white;
    }
 </style>
