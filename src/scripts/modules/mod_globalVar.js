@@ -39,6 +39,8 @@ module.exports = {
       lineWidth:     2,
       isSelecting : false,
    },
+
+   faction: "Orange",
    
 
    // --- Constants ---
@@ -70,17 +72,17 @@ module.exports = {
 
    // --- Ints ---
    CursorSize: 50,
-   MouseSpeed: 5,
-   MaxPop:    20,
+   MouseSpeed: 3,
+   MaxPop:    2000,
    CurrentPop: 0,
 
 
    // --- TEST ---
    TestViewport: {
-      x: 400,
-      y: 250,
-      width:  800, // *0.5 => x
-      height: 500, // *0.5 => y
+      x: 200,
+      y: 180,
+      width:  900, // *0.5 => x
+      height: 600, // *0.5 => y
    },
 
    ViewportSqr: undefined,

@@ -2,7 +2,10 @@
 <template>
    <section class="coordinates flex">
 
-      <DebugMessage :message ="debugMessage"/>
+      <DebugMessage
+         :message_1 ="title"
+         :message_2 ="faction"
+      />
 
       <CoordSpan :coordType ="screenCoord"/>
       <CoordSpan :coordType ="gridCoord"/>
@@ -16,6 +19,7 @@
 <script>
    import CoordSpan    from "./CoordSpan.vue"
    import DebugMessage from "./DebugMessage.vue"
+   import Glo          from "../../scripts/modules/mod_globalVar.js"
 
    export default {
       components: {
@@ -25,7 +29,8 @@
 
       data() {
          return {
-            debugMessage: "- Empire Rising -",
+            title:   `- Empire Rising -`,
+            faction: `Faction: ${Glo.faction}`,
 
             screenCoord: {
                name: "Screen Coord:",

@@ -124,36 +124,78 @@ module.exports = {
 
    scrollCam() {
 
-      // --- Draw Viewport - Tempory ---
-      glo.Ctx.selection.strokeStyle = "yellow";
+      const detSize = 50;
+
+      const vp = {
+         x: glo.ViewportSqr.x,
+         y: glo.ViewportSqr.y,
+         w: glo.ViewportSqr.width,
+         h: glo.ViewportSqr.height,
+      }
+
+      const bounderies = {
+
+         top: {
+            x:       vp.x,
+            y:       vp.y,
+            width:   vp.w,
+            height:  detSize,
+            color:  "red",
+         },
+
+         right: {
+            x:       vp.x +vp.w -detSize,
+            y:       vp.y,
+            width:   detSize,
+            height:  vp.h,
+            color:  "dodgerblue",
+         },
+
+         bottom: {
+            x:       vp.x,
+            y:       vp.y +vp.h -detSize,
+            width:   vp.w,
+            height:  detSize,
+            color:  "lawngreen",
+         },
+
+         left: {
+            x:       vp.x,
+            y:       vp.y,
+            width:   detSize,
+            height:  vp.h,
+            color:  "yellow",
+         },
+      }
+
       glo.Ctx.selection.lineWidth = 4;
-      glo.Ctx.selection.strokeRect(
-         glo.ViewportSqr.x,
-         glo.ViewportSqr.y,
-         glo.ViewportSqr.width,
-         glo.ViewportSqr.height,
-      );
-      // --- Draw Viewport - Tempory ---
-      
+
+      for(let i in bounderies) {
+         let rect = bounderies[i];
+
+         glo.Ctx.selection.strokeStyle = rect.color;
+         glo.Ctx.selection.strokeRect(
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height
+         );
+      }      
 
       const mousePos = glo.SelectArea.currentPos.cartesian;
       
       if(mousePos) {
-         
-         const cursorSqr = {
-            x: mousePos.x,
-            y: mousePos.y,
-            width:  glo.CursorSize,
-            height: glo.CursorSize,
+         const viewport = {
+            x:      vp.x,
+            y:      vp.y,
+            width:  vp.w,
+            height: vp.h,
          }
-   
-         const cursor   = collision.extractSides(cursorSqr);
-         const viewport = collision.extractSides(glo.ViewportSqr);
 
-         if(collision.line_toLine(cursor.left, viewport.top   )) glo.ScrollOffset.y += glo.MouseSpeed;
-         if(collision.line_toLine(cursor.top,  viewport.right )) glo.ScrollOffset.x -= glo.MouseSpeed;
-         if(collision.line_toLine(cursor.left, viewport.bottom)) glo.ScrollOffset.y -= glo.MouseSpeed;
-         if(collision.line_toLine(cursor.top,  viewport.left  )) glo.ScrollOffset.x += glo.MouseSpeed;
+         if(collision.point_toSquare(mousePos, bounderies.top   )) glo.ScrollOffset.y += glo.MouseSpeed;
+         if(collision.point_toSquare(mousePos, bounderies.right )) glo.ScrollOffset.x -= glo.MouseSpeed;
+         if(collision.point_toSquare(mousePos, bounderies.bottom)) glo.ScrollOffset.y -= glo.MouseSpeed;
+         if(collision.point_toSquare(mousePos, bounderies.left  )) glo.ScrollOffset.x += glo.MouseSpeed;
       }
    },
 
@@ -240,11 +282,14 @@ module.exports = {
       });
    },
 
-   createNewAgent(categoryName, typeName, cellID) {
+   createNewAgent(categoryName, typeName, cellID, diffImgSrc) {
 
       const avID     = glo.AvailableIDArray[0];
       const category = unitParam[categoryName];
       const type     = category.type[typeName];
+
+      let imgSrc     = type.imgSrc;
+      if(diffImgSrc !== "") imgSrc = diffImgSrc;
    
       glo.CurrentPop += category.popCost;
       glo.AvailableIDArray.splice(0, category.popCost);
@@ -252,14 +297,23 @@ module.exports = {
       const agentParams = {
          id:          avID,
          type:        type,
+         imgSrc:      imgSrc,
          popCost:     category.popCost,
          collider:    category.collider,
          startCell:   glo.Grid.cellsList[cellID], // Tempory until buildings class created
          isEuclidean: glo.Grid.isEuclidean,
       };
+
+      this.cycleList(glo.Grid.cellsList, (cell) => {
+         cell.agentList[avID] = {
+            hCost: 0,
+            gCost: 0,
+            fCost: 0,
+            cameFromCell: undefined,
+         }
+      });
       
       glo.AgentsList[avID] = new AgentClass(agentParams);
-      glo.AgentsList[avID].drawAgent(glo.Ctx.isoSelect, "yellow");
    },   
    
 }

@@ -2,7 +2,8 @@
 <template>
    <div class="flex debug-message">
 
-      <p class="flex">{{ message }}</p>
+      <p class="flex mess-1">{{ message_1 }}</p>
+      <p class="flex mess-2">{{ message_2 }}</p>
 
    </div>
 </template>
@@ -11,7 +12,8 @@
 <script>
    export default {
       props: {
-         message: String,
+         message_1: String,
+         message_2: String,
       },
    }
 </script>
@@ -27,8 +29,15 @@
    .debug-message p {
       position: relative;
       width: 100%;
-      color: darkviolet;
       font-size: 22px;
       font-weight: 600;
+   }
+
+   .mess-1 {
+      color: darkviolet;
+   }
+
+   .mess-2 {
+      color: black;
    }
 </style>

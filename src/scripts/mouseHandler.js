@@ -36,19 +36,41 @@ const mouse_LeftClick = (state) => {
 const mouse_RightClick = (state) => {
 
    if(state === "Down") {
-      // ext.withinTheGrid(() => {
-      //    ext.cycleList(glo.OldSelectList, (agent) => {
-      
-      //       agent.endCell = glo.Grid.cellsList[glo.HoverCell.id];
-      //       agent.searchPath(glo.Grid.cellsList);
-      //       agent.displayPath(glo.Ctx.isoSelect, true);
-      //       agent.startCell = agent.endCell;
-      //    });
-      // });
+      ext.withinTheGrid(() => {
+         ext.cycleList(glo.OldSelectList, (agent) => {
+
+            const targetCell = glo.Grid.cellsList[glo.HoverCell.id];
+
+            if(targetCell.isBlocked) return;
+            
+            agent.endCell = targetCell;
+            agent.searchPath(glo.Grid.cellsList);
+
+            // if(targetCell.isVacant) targetCell.isVacant = false;
+         });
+      });
    }
 
    if(state === "Up") {
-      
+
+      // ********************************************  Test  ********************************************
+      ext.cycleList(glo.OldSelectList, (agent) => {
+         setInterval(() => {
+         
+            
+            let i = glo.Grid.rand(10);
+            let j = glo.Grid.rand(10);
+            
+            const targetCell = glo.Grid.cellsList[`${i}-${j}`];
+            
+            if(targetCell.isBlocked) return;
+            
+            agent.endCell = targetCell;
+            agent.searchPath(glo.Grid.cellsList);
+            
+         }, 1500);
+      });
+      // ********************************************  Test  ********************************************
    }
 }
 

@@ -25,14 +25,25 @@ class CellClass {
       };
 
       this.neighborsList = {};
-      this.cameFromCell;
+      this.agentList     = {};
       
-      this.fCost = 0;
-      this.gCost = 0;
-      this.hCost = 0;
+      // this.cameFromCell = {};
+      // this.fCost = {};
+      // this.gCost = {};
+      // this.hCost = {};
       
       this.zIndex;
       this.isBlocked = false;
+      this.isVacant  = true;
+
+      this.img;
+
+      this.init();
+   }
+
+   init() {
+      this.img     = new Image();
+      this.img.src = "Terrain/iso_stone.png";
    }
 
    // Collision
@@ -293,18 +304,39 @@ class CellClass {
       );      
    }
 
-   drawWall(ctx, isTempory) {
+   drawWall(ctx, gridPos, isTempory) {
 
-      let wallColor;
-      if(isTempory) wallColor = "rgba(105, 105, 105, 0.45)";
-      else wallColor = "dimgray";
+      // let wallColor;
+      // if(isTempory) wallColor = "rgba(105, 105, 105, 0.45)";
+      // else wallColor = "dimgray";
       
-      ctx.fillStyle = wallColor;
-      ctx.fillRect(
-         this.x,
-         this.y,
-         this.size,
-         this.size
+      // ctx.fillStyle = wallColor;
+      // ctx.fillRect(
+      //    this.x,
+      //    this.y,
+      //    this.size,
+      //    this.size
+      // );
+
+      const srcSize  = 1024;
+      const destSize = 80;
+      const offsetX  = 48;
+      const offsetY  = 55;
+
+      ctx.drawImage(
+         this.img,
+
+         // Source
+         0,
+         0,
+         srcSize,
+         srcSize,
+         
+         // Destination
+         gridPos.x -offsetX,
+         gridPos.y -offsetY,
+         destSize +17,
+         destSize,
       );
    }
 
@@ -352,6 +384,30 @@ class CellClass {
       );
 
       this.drawFrame(ctx);
+   }
+
+   drawSprite(ctx, gridPos) {
+
+      const srcSize  = 1024;
+      const destSize = 115;
+      const offsetX  = 64;
+      const offsetY  = 30;
+
+      ctx.drawImage(
+         this.img,
+
+         // Source
+         0,
+         0,
+         srcSize,
+         srcSize,
+         
+         // Destination
+         gridPos.x -offsetX,
+         gridPos.y -offsetY,
+         destSize +17,
+         destSize,
+      );
    }
 
 }

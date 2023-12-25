@@ -13,7 +13,7 @@ module.exports = {
 
       collider: {
          offsetY: 0,
-         radius:  glo.GridParams.cellSize *0.1,
+         radius:  glo.GridParams.cellSize *0.3,
       },
 
       type: {
@@ -26,7 +26,7 @@ module.exports = {
             attackSpeed: 7,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
 
          swordsman: {
@@ -37,7 +37,7 @@ module.exports = {
             attackSpeed: 12,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: `Units/Swordsman_${glo.faction}.png`,
          },
          
          bowman: {
@@ -48,7 +48,7 @@ module.exports = {
             attackSpeed: 14,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
          
          spearman: {
@@ -59,7 +59,7 @@ module.exports = {
             attackSpeed: 10,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
       },
    },
@@ -81,7 +81,7 @@ module.exports = {
             attackSpeed: 12,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
 
          bowman: {
@@ -92,7 +92,7 @@ module.exports = {
             attackSpeed: 14,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
       },
    },
@@ -114,7 +114,7 @@ module.exports = {
             attackSpeed:  8,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
 
          catapult: {
@@ -125,7 +125,7 @@ module.exports = {
             attackSpeed: 10,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
       },
    },
