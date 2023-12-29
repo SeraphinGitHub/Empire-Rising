@@ -1,7 +1,7 @@
 
 "use strict"
 
-const glo = require("./mod_globalVar.js");
+const glo = require("./globalVar.js");
 
 // ================================================================================================
 // Units Parameters
@@ -26,7 +26,7 @@ module.exports = {
             attackSpeed: 7,
             animationDelay: 0.5,
             
-            imgSrc: "",
+            imgSrc: "Units/Download36395.png",
          },
 
          swordsman: {

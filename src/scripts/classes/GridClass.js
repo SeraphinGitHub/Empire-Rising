@@ -14,7 +14,6 @@ class GridClass {
       this.width = params.width;
       this.height = params.height;
       this.cellSize = params.cellSize;
-      this.isEuclidean = params.isEuclidean;
       
       this.collums = (this.width  -(this.width  %this.cellSize)) /this.cellSize;
       this.rows    = (this.height -(this.height %this.cellSize)) /this.cellSize;
@@ -30,7 +29,7 @@ class GridClass {
       for(let i = 0; i < this.collums; i++) {
          for(let j = 0; j < this.rows; j++) {
             
-            const cell = new CellClass(this.collums, this.rows, this.cellSize, this.isEuclidean, i, j);
+            const cell = new CellClass(this.collums, this.rows, this.cellSize, i, j);
             this.cellsList[cell.id] = cell;
          }
       }

@@ -13,14 +13,12 @@ module.exports = {
    },
    
    GridParams: {
-      cellSize: 80,
-      height: 960,
-      width: 960,
-      isEuclidean: true,
+      cellSize: 40,
+      height: 960 *1.5,
+      width: 960 *1.5,
    },
 
    SelectArea: {
-
       oldPos: {
          cartesian: undefined,
          isometric: undefined,
@@ -57,7 +55,7 @@ module.exports = {
    IsoGridPos: undefined,
    HoverCell:  undefined,
    
-   ScrollOffset: { // <== Tempory
+   ScrollOffset: {
       x: 0,
       y: 0,
    },
@@ -71,20 +69,20 @@ module.exports = {
 
 
    // --- Ints ---
-   CursorSize: 50,
-   MouseSpeed: 3,
-   MaxPop:    2000,
+   MouseSpeed: 5,
+   MaxPop:     2000,
    CurrentPop: 0,
 
 
    // --- TEST ---
    TestViewport: {
-      x: 200,
-      y: 180,
-      width:  900, // *0.5 => x
-      height: 600, // *0.5 => y
+      x: 0,
+      y: 0,
+      width:  1000, // *0.5 => x
+      height: 650,  // *0.5 => y
    },
 
-   ViewportSqr: undefined,
+   ViewportSqr:    undefined,
+   ComputedCanvas: undefined,
 
 }

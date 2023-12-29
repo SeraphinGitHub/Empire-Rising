@@ -24,8 +24,9 @@
    span {
       position: relative;
       align-content: flex-start;
-      height: 100%;
-      width: 15%;
+      height: 15%;
+      width: 100%;
+      margin: 10px;
    }
 
    span p {

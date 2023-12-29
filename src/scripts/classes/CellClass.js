@@ -5,14 +5,13 @@
 // Cell Class
 // =====================================================================
 class CellClass {
-   constructor(collums, rows, size, isEuclidean, i, j) {
+   constructor(collums, rows, size, i, j) {
       
       this.id =`${i}-${j}`;
 
       this.collums = collums;
       this.rows = rows;
       this.size = size;
-      this.isEuclidean = isEuclidean;
 
       this.i = i;
       this.j = j;
@@ -24,13 +23,19 @@ class CellClass {
          y: this.y + size/2,
       };
 
+      // this.neighborsList = [
+      //    `${this.i -1}-${this.j -1}`,
+      //    `${this.i   }-${this.j -1}`,
+      //    `${this.i +1}-${this.j -1}`,
+      //    `${this.i +1}-${this.j   }`,
+      //    `${this.i +1}-${this.j +1}`,
+      //    `${this.i   }-${this.j +1}`,
+      //    `${this.i -1}-${this.j +1}`,
+      //    `${this.i -1}-${this.j   }`,
+      // ];
+
       this.neighborsList = {};
       this.agentList     = {};
-      
-      // this.cameFromCell = {};
-      // this.fCost = {};
-      // this.gCost = {};
-      // this.hCost = {};
       
       this.zIndex;
       this.isBlocked = false;
@@ -178,24 +183,20 @@ class CellClass {
    // NeighborsList
    initNeighborsList() {
 
-      this.setNeb_Left ("left");
-      this.setNeb_Right("right");
       this.setNeb_Top(   () => { this.addNeb("top"   ) });
+      this.setNeb_Right("right");
       this.setNeb_Bottom(() => { this.addNeb("bottom") });
+      this.setNeb_Left ("left");
 
-      // If Euclidean ==> Can search diagonally
-      if(this.isEuclidean) {
-      
-         this.setNeb_Top(() => {
-            this.setNeb_Left ("topLeft");
-            this.setNeb_Right("topRight");
-         });
+      this.setNeb_Top(() => {
+         this.setNeb_Left ("topLeft");
+         this.setNeb_Right("topRight");
+      });
 
-         this.setNeb_Bottom(() => {
-            this.setNeb_Left ("bottomLeft");
-            this.setNeb_Right("bottomRight");
-         });
-      }
+      this.setNeb_Bottom(() => {
+         this.setNeb_Right("bottomRight");
+         this.setNeb_Left ("bottomLeft");
+      });
    } 
 
    addNeb(side) {
@@ -251,7 +252,7 @@ class CellClass {
    drawFrame(ctx) {
 
       ctx.strokeStyle = "black";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1;
    
       ctx.strokeRect(
          this.x,
@@ -264,13 +265,13 @@ class CellClass {
    drawID(ctx) {
 
       ctx.fillStyle = "black";
-      ctx.font = "18px Verdana";
+      ctx.font = "16px Verdana";
       ctx.textAlign = "center";
 
       ctx.fillText(
          this.id,
          this.center.x,
-         this.center.y -15
+         this.center.y
       );
    }
 
@@ -302,42 +303,6 @@ class CellClass {
          this.center.x -offsetX,
          this.center.y +27
       );      
-   }
-
-   drawWall(ctx, gridPos, isTempory) {
-
-      // let wallColor;
-      // if(isTempory) wallColor = "rgba(105, 105, 105, 0.45)";
-      // else wallColor = "dimgray";
-      
-      // ctx.fillStyle = wallColor;
-      // ctx.fillRect(
-      //    this.x,
-      //    this.y,
-      //    this.size,
-      //    this.size
-      // );
-
-      const srcSize  = 1024;
-      const destSize = 80;
-      const offsetX  = 48;
-      const offsetY  = 55;
-
-      ctx.drawImage(
-         this.img,
-
-         // Source
-         0,
-         0,
-         srcSize,
-         srcSize,
-         
-         // Destination
-         gridPos.x -offsetX,
-         gridPos.y -offsetY,
-         destSize +17,
-         destSize,
-      );
    }
 
    drawWallCollider(ctx, isDiamond, showWallCol) {
@@ -386,12 +351,12 @@ class CellClass {
       this.drawFrame(ctx);
    }
 
-   drawSprite(ctx, gridPos) {
+   drawSprite(ctx, gridPos, scrollOffset) {
 
       const srcSize  = 1024;
-      const destSize = 115;
-      const offsetX  = 64;
-      const offsetY  = 30;
+      const destSize = 55;
+      const offsetX  = 30;
+      const offsetY  = 40;
 
       ctx.drawImage(
          this.img,
@@ -403,9 +368,9 @@ class CellClass {
          srcSize,
          
          // Destination
-         gridPos.x -offsetX,
-         gridPos.y -offsetY,
-         destSize +17,
+         gridPos.x -offsetX +scrollOffset.x,
+         gridPos.y -offsetY +scrollOffset.y,
+         destSize +10,
          destSize,
       );
    }

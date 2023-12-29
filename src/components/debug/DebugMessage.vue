@@ -22,19 +22,20 @@
 <style scoped>
    .debug-message {
       position: relative;
-      height: 100%;
-      width: 25%;
+      height: 60px;
+      width: 100%;
    }
 
    .debug-message p {
       position: relative;
       width: 100%;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 600;
    }
 
    .mess-1 {
       color: darkviolet;
+      text-decoration: underline;
    }
 
    .mess-2 {

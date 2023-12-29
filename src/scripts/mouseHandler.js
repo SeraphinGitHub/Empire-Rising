@@ -4,8 +4,8 @@
 // ================================================================================================
 // Scripts Import
 // ================================================================================================
-const glo = require("./modules/mod_globalVar.js");
-const ext = require("./modules/mod_extendedMethods.js");
+const glo = require("./modules/globalVar.js");
+const ext = require("./modules/extendedMethods.js");
 
 
 // ================================================================================================
@@ -54,28 +54,28 @@ const mouse_RightClick = (state) => {
    if(state === "Up") {
 
       // ********************************************  Test  ********************************************
-      ext.cycleList(glo.OldSelectList, (agent) => {
-         setInterval(() => {
+      // ext.cycleList(glo.OldSelectList, (agent) => {
+      //    setInterval(() => {
          
             
-            let i = glo.Grid.rand(10);
-            let j = glo.Grid.rand(10);
+      //       let i = glo.Grid.rand(10);
+      //       let j = glo.Grid.rand(10);
             
-            const targetCell = glo.Grid.cellsList[`${i}-${j}`];
+      //       const targetCell = glo.Grid.cellsList[`${i}-${j}`];
             
-            if(targetCell.isBlocked) return;
+      //       if(targetCell.isBlocked) return;
             
-            agent.endCell = targetCell;
-            agent.searchPath(glo.Grid.cellsList);
+      //       agent.endCell = targetCell;
+      //       agent.searchPath(glo.Grid.cellsList);
             
-         }, 1500);
-      });
+      //    }, 1500);
+      // });
       // ********************************************  Test  ********************************************
    }
 }
 
 const mouse_ScrollClick = (state) => {
-   
+   glo.CurrentPop++;
 }
 
 

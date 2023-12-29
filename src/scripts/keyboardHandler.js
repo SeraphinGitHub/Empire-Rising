@@ -1,7 +1,7 @@
 
 "use strict"
 
-const glo = require("./modules/mod_globalVar.js");
+const glo = require("./modules/globalVar.js");
 
 // ================================================================================================
 // Keyboard Inputs

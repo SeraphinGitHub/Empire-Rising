@@ -1,7 +1,7 @@
 
 "use strict"
 
-const glo = require("./mod_globalVar.js");
+const glo = require("./globalVar.js");
 
 // ================================================================================================
 // Draw Functions
@@ -14,8 +14,8 @@ module.exports = {
          let ctxIsoSelect = glo.Ctx.isoSelect;
          
          cell.drawFrame(ctxIsoSelect);
-         cell.drawCenter(ctxIsoSelect);
-         cell.drawID(ctxIsoSelect);
+         // cell.drawCenter(ctxIsoSelect);
+         // cell.drawID(ctxIsoSelect);
       }
    },
 

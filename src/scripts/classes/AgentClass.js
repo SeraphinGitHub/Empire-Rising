@@ -27,9 +27,8 @@ class AgentClass {
       this.currentCell = params.startCell;
       this.endCell;
       this.path        = [];
-      this.openList    = new Set();
-      this.closedList  = new Set();
-      this.isEuclidean = params.isEuclidean;
+      this.openSet    = new Set();
+      this.closedSet  = new Set();
 
       this.img         = undefined;
       this.frameX      = 0;
@@ -88,42 +87,48 @@ class AgentClass {
       let distY = Math.abs(this.endCell.center.y -currentCell.center.y);
       let hypotenuse = Math.floor(Math.sqrt(distX * distX + distY * distY));
 
-      if(!this.isEuclidean) return distX + distY;
-      else return hypotenuse;
+      return hypotenuse;
    }
     
    searchPath(cellsList) {
 
       const ownID = this.id;
 
-      this.openList   = new Set([this.startCell]);
-      this.closedList = new Set();
+      this.openSet   = new Set([this.startCell]);
+      this.closedSet = new Set();
       this.path       = [];
 
-      while(this.openList.size > 0) {
+      while(this.openSet.size > 0) {
 
          // Bring up lowest fCost cell
-         let currentCell = Array.from(this.openList).reduce(
-            (lowestIndex, cell) => {
+         let currentCell = null;
+         let lowestFCost = Infinity;
 
-               if(cell.agentList[ownID].fCost < lowestIndex.agentList[ownID].fCost) return cell;
-               else return lowestIndex;
-
-            }, this.openList.values().next().value
-         );
-
-         let nebList = currentCell.neighborsList;
+         for(let cell of this.openSet) {
+            const cellData = cell.agentList[ownID];
             
+            if(cellData.fCost < lowestFCost) {
+               lowestFCost = cellData.fCost;
+               currentCell = cell;
+            }
+         }
+
+         let nebID_List = currentCell.neighborsList;
+
+
          // Scan cell neighbors
-         for(let i in nebList) {
-            let neighbor = cellsList[ nebList[i] ];
+         for(let i in nebID_List) {
+            let neighbor = cellsList[ nebID_List[i] ];
 
             // If this neighbor hasn't been scanned yet
-            if(!this.closedList.has(neighbor) && !neighbor.isBlocked) {
+            if(!this.closedSet.has(neighbor) && !neighbor.isBlocked) {
+
                let possibleG = currentCell.agentList[ownID].gCost + 1;
                let nebData   = neighbor.agentList[ownID];
       
-               if(!this.openList.has(neighbor)) this.checkBlockedDiag(currentCell.neighborsList, neighbor);
+               if(!this.openSet.has(neighbor) && !this.isBlockedDiag(cellsList, nebID_List, neighbor)) {
+                  this.openSet.add(neighbor);
+               }
                else if(possibleG >= nebData.gCost) continue;
 
                nebData.hCost = this.calcHeuristic(neighbor);
@@ -136,9 +141,9 @@ class AgentClass {
          }
 
 
-         // Transfert currentCell to closedList
-         this.openList.delete(currentCell);
-         this.closedList.add(currentCell);
+         // // Transfert currentCell to closedList
+         this.openSet.delete(currentCell);
+         this.closedSet.add(currentCell);
          
 
          // If reached destination
@@ -155,7 +160,7 @@ class AgentClass {
             }
 
             // Reset neighbors data
-            this.closedList.forEach(cell => {
+            this.closedSet.forEach(cell => {
                let cellData = cell.agentList[ownID];
 
                cellData.hCost = 0;
@@ -177,105 +182,51 @@ class AgentClass {
       return[];
    }
 
-   searchPath_OLD(cellsList) {
+   isBlockedDiag(cellsList, nebID_List, neighbor) {
 
-      this.openList = [this.startCell];
-      this.closedList = [];
-      this.path = [];
+      const {
+         topLeft:     _0,
+         top:         _1,
+         topRight:    _2,
+         right:       _3,
+         bottomRight: _4,
+         bottom:      _5,
+         bottomLeft:  _6,
+         left:        _7 
+      } = nebID_List;
+       
+      const {
+         [_0]: topLeftNeb,
+         [_1]: topNeb,
+         [_2]: topRightNeb,
+         [_3]: rightNeb,
+         [_4]: bottomRightNeb,
+         [_5]: bottomNeb,
+         [_6]: bottomLeftNeb,
+         [_7]: leftNeb
+      } = cellsList;
 
-      while(this.openList.length > 0) {
-
-         let lowestIndex = 0;
-
-         // Bring up lowest fCost index
-         for(let i = 0; i < this.openList.length; i++) {
-            if(this.openList[lowestIndex].fCost > this.openList[i].fCost) {
-               lowestIndex = i;
-            }
-         }
-
-         let currentCell = this.openList[lowestIndex];
-         let nebList = currentCell.neighborsList;
-
-         // Scan cell neighbors
-         for(let i in nebList) {
-            let neighbor = cellsList[ nebList[i] ];
-            
-            // If this neighbor hasn't been scanned yet
-            if(!this.closedList.includes(neighbor)
-            && !neighbor.isBlocked) {
-
-               let possibleG = currentCell.gCost +1;
-               
-               if(!this.openList.includes(neighbor)) this.checkBlockedDiag(nebList, neighbor);
-               else if(possibleG >= neighbor.gCost) continue;
-               
-               neighbor.hCost = this.calcHeuristic(neighbor);
-               neighbor.gCost = possibleG;
-               neighbor.fCost = neighbor.gCost +neighbor.hCost;
-               neighbor.cameFromCell = currentCell;
-            }
-         }
-
-
-         // Transfert currentCell to closedList
-         this.openList.splice(lowestIndex, 1);
-         this.closedList.push(currentCell);
-
-
-         // If reached destination
-         if(currentCell.id === this.endCell.id) {
-            
-            let temporyCell = currentCell;
-            this.path.push(temporyCell);
-            
-            // Set found path
-            while(temporyCell.cameFromCell) {
-               this.path.push(temporyCell.cameFromCell);
-               temporyCell = temporyCell.cameFromCell;
-            }
-
-            // Reset neighbors data
-            this.closedList.forEach(cell => {
-               cell.hCost = 0;
-               cell.gCost = 0;
-               cell.fCost = 0;
-               cell.cameFromCell = undefined;
-            });
-
-            this.path.reverse();
-            this.target = this.path[0].center; // <== Set Target Cell
-            this.animState = 1;
-
-            return this.path;
-         }
+      const isBlocked = {
+         topLeft:     () => topNeb    && leftNeb  && topNeb.isBlocked    && leftNeb.isBlocked  && neighbor === topLeftNeb,
+         topRight:    () => topNeb    && rightNeb && topNeb.isBlocked    && rightNeb.isBlocked && neighbor === topRightNeb,
+         bottomLeft:  () => bottomNeb && leftNeb  && bottomNeb.isBlocked && leftNeb.isBlocked  && neighbor === bottomLeftNeb,
+         bottomRight: () => bottomNeb && rightNeb && bottomNeb.isBlocked && rightNeb.isBlocked && neighbor === bottomRightNeb,
       }
-
-      return [];
-   }
-   
-   checkBlockedDiag(nebList, neighbor) {
       
-      let topNeb    = nebList["top"];
-      let rightNeb  = nebList["right"];
-      let bottomNeb = nebList["bottom"];
-      let leftNeb   = nebList["left"];
-
-      let topLeftNeb     = nebList["topLeft"];
-      let topRightNeb    = nebList["topRight"];
-      let bottomRightNeb = nebList["bottomRight"];
-      let bottomLeftNeb  = nebList["bottomLeft"];
-
-      if( !(topNeb    && leftNeb  && topNeb.isBlocked    && leftNeb.isBlocked  && neighbor === topLeftNeb
-         || topNeb    && rightNeb && topNeb.isBlocked    && rightNeb.isBlocked && neighbor === topRightNeb
-         || bottomNeb && leftNeb  && bottomNeb.isBlocked && leftNeb.isBlocked  && neighbor === bottomLeftNeb
-         || bottomNeb && rightNeb && bottomNeb.isBlocked && rightNeb.isBlocked && neighbor === bottomRightNeb )
-      && this.isEuclidean
-      || !this.isEuclidean) {
-
-         this.openList.add(neighbor);
-      }
+      return isBlocked.topLeft() || isBlocked.topRight() || isBlocked.bottomLeft() || isBlocked.bottomRight();
    }
+
+
+
+   // hasArrived() {
+   //    const { x: startX, y: startY } = this.startCell;
+   //    const { x: endX, y: endY } = this.endCell;
+   //    const { x: posX, y: posY } = this.position;
+   //    const { x: targetX, y: targetY } = this.target;
+  
+   //    return startX === endX && startY === endY && posX === targetX && posY === targetY;
+   // }
+
 
    walkPath() {
 
@@ -354,9 +305,9 @@ class AgentClass {
       }
 
       if(isDown)  this.frameY = 11;
-      if(isUp)    this.frameY = 8;
+      if(isUp)    this.frameY = 8; // 9
       if(isLeft)  this.frameY = 9;
-      if(isRight) this.frameY = 8;
+      if(isRight) this.frameY = 8; // 11
 
       if(isDown && isLeft)  this.frameY = 10;
       if(isDown && isRight) this.frameY = 11;
@@ -364,6 +315,30 @@ class AgentClass {
       if(isUp   && isRight) this.frameY = 8;
 
       this.lastFrameY = this.frameY;
+
+
+
+
+
+      // const walkSpeed = this.speed;
+    
+      // const deltaX   = target.x -this.position.x;
+      // const deltaY   = target.y -this.position.y;
+
+      // const distance = Math.hypot(deltaX,  deltaY);
+      
+      // const moveX = deltaX /distance * Math.min(distance, walkSpeed);
+      // const moveY = deltaY /distance * Math.min(distance, walkSpeed);
+      
+      // this.position.x += moveX;
+      // this.position.y += moveY;
+      
+      // if(deltaX  < 0) this.frameY = 11;
+      // if(deltaX >= 0) this.frameY = 8;
+      // if(deltaY  < 0) this.frameY = 9;
+      // if(deltaY >= 0) this.frameY = 10;
+    
+      // this.lastFrameY = this.frameY;
    }
 
    displayPath(ctx) {
@@ -372,7 +347,7 @@ class AgentClass {
          // Display scanned neighbors
          let neighborsColor = "rgba(255, 145, 0, 0.4)";
    
-         this.closedList.forEach(cell => {
+         this.closedSet.forEach(cell => {
             cell.drawCellColor(ctx, neighborsColor);
             // cell.drawData(ctx);
          });
@@ -426,20 +401,20 @@ class AgentClass {
       }, 100 *i);
    }
 
-   drawCollider(ctx, gridPos, offset) {
+   drawCollider(ctx, gridPos, scrollOffset) {
 
       ctx.fillStyle = "red";
       ctx.beginPath();
       ctx.arc(
-         gridPos.x + offset.x,
-         gridPos.y + this.collider.offsetY +offset.y,
+         gridPos.x + scrollOffset.x,
+         gridPos.y + this.collider.offsetY +scrollOffset.y,
          this.collider.radius, 0, Math.PI * 2
       );
       ctx.fill();
       ctx.closePath();
    }
 
-   drawSprite(ctx, position, offset) {
+   drawSprite(ctx, position, scrollOffset) {
       
       let spritesWidth  = this.sprites.width;
       let spritesHeight = this.sprites.height;
@@ -456,8 +431,8 @@ class AgentClass {
          spritesHeight,      
          
          // Destination
-         position.x - spritesWidth /2 +offset.x,
-         position.y - spritesHeight/2 - this.sprites.offsetY +offset.y,
+         position.x - spritesWidth /2 +scrollOffset.x,
+         position.y - spritesHeight/2 - this.sprites.offsetY +scrollOffset.y,
          spritesWidth,
          spritesHeight,
       );

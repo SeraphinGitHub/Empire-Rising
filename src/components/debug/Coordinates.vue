@@ -19,7 +19,6 @@
 <script>
    import CoordSpan    from "./CoordSpan.vue"
    import DebugMessage from "./DebugMessage.vue"
-   import Glo          from "../../scripts/modules/mod_globalVar.js"
 
    export default {
       components: {
@@ -27,55 +26,64 @@
          DebugMessage,
       },
 
-      data() {
+      computed: {
+
+         screenCoord() {
          return {
-            title:   `- Empire Rising -`,
-            faction: `Faction: ${Glo.faction}`,
+            name: "Screen Coord:",
+            classX: "cartX",
+            classY: "cartY",
+            x: "x : 0",
+            y: "y : 0",
+         }},
 
-            screenCoord: {
-               name: "Screen Coord:",
-               classX: "cartX",
-               classY: "cartY",
-               x: 0,
-               y: 0,
-            },
+         gridCoord() {
+         return {
+            name: "Grid Coord:",
+            classX: "isoX",
+            classY: "isoY",
+            x: "x : 0",
+            y: "y : 0",
+         }},
 
-            gridCoord: {
-               name: "Grid Coord:",
-               classX: "isoX",
-               classY: "isoY",
-               x: 0,
-               y: 0,
-            },
+         cellCoord() {
+         return {
+            name: "Cell Coord:",
+            classX: "cellX",
+            classY: "cellY",
+            x: "x : 0",
+            y: "y : 0",
+         }},
 
-            cellCoord: {
-               name: "Cell Coordinates:",
-               classX: "cellX",
-               classY: "cellY",
-               x: 0,
-               y: 0,
-            },
-
-            cellID: {
-               name: "Cell ID:",
-               classID: "ID-cell",
-               id: "",
-            },
-         }
+         cellID() {
+         return {
+            name: "Cell ID:",
+            classID: "ID-cell",
+            id: "id :",
+         }},
       },
+
+      data() {
+      return {
+         title: `Empire Rising`,
+         faction: ``,
+      }},
    }
 </script>
 
 
 <style scoped>
    .coordinates {
-      justify-content: space-around;
+      justify-content: space-between;
+      align-content: space-between;
       position: fixed;
-      top: 15px;
+      top: 50%;
+      left: 15px;
 
+      transform: translate(0%, -50%);
       padding-bottom: 5px;
-      height: 80px;
-      width: 60%;
+      height: 500px;
+      width: 185px;
       background: white;
    }
 </style>

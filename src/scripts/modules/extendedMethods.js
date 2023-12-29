@@ -5,10 +5,10 @@
 // Scripts Import
 // ================================================================================================
 const AgentClass = require("../classes/AgentClass.js");
-const unitParam  = require("./mod_unitsParams.js");
-const collision  = require("./mod_collisions.js");
-const glo  = require("./mod_globalVar.js");
-const draw = require("./mod_drawMethods.js");
+const unitParam  = require("./unitsParams.js");
+const collision  = require("./collisions.js");
+const glo  = require("./globalVar.js");
+const draw = require("./drawMethods.js");
 
 
 // ================================================================================================
@@ -17,6 +17,11 @@ const draw = require("./mod_drawMethods.js");
 module.exports = {
    
    clearCanvas(canvas) {
+
+      if(canvas === "isoSelect") {
+         return glo.Ctx[canvas].clearRect(0, 0, glo.GridParams.width, glo.GridParams.height);
+      }
+
       glo.Ctx[canvas].clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
    },
 
@@ -83,6 +88,28 @@ module.exports = {
          y: Math.floor( glo.Viewport.height /2 - glo.Cos_45deg /4 *(glo.Grid.height +glo.Grid.width) +TempY +glo.Cos_30deg *glo.Grid.cellSize /2 ),
       };
    },
+
+
+   // gridPos_toScreenPos(gridPos) {
+
+   //    if(this.cachedScreenPos) return this.cachedScreenPos;
+
+   //    const halfGridWidth = glo.Grid.width / 2;
+   //    const halfGridCellSizeCos45 = glo.Grid.cellSize * glo.Cos_45deg / 2;
+   //    const halfViewportWidth = glo.Viewport.width / 2;
+   //    const halfViewportHeight = glo.Viewport.height / 2;
+   //    const halfCos45GridWidth = glo.Cos_45deg * (glo.Grid.height + glo.Grid.width) / 2;
+   //    const halfCos30GridCellSize = glo.Cos_30deg * glo.Grid.cellSize / 2;
+    
+   //    // Cartesian <== Isometric
+   //    const tempX = Math.floor((gridPos.x + gridPos.y) * glo.Cos_45deg);
+   //    const tempY = Math.floor((gridPos.y + halfGridWidth - halfGridCellSizeCos45) * glo.Cos_45deg * 2 - tempX) / 2;
+      
+   //    return {
+   //      x: Math.floor(halfViewportWidth - halfCos45GridWidth + tempX),
+   //      y: Math.floor(halfViewportHeight - halfViewportWidth / 2 + tempY + halfCos30GridCellSize),
+   //    };
+   // },
    
    getHoverCell() {
 
@@ -140,7 +167,6 @@ module.exports = {
             y:       vp.y,
             width:   vp.w,
             height:  detSize,
-            color:  "red",
          },
 
          right: {
@@ -148,7 +174,6 @@ module.exports = {
             y:       vp.y,
             width:   detSize,
             height:  vp.h,
-            color:  "dodgerblue",
          },
 
          bottom: {
@@ -156,7 +181,6 @@ module.exports = {
             y:       vp.y +vp.h -detSize,
             width:   vp.w,
             height:  detSize,
-            color:  "lawngreen",
          },
 
          left: {
@@ -164,17 +188,14 @@ module.exports = {
             y:       vp.y,
             width:   detSize,
             height:  vp.h,
-            color:  "yellow",
          },
       }
-
-      glo.Ctx.selection.lineWidth = 4;
 
       for(let i in bounderies) {
          let rect = bounderies[i];
 
-         glo.Ctx.selection.strokeStyle = rect.color;
-         glo.Ctx.selection.strokeRect(
+         glo.Ctx.units.fillStyle = "rgba(255, 0, 255, 0.5)";
+         glo.Ctx.units.fillRect(
             rect.x,
             rect.y,
             rect.width,
@@ -185,18 +206,16 @@ module.exports = {
       const mousePos = glo.SelectArea.currentPos.cartesian;
       
       if(mousePos) {
-         const viewport = {
-            x:      vp.x,
-            y:      vp.y,
-            width:  vp.w,
-            height: vp.h,
-         }
-
+         
          if(collision.point_toSquare(mousePos, bounderies.top   )) glo.ScrollOffset.y += glo.MouseSpeed;
          if(collision.point_toSquare(mousePos, bounderies.right )) glo.ScrollOffset.x -= glo.MouseSpeed;
          if(collision.point_toSquare(mousePos, bounderies.bottom)) glo.ScrollOffset.y -= glo.MouseSpeed;
          if(collision.point_toSquare(mousePos, bounderies.left  )) glo.ScrollOffset.x += glo.MouseSpeed;
       }
+      
+      glo.ComputedCanvas.e = glo.ScrollOffset.x;
+      glo.ComputedCanvas.f = glo.ScrollOffset.y *2 -glo.GridParams.height /2;
+      glo.CanvasObj.isoSelect.style.transform = glo.ComputedCanvas.toString();
    },
 
    updateUnitsList(collideCallback, first, second, agent) {
@@ -232,8 +251,8 @@ module.exports = {
          
          // Agent collider
          const circle = {
-            x: agentPos.x,
-            y: agentPos.y,
+            x: agentPos.x +glo.ScrollOffset.x,
+            y: agentPos.y +glo.ScrollOffset.y,
             radius: agent.collider.radius,
          };
 
@@ -301,7 +320,6 @@ module.exports = {
          popCost:     category.popCost,
          collider:    category.collider,
          startCell:   glo.Grid.cellsList[cellID], // Tempory until buildings class created
-         isEuclidean: glo.Grid.isEuclidean,
       };
 
       this.cycleList(glo.Grid.cellsList, (cell) => {

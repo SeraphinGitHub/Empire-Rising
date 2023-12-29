@@ -1,7 +1,7 @@
 
 "use strict"
 
-const glo = require("./mod_globalVar.js");
+const glo = require("./globalVar.js");
 
 // ================================================================================================
 // Initialization Methods
