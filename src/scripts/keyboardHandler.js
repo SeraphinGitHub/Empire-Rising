@@ -2,26 +2,40 @@
 "use strict"
 
 const glo = require("./modules/globalVar.js");
+const ext = require("./modules/extendedMethods.js");
+
+
+let randPathIntervals = [];
 
 // ================================================================================================
 // Keyboard Inputs
 // ================================================================================================
-const Keyboard_Enter = () => {
+const keyboardInput = (event) => {
 
+   switch(event.key) {
+
+      case "Enter": {
+         ext.cycleList(glo.AgentsList, (agent) => {
+            
+            ext.Test_PathRandomize(agent);
+            const intervalID = setInterval(() => ext.Test_PathRandomize(agent), 3000);
+            randPathIntervals.push(intervalID);
+         });
+      } break;
+
+      case "Backspace": {
+         randPathIntervals.forEach((intervalID) => clearInterval(intervalID));
+      } break;
+   }
 }
 
 
 // ================================================================================================
-// Init Keyboard Handler
+// Init Keyboard Event
 // ================================================================================================
 module.exports = {
    
    init() {
-
-      // Keyboard press key
-      window.addEventListener("keydown", (event) => {
-         
-         if(event.key === "Enter") Keyboard_Enter();
-      });
+      window.addEventListener("keydown", (event) => keyboardInput(event));
    }
 }

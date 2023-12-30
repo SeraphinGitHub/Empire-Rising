@@ -2,31 +2,45 @@
 "use strict"
 
 // ================================================================================================
-// thisbal Variables
+// Global Variables
 // ================================================================================================
 module.exports = {
 
    Debug: {
       showWallCol: false,
-      showCellInfo: true,
       hoverColor: "blue",
    },
    
    GridParams: {
-      cellSize: 40,
-      height: 960 *1.5,
-      width: 960 *1.5,
+      cellSize:  40,
+      height:    960 *1.5,
+      width:     960 *1.5,
+      cellRange: 0,
    },
 
    SelectArea: {
       oldPos: {
-         cartesian: undefined,
-         isometric: undefined,
+         cartesian: {
+            x: 0,
+            y: 0,
+         },
+
+         isometric: {
+            x: 0,
+            y: 0,
+         },
       },
 
       currentPos: {
-         cartesian: undefined,
-         isometric: undefined,
+         cartesian: {
+            x: 0,
+            y: 0,
+         },
+         
+         isometric: {
+            x: 0,
+            y: 0,
+         },
       },
 
       height: undefined,
@@ -49,11 +63,27 @@ module.exports = {
    CanvasObj:  undefined,
    Ctx:        undefined,
    Grid:       undefined,
+   
+   GridAngle:       undefined,
+   ViewportOffsetX: undefined,
+   ViewportOffsetY: undefined,
+   
 
 
    // --- Positions ---
-   IsoGridPos: undefined,
-   HoverCell:  undefined,
+   IsoGridPos: {
+      x: 0,
+      y: 0,
+   },
+
+   HoverCell:  {
+      id: "",
+
+      gridPos: {
+         x: 0,
+         y: 0,
+      },
+   },
    
    ScrollOffset: {
       x: 0,

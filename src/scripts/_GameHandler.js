@@ -11,7 +11,6 @@ const keyboardHandler = require("./keyboardHandler.js");
 const glo  = require("./modules/globalVar.js");
 const init = require("./modules/initMethods.js");
 const ext  = require("./modules/extendedMethods.js");
-const draw = require("./modules/drawMethods.js");
 
 
 // ================================================================================================
@@ -24,69 +23,6 @@ document.body.oncontextmenu = (event) => {
 
 
 let frame = 0;
-
-const isWithinViewport = (gridPos) => {
-
-   const {
-      x:      vpX,
-      y:      vpY,
-      width:  vpWidth,
-      height: vpHeight
-   } = glo.ViewportSqr;
-
-   const {
-      x:      scrollX,
-      y:      scrollY,
-   } = glo.ScrollOffset;
-
-   if(gridPos.x >= vpX           -scrollX
-   && gridPos.x <= vpX +vpWidth  -scrollX
-   && gridPos.y >= vpY           -scrollY
-   && gridPos.y <= vpY +vpHeight -scrollY) {
-
-      return true;
-   }
-
-   return false;
-}
-
-const Test_GenerateUnits = () => {
-
-   let pop = 30;
-
-   const blue   = "Units/Swordsman_Blue.png";
-   const purple = "Units/Swordsman_Purple.png";
-   const red    = "Units/Swordsman_Red.png";
-   
-   while(pop > 0) {
-
-      let index = glo.Grid.rand(4);
-      let i = glo.Grid.rand(35);
-      let j = glo.Grid.rand(35);
-
-      let unitType = glo.Grid.rand(2);
-
-      if( glo.Grid.cellsList[`${i}-${j}`].isVacant
-      && !glo.Grid.cellsList[`${i}-${j}`].isBlocked) {
-
-         let color = "";
-
-         if(index === 0) color = blue;
-         if(index === 1) color = purple;
-         if(index === 2) color = red;
-
-         if(unitType === 0) ext.createNewAgent("infantry", "swordsman", `${i}-${j}`, color);
-         if(unitType === 1) ext.createNewAgent("infantry", "worker", `${i}-${j}`, "");
-         
-         glo.Grid.cellsList[`${i}-${j}`].isVacant = false;
-         pop--;
-
-         glo.CurrentPop++;
-      }
-      
-      else continue;
-   }
-}
 
 // ================================================================================================
 // Animation
@@ -111,11 +47,11 @@ const runAnimation = () => {
       agent.updateState(frame);
       agent.walkPath();
 
-      if(!isWithinViewport(agentPos)) return;
+      if(!ext.isWithinViewport(agentPos)) return;
       
       agent.drawSprite(glo.Ctx.units, agentPos, glo.ScrollOffset);
       // agent.drawCollider(glo.Ctx.units, agentPos, glo.ScrollOffset);
-      // agent.displayPath(glo.Ctx.isoSelect);
+      // agent.drawPath(glo.Ctx.isoSelect);
    });
 
 
@@ -123,9 +59,10 @@ const runAnimation = () => {
    ext.cycleList(glo.Grid.cellsList, (cell) => {
       let cellPos = ext.gridPos_toScreenPos(cell.center);
 
-      if(!isWithinViewport(cellPos)) return;
+      if(!ext.isWithinViewport(cellPos)) return;
       if(cell.isBlocked) cell.drawSprite(glo.Ctx.units, cellPos, glo.ScrollOffset);
-      draw.cellInfo(cell);
+
+      cell.drawInfos(glo.Ctx.isoSelect)
    });   
 
 
@@ -133,7 +70,7 @@ const runAnimation = () => {
    ext.cycleList(glo.OldSelectList,     (agent) => {
       let agentPos = ext.gridPos_toScreenPos(agent.position);
 
-      if(!isWithinViewport(agentPos)) return;
+      if(!ext.isWithinViewport(agentPos)) return;
       agent.drawSelect(glo.Ctx.isoSelect, "yellow");
    });
 
@@ -142,12 +79,12 @@ const runAnimation = () => {
    ext.cycleList(glo.CurrentSelectList, (agent) => {
       let agentPos = ext.gridPos_toScreenPos(agent.position);
 
-      if(!isWithinViewport(agentPos)) return;
+      if(!ext.isWithinViewport(agentPos)) return;
       agent.drawSelect(glo.Ctx.isoSelect, "blue");
    });
    
-   
-   ext.withinTheGrid(() => draw.hover());
+   if(ext.isWithinGrid(glo.IsoGridPos)) ext.drawHoverCell();
+
    requestAnimationFrame(runAnimation);
 }
 
@@ -215,19 +152,18 @@ module.exports = {
    methods: {
 
       initGameHandler(document) {
-         glo.Grid      = new GridClass(glo.GridParams);
-         
-         glo.DOM       = init.setDOM(document);
-         glo.Viewport  = init.setViewport(document);
-         glo.CanvasObj = init.setCanvas(document);
-         glo.Ctx       = init.setCtx(glo.CanvasObj);
-         
-         glo.ViewportSqr    = init.setViewportSqr(); // ==> Tempory
-         glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.CanvasObj.isoSelect).transform);
-         
-         init.setAvailableID();
 
-         glo.Grid.init();
+         glo.Grid = new GridClass(glo.GridParams);
+
+         init.setViewport(document);
+         init.setCanvas(document);
+         init.setCtx(glo.CanvasObj);
+         init.setViewportSqr(); // ==> Tempory
+         init.setAvailableID();
+         init.setPosConvert();
+         
+         glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.CanvasObj.isoSelect).transform);
+
          mouseHandler.init();
          keyboardHandler.init();
 
@@ -242,7 +178,7 @@ module.exports = {
          // ext.createNewAgent("machinery", "ballista",  "8-5", "");
          // ext.createNewAgent("machinery", "catapult",  "6-9", "");
          
-         Test_GenerateUnits();
+         ext.Test_GenerateUnits();
          // --- Tempory ---
          
 

@@ -8,7 +8,6 @@ const AgentClass = require("../classes/AgentClass.js");
 const unitParam  = require("./unitsParams.js");
 const collision  = require("./collisions.js");
 const glo  = require("./globalVar.js");
-const draw = require("./drawMethods.js");
 
 
 // ================================================================================================
@@ -28,19 +27,44 @@ module.exports = {
    isEmptyObj(obj) {
       if(Object.keys(obj).length === 0) return true;
    },
-
-   updateDOM() {
-
-      glo.DOM.cartX.textContent = `x : ${glo.SelectArea.currentPos.cartesian.x}`;
-      glo.DOM.cartY.textContent = `y : ${glo.SelectArea.currentPos.cartesian.y}`;
-      glo.DOM.isoX.textContent  = `x : ${glo.IsoGridPos.x}`;
-      glo.DOM.isoY.textContent  = `y : ${glo.IsoGridPos.y}`;
+   
+   isWithinGrid(isoGridPos) {
       
-      this.withinTheGrid(() => {
-         glo.DOM.cellX.textContent  =  `x : ${glo.HoverCell.gridPos.x}`;
-         glo.DOM.cellY.textContent  =  `y : ${glo.HoverCell.gridPos.y}`;
-         glo.DOM.cellID.textContent = `id : ${glo.HoverCell.id}`;
-      });
+      if(isoGridPos
+      && isoGridPos.x > 0
+      && isoGridPos.x < glo.Grid.width
+      && isoGridPos.y > 0
+      && isoGridPos.y < glo.Grid.height) {
+   
+         return true;
+      }
+   
+      return false;
+   },
+
+   isWithinViewport(gridPos) {
+
+      const {
+         x:      vpX,
+         y:      vpY,
+         width:  vpWidth,
+         height: vpHeight
+      } = glo.ViewportSqr;
+   
+      const {
+         x:      scrollX,
+         y:      scrollY,
+      } = glo.ScrollOffset;
+   
+      if(gridPos.x >= vpX           -scrollX
+      && gridPos.x <= vpX +vpWidth  -scrollX
+      && gridPos.y >= vpY           -scrollY
+      && gridPos.y <= vpY +vpHeight -scrollY) {
+   
+         return true;
+      }
+   
+      return false;
    },
 
    cycleList(list, callback) {
@@ -70,46 +94,28 @@ module.exports = {
    
    screenPos_toGridPos(screenPos) {
    
+      const screenX        = screenPos.x;
+      const doubleScreenY  = screenPos.y    *2;
+      const half_GridWidth = glo.Grid.width *0.5;
+
       // Isometric <== Cartesian
       return {
-         x:  Math.floor( (screenPos.x -screenPos.y *2) /glo.Cos_45deg /2 ) +glo.Grid.width /2,
-         y:  Math.floor( (screenPos.x +screenPos.y *2) /glo.Cos_45deg /2 ) -glo.Grid.width /2,
+         x:  Math.floor( (screenX -doubleScreenY) /glo.Cos_45deg  *0.5 ) +half_GridWidth,
+         y:  Math.floor( (screenX +doubleScreenY) /glo.Cos_45deg  *0.5 ) -half_GridWidth,
       };
    },
    
    gridPos_toScreenPos(gridPos) {
    
       // Cartesian <== Isometric
-      let TempX = Math.floor( (gridPos.x + gridPos.y) *glo.Cos_45deg );
-      let TempY = Math.floor( (gridPos.y +glo.Grid.width /2 -glo.Grid.cellSize *glo.Cos_45deg *glo.Cos_30deg) *glo.Cos_45deg *2 -TempX ) /2;
+      const TempX = Math.floor( (gridPos.x +gridPos.y) *glo.Cos_45deg );
+      const TempY = Math.floor( (gridPos.y +glo.GridAngle) *glo.Cos_45deg *2 -TempX ) /2;
       
       return {
-         x: Math.floor( glo.Viewport.width  /2 - glo.Cos_45deg /2 *(glo.Grid.height +glo.Grid.width) +TempX ),
-         y: Math.floor( glo.Viewport.height /2 - glo.Cos_45deg /4 *(glo.Grid.height +glo.Grid.width) +TempY +glo.Cos_30deg *glo.Grid.cellSize /2 ),
+         x: Math.floor( TempX +glo.ViewportOffsetX),
+         y: Math.floor( TempY +glo.ViewportOffsetY),
       };
    },
-
-
-   // gridPos_toScreenPos(gridPos) {
-
-   //    if(this.cachedScreenPos) return this.cachedScreenPos;
-
-   //    const halfGridWidth = glo.Grid.width / 2;
-   //    const halfGridCellSizeCos45 = glo.Grid.cellSize * glo.Cos_45deg / 2;
-   //    const halfViewportWidth = glo.Viewport.width / 2;
-   //    const halfViewportHeight = glo.Viewport.height / 2;
-   //    const halfCos45GridWidth = glo.Cos_45deg * (glo.Grid.height + glo.Grid.width) / 2;
-   //    const halfCos30GridCellSize = glo.Cos_30deg * glo.Grid.cellSize / 2;
-    
-   //    // Cartesian <== Isometric
-   //    const tempX = Math.floor((gridPos.x + gridPos.y) * glo.Cos_45deg);
-   //    const tempY = Math.floor((gridPos.y + halfGridWidth - halfGridCellSizeCos45) * glo.Cos_45deg * 2 - tempX) / 2;
-      
-   //    return {
-   //      x: Math.floor(halfViewportWidth - halfCos45GridWidth + tempX),
-   //      y: Math.floor(halfViewportHeight - halfViewportWidth / 2 + tempY + halfCos30GridCellSize),
-   //    };
-   // },
    
    getHoverCell() {
 
@@ -129,24 +135,57 @@ module.exports = {
       const screenPos = this.gridPos_toScreenPos(cellCenter);
    
       return {
-         id: `${cellPos.x /cellSize}-${cellPos.y /cellSize}`,
-         center: cellCenter,
-         gridPos: cellPos,
+         id:       `${cellPos.x /cellSize}-${cellPos.y /cellSize}`,
+         center:    cellCenter,
+         gridPos:   cellPos,
          screenPos: screenPos,
       }
    },
    
-   withinTheGrid(callback) {
-      let isoGridPos = glo.IsoGridPos;
+   drawSelectArea() {
+
+      let selected   = glo.SelectArea;
+      let oldPos     = selected.oldPos.cartesian;
+      let currentPos = selected.currentPos.cartesian;
+
+      // Set rect size
+      selected.width  = currentPos.x -oldPos.x;
+      selected.height = currentPos.y -oldPos.y;
+
+      // Set rect params
+      glo.Ctx.selection.lineWidth   = selected.lineWidth;
+      glo.Ctx.selection.strokeStyle = selected.borderColor;
+      glo.Ctx.selection.fillStyle   = selected.filledColor;
+
+      // Draw borders
+      glo.Ctx.selection.strokeRect(
+         oldPos.x,
+         oldPos.y,
+         selected.width,
+         selected.height
+      );
       
-      if(isoGridPos
-      && isoGridPos.x > 0
-      && isoGridPos.x < glo.Grid.width
-      && isoGridPos.y > 0
-      && isoGridPos.y < glo.Grid.height) {
-   
-         callback();
-      }
+      // Draw filled rect
+      glo.Ctx.selection.fillRect(
+         oldPos.x,
+         oldPos.y,
+         selected.width,
+         selected.height
+      );
+   },
+
+   drawHoverCell() {
+
+      glo.Ctx.isoSelect.strokeStyle = "yellow";
+      glo.Ctx.isoSelect.lineWidth = 4;
+      
+      // Draw hovelCell frame
+      glo.Ctx.isoSelect.strokeRect(
+         glo.HoverCell.gridPos.x,
+         glo.HoverCell.gridPos.y,
+         glo.Grid.cellSize,
+         glo.Grid.cellSize,
+      );
    },
 
    scrollCam() {
@@ -230,7 +269,7 @@ module.exports = {
 
       if(isSelecting) {
          this.clearCanvas("selection");
-         draw.selectArea();
+         this.drawSelectArea();
 
          square = {
             x: glo.SelectArea.oldPos.cartesian.x,
@@ -332,6 +371,57 @@ module.exports = {
       });
       
       glo.AgentsList[avID] = new AgentClass(agentParams);
-   },   
+   },
+
+   Test_PathRandomize(agent) {
+
+      let i = glo.Grid.rand(glo.Grid.cellRange);
+      let j = glo.Grid.rand(glo.Grid.cellRange);
+      
+      const targetCell = glo.Grid.cellsList[`${i}-${j}`];
+      
+      if(targetCell.isBlocked) return;
+      
+      agent.endCell = targetCell;
+      agent.searchPath(glo.Grid.cellsList);
+   },
    
+   Test_GenerateUnits() {
+   
+      let pop = 30;
+   
+      const blue   = "Units/Swordsman_Blue.png";
+      const purple = "Units/Swordsman_Purple.png";
+      const red    = "Units/Swordsman_Red.png";
+      
+      while(pop > 0) {
+   
+         let index = glo.Grid.rand(4);
+         let i = glo.Grid.rand(glo.Grid.cellRange);
+         let j = glo.Grid.rand(glo.Grid.cellRange);
+   
+         let unitType = glo.Grid.rand(2);
+   
+         if( glo.Grid.cellsList[`${i}-${j}`].isVacant
+         && !glo.Grid.cellsList[`${i}-${j}`].isBlocked) {
+   
+            let color = "";
+   
+            if(index === 0) color = blue;
+            if(index === 1) color = purple;
+            if(index === 2) color = red;
+   
+            if(unitType === 0) this.createNewAgent("infantry", "swordsman", `${i}-${j}`, color);
+            if(unitType === 1) this.createNewAgent("infantry", "worker", `${i}-${j}`, "");
+            
+            glo.Grid.cellsList[`${i}-${j}`].isVacant = false;
+            pop--;
+   
+            glo.CurrentPop++;
+         }
+         
+         else continue;
+      }
+   },
+
 }

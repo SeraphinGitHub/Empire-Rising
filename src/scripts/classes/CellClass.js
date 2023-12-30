@@ -236,6 +236,13 @@ class CellClass {
 
 
    // Draw
+   drawInfos(ctx) {
+         
+      this.drawFrame(ctx);
+      // this.drawCenter(ctx);
+      // this.drawID(ctx);
+   }
+
    drawCenter(ctx) {
 
       ctx.fillStyle = "red";

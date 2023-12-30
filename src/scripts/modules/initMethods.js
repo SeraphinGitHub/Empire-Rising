@@ -8,19 +8,6 @@ const glo = require("./globalVar.js");
 // ================================================================================================
 module.exports = {
    
-   setDOM(document) {
-      return {
-         message: document.querySelector(".debug-message p"),
-         cartX:   document.querySelector(".coordinates .cartX"),
-         cartY:   document.querySelector(".coordinates .cartY"),
-         isoX:    document.querySelector(".coordinates .isoX"),
-         isoY:    document.querySelector(".coordinates .isoY"),
-         cellX:   document.querySelector(".coordinates .cellX"),
-         cellY:   document.querySelector(".coordinates .cellY"),
-         cellID:  document.querySelector(".coordinates .ID-cell"),
-      };
-   },
-   
    setViewport(document) {
    
       const viewport_1080p = {
@@ -43,15 +30,15 @@ module.exports = {
       if(document.body.clientWidth <= laptop_17pcs.width
       && document.body.clientWidth > laptop_15pcs.width) {
          viewport_1080p.height = laptop_17pcs.height;
-         viewport_1080p.width = laptop_17pcs.width;
+         viewport_1080p.width  = laptop_17pcs.width;
       }
    
       else if(document.body.clientWidth <= laptop_15pcs.width) {
          viewport_1080p.height = laptop_15pcs.height;
-         viewport_1080p.width = laptop_15pcs.width;
+         viewport_1080p.width  = laptop_15pcs.width;
       }
    
-      return viewport_1080p;
+      glo.Viewport = viewport_1080p;
    },
    
    setCanvas(document) {
@@ -77,7 +64,7 @@ module.exports = {
          }
       });
    
-      return canvasObj;
+      glo.CanvasObj = canvasObj;
    },
    
    setCtx(canvasObj) {
@@ -89,7 +76,7 @@ module.exports = {
          ctx[key] = value.getContext("2d");
       });
    
-      return ctx;
+      glo.Ctx = ctx;
    },
    
    setAvailableID() {
@@ -99,13 +86,28 @@ module.exports = {
       }
    },
    
-   // --- Tempory ---
    setViewportSqr() {
-      return {
+
+      glo.ViewportSqr = {
          x: (glo.CanvasObj.selection.width  -glo.TestViewport.width ) *0.5,
          y: (glo.CanvasObj.selection.height -glo.TestViewport.height) *0.5,
          width:  glo.TestViewport.width,
          height: glo.TestViewport.height,
       };
+   },
+
+   setPosConvert() {
+
+      const Cos_45              = glo.Cos_45deg;
+      const Cos_30              = glo.Cos_30deg;
+      const cellSize            = glo.Grid.cellSize;
+      const diagonalOffset      = (glo.Grid.height +glo.Grid.width) *Cos_45 *0.5;
+      const half_GridWidth      = glo.Grid.width      *0.5;
+      const half_ViewportWidth  = glo.Viewport.width  *0.5;
+      const half_ViewportHeight = glo.Viewport.height *0.5;
+
+      glo.GridAngle       = half_GridWidth -(cellSize *Cos_45 *Cos_30);
+      glo.ViewportOffsetX = half_ViewportWidth  -diagonalOffset;
+      glo.ViewportOffsetY = half_ViewportHeight -diagonalOffset /2 +(Cos_30 *cellSize /2);
    }
 }

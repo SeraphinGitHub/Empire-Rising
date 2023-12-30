@@ -341,7 +341,7 @@ class AgentClass {
       // this.lastFrameY = this.frameY;
    }
 
-   displayPath(ctx) {
+   drawPath(ctx) {
       if(this.path.length > 0) {
 
          // Display scanned neighbors
@@ -360,13 +360,13 @@ class AgentClass {
             
             if(i +1 < this.path.length) {
                let nextCell = this.path[i +1];
-               this.drawPath(ctx, currentCell, nextCell);
+               this.drawPathLine(ctx, currentCell, nextCell);
             }
          }
       }
    }
 
-   drawPath(ctx, currentCell, nextCell) {
+   drawPathLine(ctx, currentCell, nextCell) {
       
       ctx.strokeStyle = "lime";
       ctx.beginPath();
@@ -462,8 +462,7 @@ class AgentClass {
                this.animSpecs.walk.index,
                this.animSpecs.walk.spritesNumber
             );
-         }
-         break;
+         } break;
 
          // Attacking
          case 2: {
@@ -472,8 +471,7 @@ class AgentClass {
                this.animSpecs.attack.index,
                this.animSpecs.attack.spritesNumber
             );
-         }
-         break;
+         } break;
       
          // Died
          case 3: {
@@ -482,8 +480,7 @@ class AgentClass {
                this.animSpecs.died.index,
                this.animSpecs.died.spritesNumber
             );
-         }
-         break;
+         } break;
 
          // Idle
          default: {
@@ -491,8 +488,7 @@ class AgentClass {
                this.animSpecs.idle.index,
                this.animSpecs.idle.spritesNumber
             );
-         }
-         break;
+         } break;
       }
    }
 

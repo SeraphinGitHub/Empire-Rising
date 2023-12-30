@@ -2,8 +2,10 @@
 <template>
    <div class="flex debug-message">
 
-      <p class="flex mess-1">{{ message_1 }}</p>
-      <p class="flex mess-2">{{ message_2 }}</p>
+      <p class="flex title">{{ title }}</p>
+      <p class="flex message" v-for="(value, key) in message" :key="key">
+         {{ value }}
+      </p>
 
    </div>
 </template>
@@ -12,8 +14,8 @@
 <script>
    export default {
       props: {
-         message_1: String,
-         message_2: String,
+         title:   String,
+         message: Object,
       },
    }
 </script>
@@ -22,7 +24,7 @@
 <style scoped>
    .debug-message {
       position: relative;
-      height: 60px;
+      height: auto;
       width: 100%;
    }
 
@@ -33,12 +35,13 @@
       font-weight: 600;
    }
 
-   .mess-1 {
+   .title {
+      margin: 10px;
       color: darkviolet;
       text-decoration: underline;
    }
 
-   .mess-2 {
+   .message {
       color: black;
    }
 </style>

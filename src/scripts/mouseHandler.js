@@ -15,67 +15,72 @@ const mouse_Move = (event) => {
    
    glo.SelectArea.currentPos = ext.getScreenPos(event);
    glo.IsoGridPos = ext.screenPos_toGridPos(glo.SelectArea.currentPos.isometric);
-   glo.HoverCell  = ext.getHoverCell();
    
-   ext.updateDOM();
+   if(ext.isWithinGrid(glo.IsoGridPos)) {
+      glo.HoverCell = ext.getHoverCell();
+   }
+
    ext.unitSelection();
 }
 
-const mouse_LeftClick = (state) => {
+const mouse_Input = (event, state) => {
 
-   if(state === "Down") {
-      glo.SelectArea.isSelecting = true;
-   }
-   
-   if(state === "Up") {
-      glo.SelectArea.isSelecting = false;
-      ext.unitDiselection();
-   }
-}
+   if(state === "Down") glo.SelectArea.oldPos = ext.getScreenPos(event);
 
-const mouse_RightClick = (state) => {
+   switch(event.which) {
 
-   if(state === "Down") {
-      ext.withinTheGrid(() => {
-         ext.cycleList(glo.OldSelectList, (agent) => {
+      // Left click
+      case 1: {
 
-            const targetCell = glo.Grid.cellsList[glo.HoverCell.id];
-
-            if(targetCell.isBlocked) return;
-            
-            agent.endCell = targetCell;
-            agent.searchPath(glo.Grid.cellsList);
-
-            // if(targetCell.isVacant) targetCell.isVacant = false;
-         });
-      });
-   }
-
-   if(state === "Up") {
-
-      // ********************************************  Test  ********************************************
-      // ext.cycleList(glo.OldSelectList, (agent) => {
-      //    setInterval(() => {
+         if(state === "Down") { 
+            glo.SelectArea.isSelecting = true;
+         }
          
-            
-      //       let i = glo.Grid.rand(10);
-      //       let j = glo.Grid.rand(10);
-            
-      //       const targetCell = glo.Grid.cellsList[`${i}-${j}`];
-            
-      //       if(targetCell.isBlocked) return;
-            
-      //       agent.endCell = targetCell;
-      //       agent.searchPath(glo.Grid.cellsList);
-            
-      //    }, 1500);
-      // });
-      // ********************************************  Test  ********************************************
-   }
-}
+         if(state === "Up") {
+            glo.SelectArea.isSelecting = false;
+            ext.unitDiselection();
+         }
+         
+      } break;
 
-const mouse_ScrollClick = (state) => {
-   glo.CurrentPop++;
+
+      // Scroll click
+      case 2: {
+
+         if(state === "Down") {
+
+         }
+      
+         if(state === "Up") {
+
+         }
+
+      } break;
+
+
+      // Right click
+      case 3: {
+
+         if(state === "Down") {
+            if(ext.isWithinGrid(glo.IsoGridPos)) {
+               ext.cycleList(glo.OldSelectList, (agent) => {
+      
+                  const targetCell = glo.Grid.cellsList[glo.HoverCell.id];
+      
+                  if(targetCell.isBlocked) return;
+                  
+                  agent.endCell = targetCell;
+                  agent.searchPath(glo.Grid.cellsList);
+               });
+            }
+         }
+      
+         if(state === "Up") {
+
+         }
+
+      } break;
+   }
 }
 
 
@@ -86,22 +91,7 @@ module.exports = {
 
    init() {
       window.addEventListener("mousemove", (event) => mouse_Move(event));
-      
-      window.addEventListener("mousedown", (event) => {
-         glo.SelectArea.oldPos = ext.getScreenPos(event);
-         
-         const state = "Down";
-         if(event.which === 1) mouse_LeftClick  (state);
-         if(event.which === 2) mouse_ScrollClick(state);
-         if(event.which === 3) mouse_RightClick (state);
-      });
-         
-      window.addEventListener("mouseup", (event) => {
-         
-         const state = "Up";
-         if(event.which === 1) mouse_LeftClick  (state);
-         if(event.which === 2) mouse_ScrollClick(state);
-         if(event.which === 3) mouse_RightClick (state);
-      });
+      window.addEventListener("mousedown", (event) => mouse_Input(event, "Down"));
+      window.addEventListener("mouseup",   (event) => mouse_Input(event, "Up"));
    }
 }

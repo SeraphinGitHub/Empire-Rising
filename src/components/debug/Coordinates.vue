@@ -3,8 +3,8 @@
    <section class="coordinates flex">
 
       <DebugMessage
-         :message_1 ="title"
-         :message_2 ="faction"
+         :title   ="title"
+         :message ="population"
       />
 
       <CoordSpan :coordType ="screenCoord"/>
@@ -19,6 +19,7 @@
 <script>
    import CoordSpan    from "./CoordSpan.vue"
    import DebugMessage from "./DebugMessage.vue"
+   import GlobalVar    from "../../scripts/modules/globalVar.js"
 
    export default {
       components: {
@@ -26,48 +27,58 @@
          DebugMessage,
       },
 
-      computed: {
-
-         screenCoord() {
-         return {
-            name: "Screen Coord:",
-            classX: "cartX",
-            classY: "cartY",
-            x: "x : 0",
-            y: "y : 0",
-         }},
-
-         gridCoord() {
-         return {
-            name: "Grid Coord:",
-            classX: "isoX",
-            classY: "isoY",
-            x: "x : 0",
-            y: "y : 0",
-         }},
-
-         cellCoord() {
-         return {
-            name: "Cell Coord:",
-            classX: "cellX",
-            classY: "cellY",
-            x: "x : 0",
-            y: "y : 0",
-         }},
-
-         cellID() {
-         return {
-            name: "Cell ID:",
-            classID: "ID-cell",
-            id: "id :",
-         }},
-      },
-
       data() {
       return {
+         glo:    GlobalVar,
          title: `Empire Rising`,
-         faction: ``,
       }},
+
+      computed: {
+         population() {
+            return {
+               popText:  `Population`,
+               popValue: `${this.glo.CurrentPop} / ${this.glo.MaxPop}`,
+            }
+         },
+
+         screenCoord() {
+            return {
+               name: "Screen Coord:",
+               classX: "cartX",
+               classY: "cartY",
+               x: `x : ${this.glo.SelectArea.currentPos.cartesian.x}`,
+               y: `y : ${this.glo.SelectArea.currentPos.cartesian.y}`,
+            }
+         },
+
+         gridCoord() {
+            return {
+               name: "Grid Coord:",
+               classX: "isoX",
+               classY: "isoY",
+               x: `x : ${this.glo.IsoGridPos.x}`,
+               y: `y : ${this.glo.IsoGridPos.y}`,
+            }
+         },
+
+         cellCoord() {
+            return {
+               name: "Cell Coord:",
+               classX: "cellX",
+               classY: "cellY",
+               x: `x : ${this.glo.HoverCell.gridPos.x}`,
+               y: `y : ${this.glo.HoverCell.gridPos.y}`,
+            }
+         },
+
+         cellID() {
+            return {
+               name: "Cell ID:",
+               classID: "ID-cell",
+               id: `id : ${this.glo.HoverCell.id}`,
+            }
+         },
+      },
    }
 </script>
 

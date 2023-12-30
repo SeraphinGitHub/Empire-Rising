@@ -40,7 +40,6 @@
 
 
 <style>
-
    .canvas-selection {
       cursor: url("../public/GUI/cursors.png"), auto !important;
    }

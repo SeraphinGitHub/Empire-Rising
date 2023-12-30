@@ -11,12 +11,15 @@ class GridClass {
    constructor(params) {
 
       this.cellsList = {};
-      this.width = params.width;
-      this.height = params.height;
-      this.cellSize = params.cellSize;
+      this.width     = params.width;
+      this.height    = params.height;
+      this.cellSize  = params.cellSize;
+      this.cellRange = params.cellRange;
       
       this.collums = (this.width  -(this.width  %this.cellSize)) /this.cellSize;
       this.rows    = (this.height -(this.height %this.cellSize)) /this.cellSize;
+
+      this.init();
    }
 
    rand(maxValue) {
@@ -39,6 +42,8 @@ class GridClass {
 
          this.cellsList[i].initNeighborsList();
       }
+
+      this.cellRange = this.height / this.cellSize;
    }
 }
 
