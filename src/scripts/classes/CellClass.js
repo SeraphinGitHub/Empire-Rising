@@ -5,12 +5,11 @@
 // Cell Class
 // =====================================================================
 class CellClass {
-   constructor(collums, rows, size, i, j) {
+   constructor(cellPerSide, size, i, j) {
       
       this.id =`${i}-${j}`;
 
-      this.collums = collums;
-      this.rows = rows;
+      this.cellPerSide = cellPerSide;
       this.size = size;
 
       this.i = i;
@@ -34,8 +33,9 @@ class CellClass {
       //    `${this.i -1}-${this.j   }`,
       // ];
 
-      this.neighborsList = {};
+      this.agentID = undefined;
       this.agentList     = {};
+      this.neighborsList = {};
       
       this.zIndex;
       this.isBlocked = false;
@@ -47,8 +47,8 @@ class CellClass {
    }
 
    init() {
-      this.img     = new Image();
-      this.img.src = "Terrain/iso_stone.png";
+      this.img = new Image();
+      this.img.src = "Terrain/Herb_01.png";
    }
 
    // Collision
@@ -223,7 +223,7 @@ class CellClass {
    }
 
    setNeb_Right(side) {
-      if(this.i +1 < this.collums) this.addNeb(side);
+      if(this.i +1 < this.cellPerSide) this.addNeb(side); // Collums
    }
 
    setNeb_Top(callback) {
@@ -231,7 +231,7 @@ class CellClass {
    }
 
    setNeb_Bottom(callback) {
-      if(this.j +1 < this.rows) callback();
+      if(this.j +1 < this.cellPerSide) callback(); // Rows
    }
 
 
@@ -345,7 +345,14 @@ class CellClass {
       ctx.stroke();
    }
 
-   drawCellColor(ctx, color) {
+   drawVacancy(ctx) {
+
+      if(this.isVacant) return;
+      
+      this.drawColor(ctx, "rgba(255, 0, 0, 0.6)")
+   }
+
+   drawColor(ctx, color) {
 
       ctx.fillStyle = color;
       ctx.fillRect(
@@ -354,11 +361,42 @@ class CellClass {
          this.size,
          this.size
       );
-
-      this.drawFrame(ctx);
    }
 
    drawSprite(ctx, gridPos, scrollOffset) {
+
+      // if(this.id !== "10-17") return;
+
+      const frameX    = 0;
+      const srcHeight = 1000;
+      const srcWidth  = 1500;
+      const destSize  = 40;
+      const offsetX   = 23;
+      const offsetY   = 23;
+
+      ctx.drawImage(
+         this.img,
+
+         // Source
+         frameX *srcWidth,
+         0,
+         srcWidth,
+         srcHeight,
+         
+         // Destination
+         gridPos.x -offsetX +scrollOffset.x,
+         gridPos.y -offsetY +scrollOffset.y,
+         destSize +10,
+         destSize,
+      );
+   }
+
+   // --- Tempory ---
+   drawWall(ctx, gridPos, scrollOffset) {
+
+      if(!this.isBlocked) return;
+      
+      this.img.src = "Terrain/iso_stone.png";
 
       const srcSize  = 1024;
       const destSize = 55;

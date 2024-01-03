@@ -4,12 +4,10 @@
 // ================================================================================================
 // Scripts Import
 // ================================================================================================
-const GridClass       = require("./classes/GridClass.js");
-const mouseHandler    = require("./mouseHandler.js");
-const keyboardHandler = require("./keyboardHandler.js");
+const GridClass = require("./classes/GridClass.js");
 
 const glo  = require("./modules/globalVar.js");
-const init = require("./modules/initMethods.js");
+const init = require("./modules/init.js");
 const ext  = require("./modules/extendedMethods.js");
 
 
@@ -51,18 +49,20 @@ const runAnimation = () => {
       
       agent.drawSprite(glo.Ctx.units, agentPos, glo.ScrollOffset);
       // agent.drawCollider(glo.Ctx.units, agentPos, glo.ScrollOffset);
-      // agent.drawPath(glo.Ctx.isoSelect);
+      agent.drawPath(glo.Ctx.isoSelect);
    });
 
 
-   // Draw blocked cell as Wall
+   // Draw Terrain and Buildings
    ext.cycleList(glo.Grid.cellsList, (cell) => {
       let cellPos = ext.gridPos_toScreenPos(cell.center);
 
       if(!ext.isWithinViewport(cellPos)) return;
-      if(cell.isBlocked) cell.drawSprite(glo.Ctx.units, cellPos, glo.ScrollOffset);
 
-      cell.drawInfos(glo.Ctx.isoSelect)
+      // cell.drawSprite(glo.Ctx.terrain, cellPos, glo.ScrollOffset);
+      cell.drawWall   (glo.Ctx.units, cellPos, glo.ScrollOffset);
+      cell.drawInfos  (glo.Ctx.isoSelect);
+      cell.drawVacancy(glo.Ctx.isoSelect);
    });   
 
 
@@ -161,24 +161,26 @@ module.exports = {
          init.setViewportSqr(); // ==> Tempory
          init.setAvailableID();
          init.setPosConvert();
+         init.peripherals_Input();
          
          glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.CanvasObj.isoSelect).transform);
-
-         mouseHandler.init();
-         keyboardHandler.init();
 
          
          // --- Tempory ---
          walls.forEach(ID => glo.Grid.cellsList[ID].isBlocked = true);
+         
+         ext.createNewAgent("infantry",  "swordsman", "7-16", "");
+         ext.createNewAgent("infantry",  "swordsman", "7-19", "");
+         ext.createNewAgent("infantry",  "swordsman", "10-16", "");
+         ext.createNewAgent("infantry",  "swordsman", "10-19", "");
 
          // ext.createNewAgent("infantry",  "worker",    "5-3", "");
-         // ext.createNewAgent("infantry",  "swordsman", "5-3", "");
          // ext.createNewAgent("cavalry",   "swordsman", "9-2", "");
          // ext.createNewAgent("cavalry",   "bowman",    "2-6", "");
          // ext.createNewAgent("machinery", "ballista",  "8-5", "");
          // ext.createNewAgent("machinery", "catapult",  "6-9", "");
          
-         ext.Test_GenerateUnits();
+         // ext.Test_GenerateUnits();
          // --- Tempory ---
          
 

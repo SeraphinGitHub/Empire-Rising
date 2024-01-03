@@ -1,42 +1,46 @@
 
 "use strict"
 
+const glo  = require("../modules/globalVar.js");
+
+
 // =====================================================================
 // Agent Class
 // =====================================================================
 class AgentClass {
    constructor(params) {
 
-      this.id       = params.id;
-      this.type     = params.type;
-      this.imgSrc   = params.imgSrc;
-      this.popCost  = params.popCost;
-      this.collider = params.collider;
+      this.id         = params.id;
+      this.unitType   = params.unitType;
+      this.imgSrc     = params.imgSrc;
+      this.popCost    = params.popCost;
+      this.collider   = params.collider;
+      this.moveSpeed  = params.moveSpeed;
+      this.sqrtSpeed  = Math.floor(this.moveSpeed / Math.sqrt(2) *100) /100;
+      
       this.isSelected = false;
+      this.isMoving   = false;
 
       // Position
       this.position = {
          x: params.startCell.center.x, // Tempory
          y: params.startCell.center.y, // Tempory
       };
-
-      this.target = undefined;
-
+      
       // Pathfinding
       this.startCell   = params.startCell;
       this.currentCell = params.startCell;
-      this.endCell;
+      this.nextCell    = undefined;
+      this.goalCell    = undefined;
       this.path        = [];
-      this.openSet    = new Set();
-      this.closedSet  = new Set();
+      this.openSet     = new Set();
+      this.closedSet   = new Set();
 
       this.img         = undefined;
       this.frameX      = 0;
       this.frameY      = 3;
       this.lastFrameY  = 3;
       this.animState   = 0;
-      this.speed       = 3;
-      this.sqrtSpeed   = Math.floor(this.speed / Math.sqrt(2) *100) /100;
 
       this.isAttacking = false;
 
@@ -79,107 +83,8 @@ class AgentClass {
    init() {
       this.img     = new Image();
       this.img.src = this.imgSrc;
-   }
 
-   calcHeuristic(currentCell) {
-      
-      let distX = Math.abs(this.endCell.center.x -currentCell.center.x);
-      let distY = Math.abs(this.endCell.center.y -currentCell.center.y);
-      let hypotenuse = Math.floor(Math.sqrt(distX * distX + distY * distY));
-
-      return hypotenuse;
-   }
-    
-   searchPath(cellsList) {
-
-      const ownID = this.id;
-
-      this.openSet   = new Set([this.startCell]);
-      this.closedSet = new Set();
-      this.path       = [];
-
-      while(this.openSet.size > 0) {
-
-         // Bring up lowest fCost cell
-         let currentCell = null;
-         let lowestFCost = Infinity;
-
-         for(let cell of this.openSet) {
-            const cellData = cell.agentList[ownID];
-            
-            if(cellData.fCost < lowestFCost) {
-               lowestFCost = cellData.fCost;
-               currentCell = cell;
-            }
-         }
-
-         let nebID_List = currentCell.neighborsList;
-
-
-         // Scan cell neighbors
-         for(let i in nebID_List) {
-            let neighbor = cellsList[ nebID_List[i] ];
-
-            // If this neighbor hasn't been scanned yet
-            if(!this.closedSet.has(neighbor) && !neighbor.isBlocked) {
-
-               let possibleG = currentCell.agentList[ownID].gCost + 1;
-               let nebData   = neighbor.agentList[ownID];
-      
-               if(!this.openSet.has(neighbor) && !this.isBlockedDiag(cellsList, nebID_List, neighbor)) {
-                  this.openSet.add(neighbor);
-               }
-               else if(possibleG >= nebData.gCost) continue;
-
-               nebData.hCost = this.calcHeuristic(neighbor);
-               nebData.gCost = possibleG;
-               nebData.fCost = nebData.gCost +nebData.hCost;
-               nebData.cameFromCell = currentCell;
-
-               neighbor.agentList[ownID] = nebData;
-            }
-         }
-
-
-         // // Transfert currentCell to closedList
-         this.openSet.delete(currentCell);
-         this.closedSet.add(currentCell);
-         
-
-         // If reached destination
-         if(currentCell.id === this.endCell.id) {
-            
-            let temporyCell = currentCell;
-            this.path.push(temporyCell);
-            
-            // Set found path
-            while(temporyCell.agentList[ownID].cameFromCell) {
-               
-               this.path.push(temporyCell.agentList[ownID].cameFromCell);
-               temporyCell = temporyCell.agentList[ownID].cameFromCell;
-            }
-
-            // Reset neighbors data
-            this.closedSet.forEach(cell => {
-               let cellData = cell.agentList[ownID];
-
-               cellData.hCost = 0;
-               cellData.gCost = 0;
-               cellData.fCost = 0;
-               cellData.cameFromCell = undefined;
-
-               cell.agentList[ownID] = cellData;
-            });
-
-            this.path.reverse();
-            this.target = this.path[0].center; // <== Set Target Cell
-            this.animState = 1;
-
-            return this.path;
-         }
-      }
-
-      return[];
+      this.startCell.isVacant = false;
    }
 
    isBlockedDiag(cellsList, nebID_List, neighbor) {
@@ -216,93 +121,213 @@ class AgentClass {
       return isBlocked.topLeft() || isBlocked.topRight() || isBlocked.bottomLeft() || isBlocked.bottomRight();
    }
 
-
-
-   // hasArrived() {
-   //    const { x: startX, y: startY } = this.startCell;
-   //    const { x: endX, y: endY } = this.endCell;
-   //    const { x: posX, y: posY } = this.position;
-   //    const { x: targetX, y: targetY } = this.target;
+   hasArrived(cell) {
+      
+      const { x: posX,  y: posY  } = this.position;
+      const { x: cellX, y: cellY } = cell.center;
   
-   //    return startX === endX && startY === endY && posX === targetX && posY === targetY;
-   // }
+      if(posX !== cellX
+      || posY !== cellY) {
+
+         return false;
+      }
+
+      return true;
+   }
+
+   mathFloor_100(value) {
+
+      return Math.floor( value *100 ) /100;
+   }
+
+   calcHeuristic(neighbor) {
+
+      const { x: goalX, y: goalY } = this.goalCell.center;
+      const { x: nebX,  y: nebY  } = neighbor.center;
+      
+      const deltaX = Math.abs(goalX -nebX);
+      const deltaY = Math.abs(goalY -nebY);
+      const dist   = Math.floor(Math.hypot(deltaX, deltaY));
+
+      return dist;
+   }
+    
+
+   // Pathfinder
+   searchPath() {
+
+      const ownID = this.id;
+
+      this.openSet   = new Set([this.startCell]);
+      this.closedSet = new Set();
+      this.path      = [];
+
+      while(this.openSet.size > 0) {
+
+         const presentCell = this.lowerFCostCell(ownID);
+
+         this.scanNeighbors(presentCell, ownID);
+
+         // If reached destination
+         if(presentCell.id === this.goalCell.id) {
+            
+            this.foundPath(presentCell, ownID);
+            this.resetNeighbors(ownID);
+            this.isMoving = true;
+            return;
+         }
+      }
+
+      this.isMoving = false;
+   }
+
+   lowerFCostCell(ownID) {
+
+      // Bring up lowest fCost cell
+      let presentCell = null;
+      let lowestFCost = Infinity;
+
+      for(let cell of this.openSet) {
+         const cellData = cell.agentList[ownID];
+         
+         if(cellData.fCost < lowestFCost) {
+            lowestFCost = cellData.fCost;
+            presentCell = cell;
+         }
+      }
+
+      return presentCell;
+   }
+
+   scanNeighbors(presentCell, ownID) {
+
+      let nebID_List = presentCell.neighborsList;
+      const cellsList = glo.Grid.cellsList;
+
+      for(let i in nebID_List) {
+         let neighbor = cellsList[ nebID_List[i] ];
+
+         // If this neighbor hasn't been scanned yet
+         if(!this.closedSet.has(neighbor)
+         && !neighbor.isBlocked
+         && neighbor.isVacant) {
+
+            let possibleG = presentCell.agentList[ownID].gCost + 1;
+            let nebData   = neighbor.agentList[ownID];
+   
+            if(!this.openSet.has(neighbor)
+            && !this.isBlockedDiag(cellsList, nebID_List, neighbor)) {
+               
+               this.openSet.add(neighbor);
+            }
+            else if(possibleG >= nebData.gCost) continue;
+
+            nebData.hCost = this.calcHeuristic(neighbor);
+            nebData.gCost = possibleG;
+            nebData.fCost = nebData.gCost +nebData.hCost;
+            nebData.cameFromCell = presentCell;
+
+            neighbor.agentList[ownID] = nebData;
+         }
+      }
+
+      this.openSet.delete(presentCell);
+      this.closedSet.add(presentCell);
+   }
+
+   foundPath(presentCell, ownID) {
+            
+      this.path.push(presentCell);
+      let cameFromCell = presentCell.agentList[ownID].cameFromCell;
+      
+      // Set found path
+      while(cameFromCell) {
+
+         this.path.push(cameFromCell);
+         cameFromCell = cameFromCell.agentList[ownID].cameFromCell;
+      }
+
+      this.path.reverse();
+      this.nextCell  = this.path[0];
+      this.animState = 1;
+   }
+
+   resetNeighbors(ownID) {
+
+      this.closedSet.forEach(cell => {
+         let cellData = cell.agentList[ownID];
+
+         cellData.hCost = 0;
+         cellData.gCost = 0;
+         cellData.fCost = 0;
+         cellData.cameFromCell = undefined;
+
+         cell.agentList[ownID] = cellData;
+      });
+   }
 
 
+   // Walk through path
    walkPath() {
 
-      if(this.path.length === 0) return;
+      if(!this.isMoving) return;
 
-      if(this.position.x !== this.target.x
-      || this.position.y !== this.target.y) {
-            
-         this.moveToPosition(this.target);
+      if(!this.hasArrived(this.nextCell)) {
+         this.moveToNextCell();
          return;
       }
 
-      this.startCell = this.path[1];
-      
+      this.setCellVacancy();
+   
       if(this.path.length > 1) this.path.shift();
+      if(this.path.length > 0) this.startCell = this.nextCell = this.path[0];
 
-      if(this.path.length > 0) {
-         this.target    = this.path[0].center;
-         this.startCell = this.path[0];
-      }
-
-      // Has arrived
-      if(this.startCell.x === this.endCell.x
-      && this.startCell.y === this.endCell.y
-      && this.position.x  === this.target.x
-      && this.position.y  === this.target.y) {
-            
+      if(this.hasArrived(this.goalCell)) {
+   
+         this.isMoving  = false;
          this.animState = 0;
-         this.frameY = this.lastFrameY;
+         this.frameY    = this.lastFrameY;
+         
+         this.searchVacancy(this.currentCell);
       }
    }
 
-   moveToPosition(target) {
+   moveToNextCell() {
 
-      let walkSpeed = this.speed;
+      const { x: posX,  y: posY  } = this.position;
+      const { x: nextX, y: nextY } = this.nextCell.center;
+      
+      const deltaX = this.mathFloor_100(nextX -posX);
+      const deltaY = this.mathFloor_100(nextY -posY);
 
-      let isUp    = false;
-      let isDown  = false;
-      let isLeft  = false;
-      let isRight = false;
+      const isLeft  = deltaX < 0;
+      const isRight = deltaX > 0;
+      const isUp    = deltaY < 0;
+      const isDown  = deltaY > 0;
 
-      if(target.x > this.position.x && target.y > this.position.y
-      || target.x < this.position.x && target.y > this.position.y
-      || target.x > this.position.x && target.y < this.position.y
-      || target.x < this.position.x && target.y < this.position.y) {
+      let moveSpeed = this.moveSpeed;
+
+      // if(isDown && isLeft
+      // || isDown && isRight
+      // || isUp   && isLeft
+      // || isUp   && isRight) {
          
-         walkSpeed = this.sqrtSpeed;
+      //    moveSpeed = this.sqrtSpeed;
+      // }
+
+      const dist = Math.round( Math.hypot(deltaX,  deltaY));
+
+      if(dist === 0) {
+         this.position.x = nextX;
+         this.position.y = nextY;
+         return;
       }
 
-      // Go Right
-      if(target.x > this.position.x) {
-         isRight = true;
-         this.position.x += walkSpeed;
-         if(this.position.x + walkSpeed > target.x) this.position.x = target.x;
-      }
+      const moveX = this.mathFloor_100(deltaX /dist * Math.min(dist, moveSpeed));
+      const moveY = this.mathFloor_100(deltaY /dist * Math.min(dist, moveSpeed));
 
-      // Go Left
-      if(target.x < this.position.x) {
-         isLeft = true;
-         this.position.x -= walkSpeed;
-         if(this.position.x - walkSpeed < target.x) this.position.x = target.x;
-      }
-
-      // Go Down
-      if(target.y > this.position.y) {
-         isDown = true;
-         this.position.y += walkSpeed;
-         if(this.position.y + walkSpeed > target.y) this.position.y = target.y;
-      }
-
-      // Go Up
-      if(target.y < this.position.y) {
-         isUp = true;
-         this.position.y -= walkSpeed;
-         if(this.position.y - walkSpeed < target.y) this.position.y = target.y;
-      }
+      this.position.x += moveX;
+      this.position.y += moveY;
 
       if(isDown)  this.frameY = 11;
       if(isUp)    this.frameY = 8; // 9
@@ -313,42 +338,58 @@ class AgentClass {
       if(isDown && isRight) this.frameY = 11;
       if(isUp   && isLeft ) this.frameY = 9;
       if(isUp   && isRight) this.frameY = 8;
-
+    
       this.lastFrameY = this.frameY;
-
-
-
-
-
-      // const walkSpeed = this.speed;
-    
-      // const deltaX   = target.x -this.position.x;
-      // const deltaY   = target.y -this.position.y;
-
-      // const distance = Math.hypot(deltaX,  deltaY);
-      
-      // const moveX = deltaX /distance * Math.min(distance, walkSpeed);
-      // const moveY = deltaY /distance * Math.min(distance, walkSpeed);
-      
-      // this.position.x += moveX;
-      // this.position.y += moveY;
-      
-      // if(deltaX  < 0) this.frameY = 11;
-      // if(deltaX >= 0) this.frameY = 8;
-      // if(deltaY  < 0) this.frameY = 9;
-      // if(deltaY >= 0) this.frameY = 10;
-    
-      // this.lastFrameY = this.frameY;
    }
 
+   setCellVacancy() {
+
+      // Vacant Cell
+      if(this.currentCell !== this.startCell) {
+         
+         this.currentCell.agentID  = undefined;
+         this.currentCell.isVacant = true;
+         this.currentCell = this.startCell;
+      }
+      
+      // Occupied Cell
+      if(this.currentCell.agentID === undefined) this.currentCell.agentID = this.id;
+      this.currentCell.isVacant = false;
+
+      this.startCell = this.path[1];
+   }
+
+   searchVacancy(currentCell) { // <== Tempory (Need Recast)
+
+      if(currentCell.isVacant || currentCell.agentID === this.id) return;
+
+      let nebID_List = currentCell.neighborsList;
+      let vacantPath = [];
+
+      for(let i in nebID_List) {
+         let neighbor = glo.Grid.cellsList[ nebID_List[i] ];
+         vacantPath.push(neighbor);
+      }
+
+      vacantPath.sort((neb) => neb.agentList[this.id].fcost);
+
+      while(vacantPath.length > 0) {
+      
+         this.goalCell = vacantPath[0];
+         this.searchPath();
+         vacantPath.shift();
+      }
+      
+   }
+
+
+   // Draw
    drawPath(ctx) {
       if(this.path.length > 0) {
 
-         // Display scanned neighbors
-         let neighborsColor = "rgba(255, 145, 0, 0.4)";
-   
+         // Display scanned neighbors   
          this.closedSet.forEach(cell => {
-            cell.drawCellColor(ctx, neighborsColor);
+            cell.drawColor(ctx, "rgba(255, 145, 0, 0.4)");
             // cell.drawData(ctx);
          });
    

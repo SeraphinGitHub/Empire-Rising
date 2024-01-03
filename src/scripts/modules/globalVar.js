@@ -13,8 +13,7 @@ module.exports = {
    
    GridParams: {
       cellSize:  40,
-      height:    960 *1.5,
-      width:     960 *1.5,
+      gridSize:  1440,
       cellRange: 0,
    },
 

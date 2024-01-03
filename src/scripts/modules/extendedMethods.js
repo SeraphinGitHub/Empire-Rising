@@ -7,7 +7,7 @@
 const AgentClass = require("../classes/AgentClass.js");
 const unitParam  = require("./unitsParams.js");
 const collision  = require("./collisions.js");
-const glo  = require("./globalVar.js");
+const glo        = require("./globalVar.js");
 
 
 // ================================================================================================
@@ -18,7 +18,7 @@ module.exports = {
    clearCanvas(canvas) {
 
       if(canvas === "isoSelect") {
-         return glo.Ctx[canvas].clearRect(0, 0, glo.GridParams.width, glo.GridParams.height);
+         return glo.Ctx[canvas].clearRect(0, 0, glo.GridParams.gridSize, glo.GridParams.gridSize);
       }
 
       glo.Ctx[canvas].clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
@@ -32,9 +32,9 @@ module.exports = {
       
       if(isoGridPos
       && isoGridPos.x > 0
-      && isoGridPos.x < glo.Grid.width
+      && isoGridPos.x < glo.GridParams.gridSize
       && isoGridPos.y > 0
-      && isoGridPos.y < glo.Grid.height) {
+      && isoGridPos.y < glo.GridParams.gridSize) {
    
          return true;
       }
@@ -95,8 +95,8 @@ module.exports = {
    screenPos_toGridPos(screenPos) {
    
       const screenX        = screenPos.x;
-      const doubleScreenY  = screenPos.y    *2;
-      const half_GridWidth = glo.Grid.width *0.5;
+      const doubleScreenY  = screenPos.y *2;
+      const half_GridWidth = glo.GridParams.gridSize *0.5;
 
       // Isometric <== Cartesian
       return {
@@ -253,7 +253,8 @@ module.exports = {
       }
       
       glo.ComputedCanvas.e = glo.ScrollOffset.x;
-      glo.ComputedCanvas.f = glo.ScrollOffset.y *2 -glo.GridParams.height /2;
+      glo.ComputedCanvas.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
+      
       glo.CanvasObj.isoSelect.style.transform = glo.ComputedCanvas.toString();
    },
 
@@ -340,25 +341,26 @@ module.exports = {
       });
    },
 
-   createNewAgent(categoryName, typeName, cellID, diffImgSrc) {
+   createNewAgent(divisionName, typeName, cellID, diffImgSrc) {
 
       const avID     = glo.AvailableIDArray[0];
-      const category = unitParam[categoryName];
-      const type     = category.type[typeName];
+      const division = unitParam[divisionName];
+      const unitType = division.unitType[typeName];
 
-      let imgSrc     = type.imgSrc;
+      let imgSrc     = unitType.imgSrc;
       if(diffImgSrc !== "") imgSrc = diffImgSrc;
    
-      glo.CurrentPop += category.popCost;
-      glo.AvailableIDArray.splice(0, category.popCost);
+      glo.CurrentPop += division.popCost;
+      glo.AvailableIDArray.splice(0, division.popCost);
       
       const agentParams = {
          id:          avID,
-         type:        type,
-         imgSrc:      imgSrc,
-         popCost:     category.popCost,
-         collider:    category.collider,
-         startCell:   glo.Grid.cellsList[cellID], // Tempory until buildings class created
+         unitType,
+         imgSrc,
+         moveSpeed:   unitType.moveSpeed,
+         popCost:     division.popCost,
+         collider:    division.collider,
+         startCell:   glo.Grid.cellsList[cellID], // <== Tempory until create JS file "BuildingsClass"
       };
 
       this.cycleList(glo.Grid.cellsList, (cell) => {
