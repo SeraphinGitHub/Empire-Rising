@@ -5,15 +5,28 @@
 // Agent Class
 // =====================================================================
 class AgentClass {
-   constructor(id, startCell, isEuclidean) {
+   constructor(params) {
 
-      this.id = id;
-      this.startCell = startCell;
+      this.id       = params.id;
+      this.type     = params.type;
+      this.popCost  = params.popCost;
+      this.collider = params.collider;
+      this.isSelected = false;
+
+      // Position
+      this.position = {
+         x: params.startCell.center.x, // Tempory
+         y: params.startCell.center.y, // Tempory
+      };
+
+      // Pathfinding
+      this.startCell   = params.startCell;
+      this.currentCell = params.startCell;
       this.endCell;
-      this.openList = [];
-      this.closedList = [];
-      this.path = [];
-      this.isEuclidean = isEuclidean; // Can move diagonally if "true"
+      this.path        = [];
+      this.openList    = [];
+      this.closedList  = [];
+      this.isEuclidean = params.isEuclidean;
    }
 
    calcHeuristic(currentCell) {
@@ -136,7 +149,7 @@ class AgentClass {
          for(let i = 0; i < this.path.length; i++) {
    
             let currentCell = this.path[i];
-            this.drawHitbox(ctx, i, currentCell);
+            this.drawWalkPath(ctx, i, currentCell);
             
             if(i +1 < this.path.length) {
                let nextCell = this.path[i +1];
@@ -162,7 +175,7 @@ class AgentClass {
       ctx.stroke();
    }
 
-   drawHitbox(ctx, i, currentCell, showData) {
+   drawWalkPath(ctx, i, currentCell, showData) {
       
       let ratio = 0.7; // 70%
       
@@ -181,14 +194,27 @@ class AgentClass {
       }, 100 *i);
    }
 
-   drawAgent(ctx, currentCell) {
+   drawCollider(ctx, gridPos) {
 
-      ctx.fillStyle = "yellow";
+      ctx.fillStyle = "red";
       ctx.beginPath();
       ctx.arc(
-         currentCell.center.x,
-         currentCell.center.y,
-         currentCell.size /2, 0, Math.PI * 2
+         gridPos.x,
+         gridPos.y + this.collider.offsetY,
+         this.collider.radius, 0, Math.PI * 2
+      );
+      ctx.fill();
+      ctx.closePath();
+   }
+
+   drawAgent(ctx, color) {
+      
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(
+         this.position.x,
+         this.position.y,
+         this.popCost *20, 0, Math.PI * 2
       );
       ctx.fill();
       ctx.closePath();
