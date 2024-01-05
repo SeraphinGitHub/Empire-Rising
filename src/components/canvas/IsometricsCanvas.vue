@@ -18,7 +18,7 @@
    canvas {
       z-index: 0;
       position: fixed;
-      transform: rotateZ(-45deg);
+      transform: translate(0%, -50%) rotateZ(-45deg);
       background: mediumseagreen;
    }
 </style>
