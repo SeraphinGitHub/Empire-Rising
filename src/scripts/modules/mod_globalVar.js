@@ -2,7 +2,7 @@
 "use strict"
 
 // ================================================================================================
-// Global Variables
+// thisbal Variables
 // ================================================================================================
 module.exports = {
 
@@ -29,7 +29,7 @@ module.exports = {
       borderColor:   "dodgerblue",
       filledColor:   "rgba(30, 144, 255, 0.3)",
       lineWidth:     2,
-      isSelectArea : false,
+      isSelecting : false,
    },
 
    Cos_45deg:  0.707,
@@ -41,17 +41,15 @@ module.exports = {
    Ctx:        undefined,
    Grid:       undefined,
 
-   AgentsList:        {},
-   SelectedUnitsList: {},
+   IsoGridPos: undefined,
+   HoverCell:  undefined,
+   
    AvailableIDArray:  [],
+   AgentsList:        {},
+   OldSelectList:     {},
+   CurrentSelectList: {},
 
    MaxPop:    20,
    CurrentPop: 0,
-   
-   cycleList(list, callback) {
 
-      for(let i in list) {
-         callback(list[i]);
-      }
-   },
 }

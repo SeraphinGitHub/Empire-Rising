@@ -250,19 +250,6 @@ class CellClass {
       );
    }
 
-   drawHover(ctx, getCell, color) {
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 4;
-   
-      ctx.strokeRect(
-         getCell.position.x,
-         getCell.position.y,
-         this.size,
-         this.size
-      );
-   }
-
    drawID(ctx) {
 
       ctx.fillStyle = "black";

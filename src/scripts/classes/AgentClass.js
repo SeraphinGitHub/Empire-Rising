@@ -11,6 +11,7 @@ class AgentClass {
       this.type     = params.type;
       this.popCost  = params.popCost;
       this.collider = params.collider;
+      this.isSelected = false;
 
       // Position
       this.position = {
