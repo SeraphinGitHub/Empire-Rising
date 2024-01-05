@@ -5,27 +5,46 @@
 // Agent Class
 // =====================================================================
 class AgentClass {
-   constructor(startCell, endCell, isEuclidean) {
+   constructor(params) {
 
-      this.startCell = startCell;
-      this.endCell = endCell;
-      this.openList = [startCell];
-      this.closedList = [];
-      this.pathArray = [];
-      this.isEuclidean = isEuclidean; // Can move diagonally if "true"
+      this.id       = params.id;
+      this.type     = params.type;
+      this.popCost  = params.popCost;
+      this.collider = params.collider;
+      this.isSelected = false;
+
+      // Position
+      this.position = {
+         x: params.startCell.center.x, // Tempory
+         y: params.startCell.center.y, // Tempory
+      };
+
+      // Pathfinding
+      this.startCell   = params.startCell;
+      this.currentCell = params.startCell;
+      this.endCell;
+      this.path        = [];
+      this.openList    = [];
+      this.closedList  = [];
+      this.isEuclidean = params.isEuclidean;
    }
 
-   calcHeuristic(cell) {
+   calcHeuristic(currentCell) {
       
-      let distX = Math.abs(this.endCell.center.x -cell.center.x);
-      let distY = Math.abs(this.endCell.center.y -cell.center.y);
+      let distX = Math.abs(this.endCell.center.x -currentCell.center.x);
+      let distY = Math.abs(this.endCell.center.y -currentCell.center.y);
       let hypotenuse = Math.floor(Math.sqrt(distX * distX + distY * distY));
 
       if(!this.isEuclidean) return distX + distY;
       else return hypotenuse;
    }
 
-   searchPath() {
+   searchPath(cellsList) {
+
+      this.openList = [this.startCell];
+      this.closedList = [];
+      this.path = [];
+
       while(this.openList.length > 0) {
 
          let lowestIndex = 0;
@@ -38,17 +57,17 @@ class AgentClass {
          }
 
          let currentCell = this.openList[lowestIndex];
-         let nebList = currentCell.neighborsList;         
+         let nebList = currentCell.neighborsList;
 
          // Scan cell neighbors
          for(let i in nebList) {
-            let neighbor = nebList[i];
+            let neighbor = cellsList[ nebList[i] ];
             
             // If this neighbor hasn't been scanned yet
             if(!this.closedList.includes(neighbor) && !neighbor.isBlocked) {
                let possibleG = currentCell.gCost +1;
                
-               if(!this.openList.includes(neighbor)) this.checkWallDiag(nebList, neighbor);
+               if(!this.openList.includes(neighbor)) this.checkBlockedDiag(nebList, neighbor);
                else if(possibleG >= neighbor.gCost) continue;
                
                neighbor.hCost = this.calcHeuristic(neighbor);
@@ -57,41 +76,52 @@ class AgentClass {
                neighbor.cameFromCell = currentCell;
             }
          }
-         
-         // If reached destination
-         if(currentCell.id === this.endCell.id) {
-   
-            let temporyCell = currentCell;
-            this.pathArray.push(temporyCell);
-   
-            while(temporyCell.cameFromCell) {
-               this.pathArray.push(temporyCell.cameFromCell);
-               temporyCell = temporyCell.cameFromCell;
-            }
 
-            this.pathArray.reverse();
-            return this.pathArray;
-         }
 
          // Transfert currentCell to closedList
          this.openList.splice(lowestIndex, 1);
          this.closedList.push(currentCell);
+
+
+         // If reached destination
+         if(currentCell.id === this.endCell.id) {
+            
+            let temporyCell = currentCell;
+            this.path.push(temporyCell);
+            
+            // Set found path
+            while(temporyCell.cameFromCell) {
+               this.path.push(temporyCell.cameFromCell);
+               temporyCell = temporyCell.cameFromCell;
+            }
+
+            // Reset neighbors data
+            this.closedList.forEach(cell => {
+               cell.hCost = 0;
+               cell.gCost = 0;
+               cell.fCost = 0;
+               cell.cameFromCell = undefined;
+            });
+
+            this.path.reverse();
+            return this.path;
+         }
       }
 
       return [];
    }
 
-   checkWallDiag(nebList, neighbor) {
+   checkBlockedDiag(nebList, neighbor) {
       
-      let topNeb =    nebList["top"];
-      let rightNeb =  nebList["right"];
+      let topNeb    = nebList["top"];
+      let rightNeb  = nebList["right"];
       let bottomNeb = nebList["bottom"];
-      let leftNeb =   nebList["left"];
+      let leftNeb   = nebList["left"];
 
-      let topLeftNeb =     nebList["topLeft"];
-      let topRightNeb =    nebList["topRight"];
+      let topLeftNeb     = nebList["topLeft"];
+      let topRightNeb    = nebList["topRight"];
       let bottomRightNeb = nebList["bottomRight"];
-      let bottomLeftNeb =  nebList["bottomLeft"];
+      let bottomLeftNeb  = nebList["bottomLeft"];
 
       if( !(topNeb    && leftNeb  && topNeb.isBlocked    && leftNeb.isBlocked  && neighbor === topLeftNeb
          || topNeb    && rightNeb && topNeb.isBlocked    && rightNeb.isBlocked && neighbor === topRightNeb
@@ -116,13 +146,13 @@ class AgentClass {
          });
    
          // Display path
-         for(let i = 0; i < this.pathArray.length; i++) {
+         for(let i = 0; i < this.path.length; i++) {
    
-            let currentCell = this.pathArray[i];
-            this.drawHitbox(ctx, i, currentCell);
+            let currentCell = this.path[i];
+            this.drawWalkPath(ctx, i, currentCell);
             
-            if(i +1 < this.pathArray.length) {
-               let nextCell = this.pathArray[i +1];
+            if(i +1 < this.path.length) {
+               let nextCell = this.path[i +1];
                this.drawPath(ctx, currentCell, nextCell);
             }
          }
@@ -145,7 +175,7 @@ class AgentClass {
       ctx.stroke();
    }
 
-   drawHitbox(ctx, i, currentCell, showData) {
+   drawWalkPath(ctx, i, currentCell, showData) {
       
       let ratio = 0.7; // 70%
       
@@ -163,4 +193,32 @@ class AgentClass {
 
       }, 100 *i);
    }
+
+   drawCollider(ctx, gridPos) {
+
+      ctx.fillStyle = "red";
+      ctx.beginPath();
+      ctx.arc(
+         gridPos.x,
+         gridPos.y + this.collider.offsetY,
+         this.collider.radius, 0, Math.PI * 2
+      );
+      ctx.fill();
+      ctx.closePath();
+   }
+
+   drawAgent(ctx, color) {
+      
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(
+         this.position.x,
+         this.position.y,
+         this.popCost *20, 0, Math.PI * 2
+      );
+      ctx.fill();
+      ctx.closePath();
+   }
 }
+
+module.exports = AgentClass;

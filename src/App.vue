@@ -16,8 +16,8 @@
    import IsoCanvas   from "./components/canvas/IsometricsCanvas.vue"
    import CartCanvas  from "./components/canvas/CartesiansCanvas.vue"
 
-   // Scripts 
-   import GameHandler  from "./scripts/gameHandler.js"
+   // Scripts
+   import GameHandler  from "./scripts/_GameHandler.js"
 
    export default {
       name: "App",
@@ -40,6 +40,11 @@
 
 
 <style>
+
+   .canvas-selection {
+      cursor: url("../public/GUI/cursors.png"), auto !important;
+   }
+
    .flex {
       /* Reset */
       margin: 0;

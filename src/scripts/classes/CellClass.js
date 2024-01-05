@@ -165,7 +165,29 @@ class CellClass {
    
 
    // NeighborsList
-   initNeighborsList(cellsList) {
+   initNeighborsList() {
+
+      this.setNeb_Left ("left");
+      this.setNeb_Right("right");
+      this.setNeb_Top(   () => { this.addNeb("top"   ) });
+      this.setNeb_Bottom(() => { this.addNeb("bottom") });
+
+      // If Euclidean ==> Can search diagonally
+      if(this.isEuclidean) {
+      
+         this.setNeb_Top(() => {
+            this.setNeb_Left ("topLeft");
+            this.setNeb_Right("topRight");
+         });
+
+         this.setNeb_Bottom(() => {
+            this.setNeb_Left ("bottomLeft");
+            this.setNeb_Right("bottomRight");
+         });
+      }
+   } 
+
+   addNeb(side) {
 
       const nebID = {
          top:   `${this.i   }-${this.j -1}`,
@@ -179,40 +201,17 @@ class CellClass {
          bottomLeft: `${this.i -1}-${this.j +1}`,
       };
 
-      this.setNeb_Left (cellsList, nebID, nebID.left);
-      this.setNeb_Right(cellsList, nebID, nebID.right);
-      this.setNeb_Top(   () => { this.addNeb(cellsList, nebID, nebID.top   ) });
-      this.setNeb_Bottom(() => { this.addNeb(cellsList, nebID, nebID.bottom) });
-
-      // If Euclidean ==> Can search diagonally
-      if(this.isEuclidean) {
-      
-         this.setNeb_Top(() => {
-            this.setNeb_Left (cellsList, nebID, nebID.topLeft);
-            this.setNeb_Right(cellsList, nebID, nebID.topRight);
-         });
-
-         this.setNeb_Bottom(() => {
-            this.setNeb_Left (cellsList, nebID, nebID.bottomLeft);
-            this.setNeb_Right(cellsList, nebID, nebID.bottomRight);
-         });
-      }
-   } 
-
-   addNeb(cellsList, nebID, id) {
-
-      let side = Object.keys(nebID).find(key => nebID[key] === id);
-      this.neighborsList[side] = cellsList[id];
+      this.neighborsList[side] = nebID[side];
    }
 
 
    // Set Neighbors
-   setNeb_Left(cellsList, nebID, id) {
-      if(this.i -1 >= 0) this.addNeb(cellsList, nebID, id);
+   setNeb_Left(side) {
+      if(this.i -1 >= 0) this.addNeb(side);
    }
 
-   setNeb_Right(cellsList, nebID, id) {
-      if(this.i +1 < this.collums) this.addNeb(cellsList, nebID, id);
+   setNeb_Right(side) {
+      if(this.i +1 < this.collums) this.addNeb(side);
    }
 
    setNeb_Top(callback) {
@@ -246,19 +245,6 @@ class CellClass {
       ctx.strokeRect(
          this.x,
          this.y,
-         this.size,
-         this.size
-      );
-   }
-
-   drawHover(ctx, getCell, color) {
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 4;
-   
-      ctx.strokeRect(
-         getCell.position.x,
-         getCell.position.y,
          this.size,
          this.size
       );
