@@ -1,7 +1,7 @@
 
 "use strict"
 
-const glo = require("./mod_globalVar.js");
+const glo = require("./globalVar.js");
 
 // ================================================================================================
 // Units Parameters
@@ -13,53 +13,53 @@ module.exports = {
 
       collider: {
          offsetY: 0,
-         radius:  glo.GridParams.cellSize *0.1,
+         radius:  glo.GridParams.cellSize *0.3,
       },
 
-      type: {
+      unitType: {
          worker: {
             health: 200,
             armor:    0,
             damages: 15,
-            walkSpeed:  15,
+            moveSpeed:  4,
             buildSpeed: 10,
             attackSpeed: 7,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "Units/Download36395.png",
          },
 
          swordsman: {
             health: 500,
             armor:  200,
             damages: 40,
-            walkSpeed:   12,
+            moveSpeed:   3,
             attackSpeed: 12,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: `Units/Swordsman_${glo.faction}.png`,
          },
          
          bowman: {
             health: 300,
             armor:   80,
             damages: 60,
-            walkSpeed:   15,
+            moveSpeed:   4,
             attackSpeed: 14,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
          
          spearman: {
             health: 400,
             armor:  120,
             damages: 50,
-            walkSpeed:   12,
+            moveSpeed:   3,
             attackSpeed: 10,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
       },
    },
@@ -72,27 +72,27 @@ module.exports = {
          radius:  glo.GridParams.cellSize *0.2,
       },
 
-      type: {
+      unitType: {
          swordsman: {
             health: 700,
             armor:  300,
             damages: 50,
-            walkSpeed:   20,
+            moveSpeed:   6,
             attackSpeed: 12,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
 
          bowman: {
             health: 500,
             armor:  130,
             damages: 70,
-            walkSpeed:   22,
+            moveSpeed:   7,
             attackSpeed: 14,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
       },
    },
@@ -105,27 +105,27 @@ module.exports = {
          radius:  glo.GridParams.cellSize *0.3,
       },
 
-      type: {
+      unitType: {
          ballista: {
             health: 1200,
             armor:   500,
             damages: 200,
-            walkSpeed:   10,
+            moveSpeed:   2,
             attackSpeed:  8,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
 
          catapult: {
             health: 2000,
             armor:   700,
             damages: 160,
-            walkSpeed:    8,
+            moveSpeed:    1,
             attackSpeed: 10,
             animationDelay: 0.5,
             
-            imageSrc: "",
+            imgSrc: "",
          },
       },
    },

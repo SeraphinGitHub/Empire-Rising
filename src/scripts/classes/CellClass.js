@@ -5,14 +5,12 @@
 // Cell Class
 // =====================================================================
 class CellClass {
-   constructor(collums, rows, size, isEuclidean, i, j) {
+   constructor(cellPerSide, size, i, j) {
       
       this.id =`${i}-${j}`;
 
-      this.collums = collums;
-      this.rows = rows;
+      this.cellPerSide = cellPerSide;
       this.size = size;
-      this.isEuclidean = isEuclidean;
 
       this.i = i;
       this.j = j;
@@ -24,15 +22,33 @@ class CellClass {
          y: this.y + size/2,
       };
 
+      // this.neighborsList = [
+      //    `${this.i -1}-${this.j -1}`,
+      //    `${this.i   }-${this.j -1}`,
+      //    `${this.i +1}-${this.j -1}`,
+      //    `${this.i +1}-${this.j   }`,
+      //    `${this.i +1}-${this.j +1}`,
+      //    `${this.i   }-${this.j +1}`,
+      //    `${this.i -1}-${this.j +1}`,
+      //    `${this.i -1}-${this.j   }`,
+      // ];
+
+      this.agentID = undefined;
+      this.agentList     = {};
       this.neighborsList = {};
-      this.cameFromCell;
-      
-      this.fCost = 0;
-      this.gCost = 0;
-      this.hCost = 0;
       
       this.zIndex;
       this.isBlocked = false;
+      this.isVacant  = true;
+
+      this.img;
+
+      this.init();
+   }
+
+   init() {
+      this.img = new Image();
+      this.img.src = "Terrain/Herb_01.png";
    }
 
    // Collision
@@ -167,24 +183,20 @@ class CellClass {
    // NeighborsList
    initNeighborsList() {
 
-      this.setNeb_Left ("left");
-      this.setNeb_Right("right");
       this.setNeb_Top(   () => { this.addNeb("top"   ) });
+      this.setNeb_Right("right");
       this.setNeb_Bottom(() => { this.addNeb("bottom") });
+      this.setNeb_Left ("left");
 
-      // If Euclidean ==> Can search diagonally
-      if(this.isEuclidean) {
-      
-         this.setNeb_Top(() => {
-            this.setNeb_Left ("topLeft");
-            this.setNeb_Right("topRight");
-         });
+      this.setNeb_Top(() => {
+         this.setNeb_Left ("topLeft");
+         this.setNeb_Right("topRight");
+      });
 
-         this.setNeb_Bottom(() => {
-            this.setNeb_Left ("bottomLeft");
-            this.setNeb_Right("bottomRight");
-         });
-      }
+      this.setNeb_Bottom(() => {
+         this.setNeb_Right("bottomRight");
+         this.setNeb_Left ("bottomLeft");
+      });
    } 
 
    addNeb(side) {
@@ -211,7 +223,7 @@ class CellClass {
    }
 
    setNeb_Right(side) {
-      if(this.i +1 < this.collums) this.addNeb(side);
+      if(this.i +1 < this.cellPerSide) this.addNeb(side); // Collums
    }
 
    setNeb_Top(callback) {
@@ -219,11 +231,18 @@ class CellClass {
    }
 
    setNeb_Bottom(callback) {
-      if(this.j +1 < this.rows) callback();
+      if(this.j +1 < this.cellPerSide) callback(); // Rows
    }
 
 
    // Draw
+   drawInfos(ctx) {
+         
+      this.drawFrame(ctx);
+      // this.drawCenter(ctx);
+      // this.drawID(ctx);
+   }
+
    drawCenter(ctx) {
 
       ctx.fillStyle = "red";
@@ -240,7 +259,7 @@ class CellClass {
    drawFrame(ctx) {
 
       ctx.strokeStyle = "black";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1;
    
       ctx.strokeRect(
          this.x,
@@ -253,13 +272,13 @@ class CellClass {
    drawID(ctx) {
 
       ctx.fillStyle = "black";
-      ctx.font = "18px Verdana";
+      ctx.font = "16px Verdana";
       ctx.textAlign = "center";
 
       ctx.fillText(
          this.id,
          this.center.x,
-         this.center.y -15
+         this.center.y
       );
    }
 
@@ -291,21 +310,6 @@ class CellClass {
          this.center.x -offsetX,
          this.center.y +27
       );      
-   }
-
-   drawWall(ctx, isTempory) {
-
-      let wallColor;
-      if(isTempory) wallColor = "rgba(105, 105, 105, 0.45)";
-      else wallColor = "dimgray";
-      
-      ctx.fillStyle = wallColor;
-      ctx.fillRect(
-         this.x,
-         this.y,
-         this.size,
-         this.size
-      );
    }
 
    drawWallCollider(ctx, isDiamond, showWallCol) {
@@ -341,7 +345,14 @@ class CellClass {
       ctx.stroke();
    }
 
-   drawCellColor(ctx, color) {
+   drawVacancy(ctx) {
+
+      if(this.isVacant) return;
+      
+      this.drawColor(ctx, "rgba(255, 0, 0, 0.6)")
+   }
+
+   drawColor(ctx, color) {
 
       ctx.fillStyle = color;
       ctx.fillRect(
@@ -350,8 +361,63 @@ class CellClass {
          this.size,
          this.size
       );
+   }
 
-      this.drawFrame(ctx);
+   drawSprite(ctx, gridPos, scrollOffset) {
+
+      // if(this.id !== "10-17") return;
+
+      const frameX    = 0;
+      const srcHeight = 1000;
+      const srcWidth  = 1500;
+      const destSize  = 40;
+      const offsetX   = 23;
+      const offsetY   = 23;
+
+      ctx.drawImage(
+         this.img,
+
+         // Source
+         frameX *srcWidth,
+         0,
+         srcWidth,
+         srcHeight,
+         
+         // Destination
+         gridPos.x -offsetX +scrollOffset.x,
+         gridPos.y -offsetY +scrollOffset.y,
+         destSize +10,
+         destSize,
+      );
+   }
+
+   // --- Tempory ---
+   drawWall(ctx, gridPos, scrollOffset) {
+
+      if(!this.isBlocked) return;
+      
+      this.img.src = "Terrain/iso_stone.png";
+
+      const srcSize  = 1024;
+      const destSize = 55;
+      const offsetX  = 30;
+      const offsetY  = 40;
+
+      ctx.drawImage(
+         this.img,
+
+         // Source
+         0,
+         0,
+         srcSize,
+         srcSize,
+         
+         // Destination
+         gridPos.x -offsetX +scrollOffset.x,
+         gridPos.y -offsetY +scrollOffset.y,
+         destSize +10,
+         destSize,
+      );
    }
 
 }

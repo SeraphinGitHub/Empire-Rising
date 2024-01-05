@@ -40,7 +40,6 @@
 
 
 <style>
-
    .canvas-selection {
       cursor: url("../public/GUI/cursors.png"), auto !important;
    }
@@ -59,7 +58,7 @@
 
    body {
       height: 100%;
-      background-color: rgb(30, 30, 30);
+      background-color: rgb(60, 60, 60);
    }
 
    p {

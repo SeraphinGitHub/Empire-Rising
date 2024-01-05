@@ -10,14 +10,13 @@ const CellClass = require("./CellClass.js");
 class GridClass {
    constructor(params) {
 
-      this.cellsList = {};
-      this.width = params.width;
-      this.height = params.height;
-      this.cellSize = params.cellSize;
-      this.isEuclidean = params.isEuclidean;
-      
-      this.collums = (this.width  -(this.width  %this.cellSize)) /this.cellSize;
-      this.rows    = (this.height -(this.height %this.cellSize)) /this.cellSize;
+      this.cellsList   = {};
+      this.cellSize    = params.cellSize;
+      this.gridSize    = params.gridSize;
+      this.cellRange   = params.cellRange;
+      this.cellPerSide = (this.gridSize -(this.gridSize %this.cellSize)) /this.cellSize;
+
+      this.init();
    }
 
    rand(maxValue) {
@@ -27,10 +26,10 @@ class GridClass {
    init() {
 
       // Init grid
-      for(let i = 0; i < this.collums; i++) {
-         for(let j = 0; j < this.rows; j++) {
+      for(let i = 0; i < this.cellPerSide; i++) {  // Collums
+         for(let j = 0; j < this.cellPerSide; j++) {  // Rows
             
-            const cell = new CellClass(this.collums, this.rows, this.cellSize, this.isEuclidean, i, j);
+            const cell = new CellClass(this.cellPerSide, this.cellSize, i, j);
             this.cellsList[cell.id] = cell;
          }
       }
@@ -40,6 +39,8 @@ class GridClass {
 
          this.cellsList[i].initNeighborsList();
       }
+
+      this.cellRange = this.cellPerSide / this.cellSize;
    }
 }
 

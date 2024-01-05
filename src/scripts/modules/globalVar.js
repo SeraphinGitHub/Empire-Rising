@@ -2,33 +2,44 @@
 "use strict"
 
 // ================================================================================================
-// thisbal Variables
+// Global Variables
 // ================================================================================================
 module.exports = {
 
    Debug: {
       showWallCol: false,
-      showCellInfo: true,
       hoverColor: "blue",
    },
    
    GridParams: {
-      cellSize: 80,
-      height: 960,
-      width: 960,
-      isEuclidean: true,
+      cellSize:  40,
+      gridSize:  1440,
+      cellRange: 0,
    },
 
    SelectArea: {
-
       oldPos: {
-         cartesian: undefined,
-         isometric: undefined,
+         cartesian: {
+            x: 0,
+            y: 0,
+         },
+
+         isometric: {
+            x: 0,
+            y: 0,
+         },
       },
 
       currentPos: {
-         cartesian: undefined,
-         isometric: undefined,
+         cartesian: {
+            x: 0,
+            y: 0,
+         },
+         
+         isometric: {
+            x: 0,
+            y: 0,
+         },
       },
 
       height: undefined,
@@ -39,6 +50,8 @@ module.exports = {
       lineWidth:     2,
       isSelecting : false,
    },
+
+   faction: "Orange",
    
 
    // --- Constants ---
@@ -49,13 +62,29 @@ module.exports = {
    CanvasObj:  undefined,
    Ctx:        undefined,
    Grid:       undefined,
+   
+   GridAngle:       undefined,
+   ViewportOffsetX: undefined,
+   ViewportOffsetY: undefined,
+   
 
 
    // --- Positions ---
-   IsoGridPos: undefined,
-   HoverCell:  undefined,
+   IsoGridPos: {
+      x: 0,
+      y: 0,
+   },
+
+   HoverCell:  {
+      id: "",
+
+      gridPos: {
+         x: 0,
+         y: 0,
+      },
+   },
    
-   ScrollOffset: { // <== Tempory
+   ScrollOffset: {
       x: 0,
       y: 0,
    },
@@ -69,20 +98,20 @@ module.exports = {
 
 
    // --- Ints ---
-   CursorSize: 50,
    MouseSpeed: 5,
-   MaxPop:    20,
+   MaxPop:     2000,
    CurrentPop: 0,
 
 
    // --- TEST ---
    TestViewport: {
-      x: 400,
-      y: 250,
-      width:  800, // *0.5 => x
-      height: 500, // *0.5 => y
+      x: 0,
+      y: 0,
+      width:  1000, // *0.5 => x
+      height: 650,  // *0.5 => y
    },
 
-   ViewportSqr: undefined,
+   ViewportSqr:    undefined,
+   ComputedCanvas: undefined,
 
 }
