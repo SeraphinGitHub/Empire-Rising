@@ -25,7 +25,7 @@
       position: relative;
       align-content: flex-start;
       height: 100%;
-      width: 20%;
+      width: 15%;
    }
 
    span p {

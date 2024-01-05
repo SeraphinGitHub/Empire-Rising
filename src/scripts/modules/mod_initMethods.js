@@ -10,6 +10,7 @@ module.exports = {
    
    setDOM(document) {
       return {
+         message: document.querySelector(".debug-message p"),
          cartX:   document.querySelector(".coordinates .cartX"),
          cartY:   document.querySelector(".coordinates .cartY"),
          isoX:    document.querySelector(".coordinates .isoX"),
@@ -98,4 +99,13 @@ module.exports = {
       }
    },
    
+   // --- Tempory ---
+   setViewportSqr() {
+      return {
+         x: (glo.CanvasObj.selection.width  -glo.TestViewport.width ) *0.5,
+         y: (glo.CanvasObj.selection.height -glo.TestViewport.height) *0.5,
+         width:  glo.TestViewport.width,
+         height: glo.TestViewport.height,
+      };
+   }
 }

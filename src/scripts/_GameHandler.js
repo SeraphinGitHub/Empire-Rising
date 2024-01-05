@@ -33,12 +33,16 @@ const runAnimation = () => {
    // ext.clearCanvas("buildings");
    ext.clearCanvas("units");
 
+   // --- Tempory ---
+   ext.scrollCam();
+   // --- Tempory ---
+
    ext.cycleList(glo.Grid.cellsList, (cell) => draw.cellInfo(cell));
 
    ext.cycleList(glo.AgentsList, (agent) => {
       let gridPos = ext.gridPos_toScreenPos(agent.position);
       agent.drawAgent(glo.Ctx.isoSelect, "yellow");
-      agent.drawCollider(glo.Ctx.units, gridPos);
+      agent.drawCollider(glo.Ctx.units, gridPos, glo.ScrollOffset);
    });
 
    ext.cycleList(glo.OldSelectList,     (agent) => agent.drawAgent(glo.Ctx.isoSelect, "lime"));
@@ -63,9 +67,11 @@ module.exports = {
          glo.CanvasObj = init.setCanvas(document);
          glo.Ctx       = init.setCtx(glo.CanvasObj);
          
-         init.setAvailableID();
-         runAnimation();
+         // --- Tempory ---
+         glo.ViewportSqr = init.setViewportSqr();
          
+         init.setAvailableID();
+
          glo.Grid.init();
          mouseHandler.init();
          keyboardHandler.init();
@@ -77,6 +83,8 @@ module.exports = {
          ext.createNewAgent("machinery", "ballista", "8-5");
          ext.createNewAgent("machinery", "catapult", "6-9");
          // --- Tempory ---
+
+         runAnimation();
       }
    }
 }

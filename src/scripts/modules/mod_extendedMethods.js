@@ -122,6 +122,41 @@ module.exports = {
       }
    },
 
+   scrollCam() {
+
+      // --- Draw Viewport - Tempory ---
+      glo.Ctx.selection.strokeStyle = "yellow";
+      glo.Ctx.selection.lineWidth = 4;
+      glo.Ctx.selection.strokeRect(
+         glo.ViewportSqr.x,
+         glo.ViewportSqr.y,
+         glo.ViewportSqr.width,
+         glo.ViewportSqr.height,
+      );
+      // --- Draw Viewport - Tempory ---
+      
+
+      const mousePos = glo.SelectArea.currentPos.cartesian;
+      
+      if(mousePos) {
+         
+         const cursorSqr = {
+            x: mousePos.x,
+            y: mousePos.y,
+            width:  glo.CursorSize,
+            height: glo.CursorSize,
+         }
+   
+         const cursor   = collision.extractSides(cursorSqr);
+         const viewport = collision.extractSides(glo.ViewportSqr);
+
+         if(collision.line_toLine(cursor.left, viewport.top   )) glo.ScrollOffset.y += glo.MouseSpeed;
+         if(collision.line_toLine(cursor.top,  viewport.right )) glo.ScrollOffset.x -= glo.MouseSpeed;
+         if(collision.line_toLine(cursor.left, viewport.bottom)) glo.ScrollOffset.y -= glo.MouseSpeed;
+         if(collision.line_toLine(cursor.top,  viewport.left  )) glo.ScrollOffset.x += glo.MouseSpeed;
+      }
+   },
+
    updateUnitsList(collideCallback, first, second, agent) {
       
       if(collideCallback(first, second)) glo.CurrentSelectList[agent.id] = agent;
@@ -225,6 +260,6 @@ module.exports = {
       
       glo.AgentsList[avID] = new AgentClass(agentParams);
       glo.AgentsList[avID].drawAgent(glo.Ctx.isoSelect, "yellow");
-   },
+   },   
    
 }

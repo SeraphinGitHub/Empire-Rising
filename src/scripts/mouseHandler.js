@@ -4,8 +4,8 @@
 // ================================================================================================
 // Scripts Import
 // ================================================================================================
-const glo  = require("./modules/mod_globalVar.js");
-const ext  = require("./modules/mod_extendedMethods.js");
+const glo = require("./modules/mod_globalVar.js");
+const ext = require("./modules/mod_extendedMethods.js");
 
 
 // ================================================================================================
