@@ -10,20 +10,17 @@
 </template>
 
 <script>
+
    // Components 
    import Coordinates from "./components/debug/Coordinates.vue"
    import IsoCanvas   from "./components/canvas/IsometricsCanvas.vue"
    import CartCanvas  from "./components/canvas/CartesiansCanvas.vue"
 
    // Scripts
-   import GameHandler  from "./scripts/_GameHandler.js"
+   import { GameHandler }  from "./scripts/_GameHandler.ts"
 
    export default {
       name: "App",
-
-      mixins: [
-         GameHandler,
-      ],
 
       components: {
          Coordinates,
@@ -32,7 +29,7 @@
       },
 
       mounted() {
-         this.initGameHandler(document);
+         GameHandler.init(document);
       },
    }
 </script>

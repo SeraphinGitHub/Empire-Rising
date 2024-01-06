@@ -17,9 +17,12 @@
 
 
 <script>
+   // Components
    import CoordSpan    from "./CoordSpan.vue"
    import DebugMessage from "./DebugMessage.vue"
-   import GlobalVar    from "../../scripts/modules/globalVar.js"
+   
+   // Scripts
+   import { glo } from "../../scripts/utils/_GlobalVar"
 
    export default {
       components: {
@@ -29,7 +32,6 @@
 
       data() {
       return {
-         glo:    GlobalVar,
          title: `Empire Rising`,
       }},
 
@@ -37,7 +39,7 @@
          population() {
             return {
                popText:  `Population`,
-               popValue: `${this.glo.CurrentPop} / ${this.glo.MaxPop}`,
+               popValue: `${glo.CurrentPop} / ${glo.MaxPop}`,
             }
          },
 
@@ -46,8 +48,8 @@
                name: "Screen Coord:",
                classX: "cartX",
                classY: "cartY",
-               x: `x : ${this.glo.SelectArea.currentPos.cartesian.x}`,
-               y: `y : ${this.glo.SelectArea.currentPos.cartesian.y}`,
+               x: `x : ${glo.SelectArea.currentPos.cartesian.x}`,
+               y: `y : ${glo.SelectArea.currentPos.cartesian.y}`,
             }
          },
 
@@ -56,8 +58,8 @@
                name: "Grid Coord:",
                classX: "isoX",
                classY: "isoY",
-               x: `x : ${this.glo.IsoGridPos.x}`,
-               y: `y : ${this.glo.IsoGridPos.y}`,
+               x: `x : ${glo.IsoGridPos.x}`,
+               y: `y : ${glo.IsoGridPos.y}`,
             }
          },
 
@@ -66,8 +68,8 @@
                name: "Cell Coord:",
                classX: "cellX",
                classY: "cellY",
-               x: `x : ${this.glo.HoverCell.gridPos.x}`,
-               y: `y : ${this.glo.HoverCell.gridPos.y}`,
+               x: `x : ${glo.HoverCell.gridPos.x}`,
+               y: `y : ${glo.HoverCell.gridPos.y}`,
             }
          },
 
@@ -75,7 +77,7 @@
             return {
                name: "Cell ID:",
                classID: "ID-cell",
-               id: `id : ${this.glo.HoverCell.id}`,
+               id: `id : ${glo.HoverCell.id}`,
             }
          },
       },

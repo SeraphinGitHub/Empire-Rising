@@ -37,7 +37,7 @@ export const unitParams = {
             attackSpeed: 12,
             animationDelay: 0.5,
             
-            imgSrc: `Units/Swordsman_${glo.faction}.png`,
+            imgSrc: `Units/Swordsman_${glo.Faction}.png`,
          },
          
          bowman: {

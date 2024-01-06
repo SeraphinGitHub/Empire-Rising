@@ -1,19 +1,18 @@
 
 "use strict"
 
-// ================================================================================================
-// Scripts Import
-// ================================================================================================
-const AgentClass = require("../classes/AgentClass.js");
-const unitParam  = require("./unitsParams.js");
-const collision  = require("./collisions.js");
-const glo        = require("./globalVar.js");
+import { glo        } from "./utils/_GlobalVar";
+import { unitParams } from "./utils/unitParams";
 
+import {
+   CollisionClass,
+   AgentClass,
+} from "./classes/_Export";
 
 // ================================================================================================
 // Extended Methods
 // ================================================================================================
-module.exports = {
+export const ext = {
    
    clearCanvas(canvas) {
 

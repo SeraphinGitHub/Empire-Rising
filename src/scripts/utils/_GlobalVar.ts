@@ -1,10 +1,20 @@
 
 "use strict"
 
+import { IPosition } from "./interfaces"
+import { GridClass } from "../classes/GridClass"
+
+const emptyPosition: IPosition = {
+   x: 0,
+   y: 0,
+}
+
 // ================================================================================================
 // Global Variables
 // ================================================================================================
 export const glo = {
+
+   Faction: "Orange",
 
    Debug: {
       showWallCol: false,
@@ -19,27 +29,13 @@ export const glo = {
 
    SelectArea: {
       oldPos: {
-         cartesian: {
-            x: 0,
-            y: 0,
-         },
-
-         isometric: {
-            x: 0,
-            y: 0,
-         },
+         cartesian: emptyPosition,
+         isometric: emptyPosition,
       },
 
       currentPos: {
-         cartesian: {
-            x: 0,
-            y: 0,
-         },
-         
-         isometric: {
-            x: 0,
-            y: 0,
-         },
+         cartesian: emptyPosition,
+         isometric: emptyPosition,
       },
 
       height: undefined,
@@ -51,44 +47,28 @@ export const glo = {
       isSelecting : false,
    },
 
-   faction: "Orange",
-   
-
    // --- Constants ---
    Cos_45deg:  0.707,
    Cos_30deg:  0.866,
-   DOM:        undefined,
-   Viewport:   undefined,
-   CanvasObj:  undefined,
-   Ctx:        undefined,
-   Grid:       undefined,
    
-   GridAngle:       undefined,
-   ViewportOffsetX: undefined,
-   ViewportOffsetY: undefined,
+   // --- DOM ---
+   Viewport:        {},
+   CanvasObj:       {},
+   Ctx:             {},
+   ViewportSqr:     {},
+   GridAngle:       0,
+   Grid:            undefined as GridClass | undefined,
+   ComputedCanvas:  undefined as DOMMatrix | undefined,
    
-
-
    // --- Positions ---
-   IsoGridPos: {
-      x: 0,
-      y: 0,
-   },
+   ViewportOffset: emptyPosition,
+   ScrollOffset:   emptyPosition,
+   IsoGridPos:     emptyPosition,
 
    HoverCell:  {
       id: "",
-
-      gridPos: {
-         x: 0,
-         y: 0,
-      },
+      gridPos: emptyPosition,
    },
-   
-   ScrollOffset: {
-      x: 0,
-      y: 0,
-   },
-   
 
    // --- Lists ---
    AvailableIDArray:  [],
@@ -96,12 +76,10 @@ export const glo = {
    OldSelectList:     {},
    CurrentSelectList: {},
 
-
    // --- Ints ---
    MouseSpeed: 5,
    MaxPop:     2000,
    CurrentPop: 0,
-
 
    // --- TEST ---
    TestViewport: {
@@ -111,7 +89,59 @@ export const glo = {
       height: 650,  // *0.5 => y
    },
 
-   ViewportSqr:    undefined,
-   ComputedCanvas: undefined,
-
 }
+
+
+// const files = {};
+
+// const filesSources = [
+//    "Terrain/Herb_01.png",
+//    "Terrain/Herb_02.png",
+//    "Terrain/Herb_03.png",
+
+//    "Character/Player_01.png",
+//    "Character/Player_02.png",
+//    "Character/Enemy_01.png",
+//    "Character/Enemy_02.png",
+//    "Character/Enemy_03.png",
+
+//    "UI/Panel_01.png",
+//    "UI/Panel_02.png",
+//    "UI/Panel_03.png",
+// ];
+
+// const generateImg = () => {
+
+//    filesSources.forEach(src => {
+
+   
+//       const splitSrc_1 = src.split("/").pop();
+//       const splitSrc_2 = splitSrc_1.split(".").pop();
+
+//       files[splitSrc_2] = {
+//          img: new Image(),
+//          isLoaded: false,
+//       };
+//       files[splitSrc_2].img.src = src;
+//       files[splitSrc_2].img.onload = () => files[splitSrc_2].img.isLoaded = true;
+//    })
+
+//    // Output :
+//    // const files = {
+
+//    //    Herb_01: {
+//    //       img:      new Image(),
+//    //       isLoaded: true,
+//    //    },
+
+//    //    Player_01: {
+//    //       img:      new Image(),
+//    //       isLoaded: true,
+//    //    },
+
+//    //    Panel_03: {
+//    //       img:      new Image(),
+//    //       isLoaded: true,
+//    //    },
+//    // };
+// }
