@@ -3,6 +3,7 @@
 
 const glo = require("./globalVar.js");
 const ext = require("./extendedMethods.js");
+const randPathIntervals = [];
 
 // ================================================================================================
 // Initialization Methods
@@ -123,7 +124,7 @@ module.exports = {
    },
 
    keyboard_Input(event) {
-
+      
       switch(event.key) {
 
          case "Enter": {

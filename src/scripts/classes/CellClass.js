@@ -38,8 +38,9 @@ class CellClass {
       this.neighborsList = {};
       
       this.zIndex;
-      this.isBlocked = false;
-      this.isVacant  = true;
+      this.isBlocked   = false;
+      this.hasBuilding = false;
+      this.isVacant    = true;
 
       this.img;
 

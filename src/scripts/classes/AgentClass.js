@@ -38,7 +38,7 @@ class AgentClass {
 
       this.img         = undefined;
       this.frameX      = 0;
-      this.frameY      = 3;
+      this.frameY      = 0;
       this.lastFrameY  = 3;
       this.animState   = 0;
 
@@ -210,6 +210,7 @@ class AgentClass {
          // If this neighbor hasn't been scanned yet
          if(!this.closedSet.has(neighbor)
          && !neighbor.isBlocked
+         && !neighbor.hasBuilding
          && neighbor.isVacant) {
 
             let possibleG = presentCell.agentList[ownID].gCost + 1;
@@ -288,7 +289,7 @@ class AgentClass {
          this.animState = 0;
          this.frameY    = this.lastFrameY;
          
-         this.searchVacancy(this.currentCell);
+         // this.searchVacancy(this.currentCell);
       }
    }
 

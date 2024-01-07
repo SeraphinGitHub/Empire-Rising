@@ -13,7 +13,6 @@ class GridClass {
       this.cellsList   = {};
       this.cellSize    = params.cellSize;
       this.gridSize    = params.gridSize;
-      this.cellRange   = params.cellRange;
       this.cellPerSide = (this.gridSize -(this.gridSize %this.cellSize)) /this.cellSize;
 
       this.init();
@@ -39,8 +38,6 @@ class GridClass {
 
          this.cellsList[i].initNeighborsList();
       }
-
-      this.cellRange = this.cellPerSide / this.cellSize;
    }
 }
 

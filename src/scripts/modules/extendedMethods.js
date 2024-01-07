@@ -377,14 +377,14 @@ module.exports = {
 
    Test_PathRandomize(agent) {
 
-      let i = glo.Grid.rand(glo.Grid.cellRange);
-      let j = glo.Grid.rand(glo.Grid.cellRange);
+      let i = glo.Grid.rand(glo.Grid.cellPerSide);
+      let j = glo.Grid.rand(glo.Grid.cellPerSide);
       
-      const targetCell = glo.Grid.cellsList[`${i}-${j}`];
+      const goalCell = glo.Grid.cellsList[`${i}-${j}`];
       
-      if(targetCell.isBlocked) return;
+      if(goalCell.isBlocked) return;
       
-      agent.endCell = targetCell;
+      agent.goalCell = goalCell;
       agent.searchPath(glo.Grid.cellsList);
    },
    
@@ -399,8 +399,8 @@ module.exports = {
       while(pop > 0) {
    
          let index = glo.Grid.rand(4);
-         let i = glo.Grid.rand(glo.Grid.cellRange);
-         let j = glo.Grid.rand(glo.Grid.cellRange);
+         let i = glo.Grid.rand(glo.Grid.cellPerSide);
+         let j = glo.Grid.rand(glo.Grid.cellPerSide);
    
          let unitType = glo.Grid.rand(2);
    

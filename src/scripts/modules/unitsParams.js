@@ -26,7 +26,7 @@ module.exports = {
             attackSpeed: 7,
             animationDelay: 0.5,
             
-            imgSrc: "Units/Download36395.png",
+            imgSrc: "Units/Worker.png",
          },
 
          swordsman: {
@@ -37,7 +37,7 @@ module.exports = {
             attackSpeed: 12,
             animationDelay: 0.5,
             
-            imgSrc: `Units/Swordsman_${glo.faction}.png`,
+            imgSrc: `Units/Swordsman_${glo.Faction}.png`,
          },
          
          bowman: {

@@ -6,6 +6,9 @@
       <IsoCanvas/>
       <CartCanvas/>
       
+      <button class="flex rand-path-btn" @click="randomize">Randomize Path</button>
+      <button class="flex stop-path-btn" @click="stopRand">Stop randomize</button>
+      
    </section>
 </template>
 
@@ -35,11 +38,70 @@
       mounted() {
          this.initGameHandler(document);
       },
+
+      methods: {
+         randomize() {
+            const enter = new KeyboardEvent('keydown', { key: 'Enter' });
+            window.dispatchEvent(enter);
+         },
+
+         stopRand() {
+            const backspace = new KeyboardEvent('keydown', { key: 'Backspace' });
+            window.dispatchEvent(backspace);
+         }
+      },
    }
 </script>
 
 
 <style>
+
+   /* ------ Tempory ------ */
+   .rand-path-btn,
+   .stop-path-btn {
+      z-index: 10;
+      position: fixed;
+      padding: 15px !important;
+      
+      right: 30px;
+      height: 50px;
+      width: auto;
+
+      text-align: center;
+      border-radius: 10px;
+
+      font-size: 20px;
+      font-family: Verdana;
+      color: black;
+   }
+
+   .rand-path-btn {
+      top: 100px;
+      border: double blue 4px;
+      background-color: dodgerblue;
+   }
+
+   .stop-path-btn {
+      top: 200px;
+      border: double red 4px;
+      background-color: pink;
+   }
+
+   .rand-path-btn:active,
+   .stop-path-btn:active {
+      right: 27px;
+      box-shadow: black -3px -3px;
+   }
+
+   .rand-path-btn:active {
+      top: 103px;
+   }
+
+   .stop-path-btn:active {
+      top: 203px;
+   }
+   /* ------ Tempory ------ */
+
    .canvas-selection {
       cursor: url("../public/GUI/cursors.png"), auto !important;
    }

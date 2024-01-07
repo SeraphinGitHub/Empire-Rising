@@ -63,7 +63,7 @@ const runAnimation = () => {
       cell.drawWall   (glo.Ctx.units, cellPos, glo.ScrollOffset);
       cell.drawInfos  (glo.Ctx.isoSelect);
       cell.drawVacancy(glo.Ctx.isoSelect);
-   });   
+   });
 
 
    // Draw Units Selection
@@ -84,11 +84,67 @@ const runAnimation = () => {
    });
    
    if(ext.isWithinGrid(glo.IsoGridPos)) ext.drawHoverCell();
+   
+   // ------ Tempory ------
+   drawBarrack();
+   // ------ Tempory ------
 
    requestAnimationFrame(runAnimation);
 }
 
+// ------ Tempory ------
+const barrackImg = new Image();
+barrackImg.src = glo.BarrackSrc;
 
+const barrackArea = [
+   "13-5",
+   "13-6",
+   "13-7",
+   "13-8",
+   "13-9",
+
+   "14-9",
+   "15-9",
+   "16-9",
+   "17-9",
+   "18-9",
+
+   "18-5",
+   "17-5",
+   "16-5",
+   "15-5",
+   "14-5",
+
+   "18-6",
+   "18-7",
+   "18-8",
+   "18-9",
+];
+
+const drawBarrack = () => {
+   
+   let barrackPos = ext.gridPos_toScreenPos(glo.Grid.cellsList["13-5"].center);
+
+   if(!ext.isWithinViewport(barrackPos)) return;
+   
+   glo.Ctx.units.drawImage(
+      barrackImg,
+      
+      // Source
+      0,
+      0,
+      510,
+      510,
+      
+      // Destination
+      barrackPos.x -30 +glo.ScrollOffset.x,
+      barrackPos.y -228 +glo.ScrollOffset.y,
+      300,
+      300,
+   );
+}
+// ------ Tempory ------
+   
 let walls = [
    
    // Top
@@ -165,16 +221,19 @@ module.exports = {
          
          glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.CanvasObj.isoSelect).transform);
 
-         
          // --- Tempory ---
          walls.forEach(ID => glo.Grid.cellsList[ID].isBlocked = true);
-         
-         ext.createNewAgent("infantry",  "swordsman", "7-16", "");
-         ext.createNewAgent("infantry",  "swordsman", "7-19", "");
-         ext.createNewAgent("infantry",  "swordsman", "10-16", "");
-         ext.createNewAgent("infantry",  "swordsman", "10-19", "");
 
-         // ext.createNewAgent("infantry",  "worker",    "5-3", "");
+         barrackArea.forEach(ID => glo.Grid.cellsList[ID].hasBuilding = true);
+         
+         ext.createNewAgent("infantry",  "swordsman", "7-16",  "Units/Swordsman_Orange.png");
+         ext.createNewAgent("infantry",  "swordsman", "7-19",  "Units/Swordsman_Blue.png");
+         ext.createNewAgent("infantry",  "swordsman", "10-16", "Units/Swordsman_Red.png");
+         ext.createNewAgent("infantry",  "swordsman", "10-19", "Units/Swordsman_Purple.png");
+
+         ext.createNewAgent("infantry",  "worker",    "19-22", "");
+         ext.createNewAgent("infantry",  "worker",    "22-25", "");
+
          // ext.createNewAgent("cavalry",   "swordsman", "9-2", "");
          // ext.createNewAgent("cavalry",   "bowman",    "2-6", "");
          // ext.createNewAgent("machinery", "ballista",  "8-5", "");

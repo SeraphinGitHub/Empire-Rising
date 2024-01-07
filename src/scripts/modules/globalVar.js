@@ -6,6 +6,8 @@
 // ================================================================================================
 module.exports = {
 
+   Faction: "Orange",
+
    Debug: {
       showWallCol: false,
       hoverColor: "blue",
@@ -14,7 +16,6 @@ module.exports = {
    GridParams: {
       cellSize:  40,
       gridSize:  1440,
-      cellRange: 0,
    },
 
    SelectArea: {
@@ -50,14 +51,11 @@ module.exports = {
       lineWidth:     2,
       isSelecting : false,
    },
-
-   faction: "Orange",
    
 
    // --- Constants ---
    Cos_45deg:  0.707,
    Cos_30deg:  0.866,
-   DOM:        undefined,
    Viewport:   undefined,
    CanvasObj:  undefined,
    Ctx:        undefined,
@@ -104,6 +102,7 @@ module.exports = {
 
 
    // --- TEST ---
+   BarrackSrc: "Buildings/Barrack_Blue.png",
    TestViewport: {
       x: 0,
       y: 0,
