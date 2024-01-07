@@ -1,6 +1,11 @@
 
-import { CellClass } from "../classes/_Export";
+import {
+   AgentClass,
+   CellClass,
+} from "../classes/_Export";
 
+
+// --- List Interfaces ---
 export interface IString {
    [key: string]: string,
 }
@@ -13,6 +18,24 @@ export interface INumber {
    [key: string]: number,
 }
 
+export interface ICanvas {
+   [key: string]: HTMLCanvasElement,
+}
+
+export interface ICtx {
+   [key: string]: CanvasRenderingContext2D,
+}
+
+export interface ICellClass {
+   [key: string]: CellClass,
+}
+
+export interface IAgentClass {
+   [key: number]: AgentClass,
+}
+
+
+// --- Normal Interfaces ---
 export interface IPosition {
    x: number,
    y: number,
@@ -36,8 +59,4 @@ export interface ILine {
    startY: number;
    endX:   number;
    endY:   number;
-}
-
-export interface ICellClass {
-   [key: string]: CellClass,
 }

@@ -1,12 +1,26 @@
 
 "use strict"
 
-import { IPosition } from "./interfaces"
+import {
+   IPosition,
+   ISquare,
+   ICanvas,
+   ICtx,
+   IAgentClass,
+} from "./interfaces"
+
 import { GridClass } from "../classes/GridClass"
 
 const emptyPosition: IPosition = {
    x: 0,
    y: 0,
+}
+
+const emptySquare: ISquare = {
+   x:      0,
+   y:      0,
+   height: 0,
+   width:  0,
 }
 
 // ================================================================================================
@@ -52,10 +66,10 @@ export const glo = {
    Cos_30deg:  0.866,
    
    // --- DOM ---
-   Viewport:        {},
-   CanvasObj:       {},
-   Ctx:             {},
-   ViewportSqr:     {},
+   Canvas:          {} as ICanvas,
+   Ctx:             {} as ICtx,
+   Viewport:        emptySquare,
+   ViewportSqr:     emptySquare,
    GridAngle:       0,
    Grid:            undefined as GridClass | undefined,
    ComputedCanvas:  undefined as DOMMatrix | undefined,
@@ -71,10 +85,10 @@ export const glo = {
    },
 
    // --- Lists ---
-   AvailableIDArray:  [],
-   AgentsList:        {},
-   OldSelectList:     {},
-   CurrentSelectList: {},
+   AvailableIDArray:  [] as number[],
+   AgentsList:        {} as IAgentClass,
+   OldSelectList:     {} as IAgentClass,
+   CurrentSelectList: {} as IAgentClass,
 
    // --- Ints ---
    MouseSpeed: 5,

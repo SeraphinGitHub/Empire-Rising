@@ -154,15 +154,14 @@ export const GameHandler = {
 
       glo.Grid = new GridClass(glo.GridParams);
 
-      init_DOM.setViewport(document);
-      init_DOM.setCanvas(document);
-      init_DOM.setCtx(glo.CanvasObj);
+      init_DOM.setViewportSize(document);
+      init_DOM.setCanvasSize();
       init_DOM.setViewportSqr(); // ==> Tempory
       init_DOM.setAvailableID();
       init_DOM.setPosConvert();
       init_DOM.peripherals_Input();
       
-      glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.CanvasObj.isoSelect).transform);
+      glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.Canvas.isoSelect).transform);
 
       
       // --- Tempory ---

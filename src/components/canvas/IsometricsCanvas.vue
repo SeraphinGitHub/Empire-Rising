@@ -3,12 +3,29 @@
    <section class="flex">
 
       <div class="flex">
-         <canvas class="flex canvas-isoSelect"></canvas>
+         <canvas ref="isoSelectCanvas" class="flex canvas-isoSelect"></canvas>
       </div>
 
    </section>
 </template>
 
+<script lang="ts">
+
+   // Scripts
+   import { ref } from "vue";
+   import { glo } from "../../scripts/utils/_GlobalVar"
+   
+   export default {
+
+      mounted() {
+         const canvasName = "isoSelect";
+         const canvasElem = this.$refs[canvasName] as HTMLCanvasElement;
+
+         glo.Canvas[canvasName] = canvasElem;
+         glo.Ctx   [canvasName] = canvasElem.getContext("2d") as CanvasRenderingContext2D;
+      },
+   }
+</script>
 
 <style scoped>
    section {

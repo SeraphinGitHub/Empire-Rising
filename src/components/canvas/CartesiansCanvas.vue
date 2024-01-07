@@ -2,14 +2,44 @@
 <template>
    <section class="flex">
 
-      <canvas class="flex canvas-terrain"></canvas>
-      <canvas class="flex canvas-buildings"></canvas>
-      <canvas class="flex canvas-units"></canvas>
-      <canvas class="flex canvas-selection"></canvas>
+      <canvas v-for="canvasName in allCanvas"
+         :key="canvasName"
+         :ref="canvasName"
+         :class="`flex canvas-${canvasName}`"
+      ></canvas>
 
    </section>
 </template>
 
+<script lang="ts">
+
+   // Scripts
+   import { ref } from "vue";
+   import { glo } from "../../scripts/utils/_GlobalVar"
+
+   export default {
+
+      data() {
+      return {
+         allCanvas: [
+            "terrain",
+            "buildings",
+            "units",
+            "selection",
+         ],
+      }},
+
+      mounted() {
+
+         this.allCanvas.forEach(canvasName => {
+            const canvasElem = this.$refs[canvasName] as HTMLCanvasElement;
+
+            glo.Canvas[canvasName] = canvasElem;
+            glo.Ctx   [canvasName] = canvasElem.getContext("2d") as CanvasRenderingContext2D;
+         });
+      },
+   }
+</script>
 
 <style scoped>
    section {

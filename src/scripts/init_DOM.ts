@@ -1,35 +1,43 @@
 
 "use strict"
 
+import {
+   ISize,
+   ISquare,
+} from "./utils/interfaces";
+
 import { glo } from "./utils/_GlobalVar";
 import { ext } from "./extended";
+import { AgentClass } from "./classes/Agent";
+
+let randPathIntervals: any = [];
 
 // ================================================================================================
 // Initialization Methods
 // ================================================================================================
 export const init_DOM = {
    
-   setViewport(document: Document) {
+   setViewportSize(document: Document) {
    
-      const viewport_1080p = {
+      const viewport_1080p: ISquare = {
          x: 0,
          y: 0,
          height: 1080,
          width: 1920,
       };
    
-      const laptop_17pcs = {
+      const laptop_17pcs: ISize = {
          height: 900,
          width: 1600,
       };
    
-      const laptop_15pcs = {
+      const laptop_15pcs: ISize = {
          height: 768,
          width: 1366,
       };
    
       if(document.body.clientWidth <= laptop_17pcs.width
-      && document.body.clientWidth > laptop_15pcs.width) {
+      && document.body.clientWidth  > laptop_15pcs.width) {
          viewport_1080p.height = laptop_17pcs.height;
          viewport_1080p.width  = laptop_17pcs.width;
       }
@@ -42,42 +50,21 @@ export const init_DOM = {
       glo.Viewport = viewport_1080p;
    },
    
-   setCanvas(document: Document) {
+   setCanvasSize() {
+      
+      Object.entries(glo.Canvas).forEach( ([key, value]: [string, unknown]) => {
+
+         const canvas = value as HTMLCanvasElement;
    
-      const canvasObj = {
-         isoSelect: document.querySelector(".canvas-isoSelect") !,
-         terrain:   document.querySelector(".canvas-terrain")   !,
-         buildings: document.querySelector(".canvas-buildings") !,
-         units:     document.querySelector(".canvas-units")     !,
-         selection: document.querySelector(".canvas-selection") !,
-      };
-   
-      // Set canvas sizes
-      Object.values(canvasObj).forEach((canvas: any) => {
-   
-         if(canvas === canvasObj.isoSelect) {
+         if(key === "isoSelect") {
             canvas.width  = glo.Grid!.gridSize;
             canvas.height = glo.Grid!.gridSize;
+            return;
          }
-         else {
-            canvas.width  = glo.Viewport.width;
-            canvas.height = glo.Viewport.height;
-         }
+
+         canvas.width  = glo.Viewport.width;
+         canvas.height = glo.Viewport.height;
       });
-   
-      glo.CanvasObj = canvasObj;
-   },
-   
-   setCtx(canvasObj) {
-      const ctx = {};
-   
-      Object.entries(canvasObj).forEach(pair => {
-         let key = pair[0];
-         let value = pair[1];
-         ctx[key] = value.getContext("2d");
-      });
-   
-      glo.Ctx = ctx;
    },
    
    setAvailableID() {
@@ -90,8 +77,8 @@ export const init_DOM = {
    setViewportSqr() {
 
       glo.ViewportSqr = {
-         x: (glo.CanvasObj.selection.width  -glo.TestViewport.width ) *0.5,
-         y: (glo.CanvasObj.selection.height -glo.TestViewport.height) *0.5,
+         x:     (glo.Canvas.selection.width  -glo.TestViewport.width ) *0.5,
+         y:     (glo.Canvas.selection.height -glo.TestViewport.height) *0.5,
          width:  glo.TestViewport.width,
          height: glo.TestViewport.height,
       };
@@ -107,9 +94,9 @@ export const init_DOM = {
       const half_ViewportWidth  = glo.Viewport.width  *0.5;
       const half_ViewportHeight = glo.Viewport.height *0.5;
 
-      glo.GridAngle       = half_GridWidth -(cellSize *Cos_45 *Cos_30);
-      glo.ViewportOffsetX = half_ViewportWidth  -diagonalOffset;
-      glo.ViewportOffsetY = half_ViewportHeight -diagonalOffset /2 +(Cos_30 *cellSize /2);
+      glo.GridAngle        = half_GridWidth      -(cellSize *Cos_45 *Cos_30);
+      glo.ViewportOffset.x = half_ViewportWidth  -diagonalOffset;
+      glo.ViewportOffset.y = half_ViewportHeight -diagonalOffset /2 +(Cos_30 *cellSize /2);
    },
 
 
@@ -122,12 +109,12 @@ export const init_DOM = {
       window.addEventListener("mouseup",   (event) => this.mouse_Input   (event, "Up"  ));
    },
 
-   keyboard_Input(event) {
+   keyboard_Input(event: KeyboardEvent) {
 
       switch(event.key) {
 
          case "Enter": {
-            ext.cycleList(glo.AgentsList, (agent) => {
+            ext.cycleList(glo.AgentsList, (agent: AgentClass) => {
                
                ext.Test_PathRandomize(agent);
                const intervalID = setInterval(() => ext.Test_PathRandomize(agent), 3000);
@@ -136,24 +123,22 @@ export const init_DOM = {
          } break;
 
          case "Backspace": {
-            randPathIntervals.forEach((intervalID) => clearInterval(intervalID));
+            randPathIntervals.forEach((intervalID: number) => clearInterval(intervalID));
          } break;
       }
    },
 
-   mouse_Move(event) {
+   mouse_Move(event: MouseEvent) {
       
       glo.SelectArea.currentPos = ext.getScreenPos(event);
-      glo.IsoGridPos = ext.screenPos_toGridPos(glo.SelectArea.currentPos.isometric);
+      glo.IsoGridPos            = ext.screenPos_toGridPos(glo.SelectArea.currentPos.isometric);
       
-      if(ext.isWithinGrid(glo.IsoGridPos)) {
-         glo.HoverCell = ext.getHoverCell();
-      }
+      if(ext.isWithinGrid(glo.IsoGridPos)) glo.HoverCell = ext.getHoverCell();
 
       ext.unitSelection();
    },
 
-   mouse_Input(event, state) {
+   mouse_Input(event: MouseEvent, state: string) {
 
       if(state === "Down") glo.SelectArea.oldPos = ext.getScreenPos(event);
 
@@ -193,9 +178,9 @@ export const init_DOM = {
 
             if(state === "Down") {
                if(ext.isWithinGrid(glo.IsoGridPos)) {
-                  ext.cycleList(glo.OldSelectList, (agent) => {
+                  ext.cycleList(glo.OldSelectList, (agent: AgentClass) => {
                      
-                     const goalCell = glo.Grid.cellsList[glo.HoverCell.id];
+                     const goalCell = glo.Grid!.cellsList[glo.HoverCell.id];
 
                      if(goalCell.isBlocked || !goalCell.isVacant) return;
                      

@@ -75,8 +75,8 @@ export const ext = {
 
    getScreenPos(event) {
 
-      let screenBound  = glo.CanvasObj.selection.getBoundingClientRect();
-      let isoGridBound = glo.CanvasObj.isoSelect.getBoundingClientRect();
+      let screenBound  = glo.Canvas.selection.getBoundingClientRect();
+      let isoGridBound = glo.Canvas.isoSelect.getBoundingClientRect();
    
       return {
          cartesian: {
@@ -254,7 +254,7 @@ export const ext = {
       glo.ComputedCanvas.e = glo.ScrollOffset.x;
       glo.ComputedCanvas.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
       
-      glo.CanvasObj.isoSelect.style.transform = glo.ComputedCanvas.toString();
+      glo.Canvas.isoSelect.style.transform = glo.ComputedCanvas.toString();
    },
 
    updateUnitsList(collideCallback, first, second, agent) {

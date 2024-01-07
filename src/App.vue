@@ -35,10 +35,6 @@
 </script>
 
 <style>
-   .canvas-selection {
-      cursor: url("../public/GUI/cursors.png"), auto !important;
-   }
-   
    #root {
       position: fixed;
       height: 100%;
@@ -50,7 +46,7 @@
       /* Reset */
       margin: 0;
       padding: 0;
-
+      cursor: url("../public/GUI/cursors.png"), auto !important;
    }
 
    .flex {
