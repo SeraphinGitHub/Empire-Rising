@@ -1,6 +1,8 @@
 
 import {
+   ICellClass,
    INumber,
+   IString,
    IPosition,
 } from "../utils/interfaces";
 
@@ -15,66 +17,36 @@ import {
 // =====================================================================
 export class AgentClass {
 
-   id:         number;
-   unitType:   string;
-   imgSrc:     string;
-   collider:   INumber;
-   popCost:    number;
-   moveSpeed:  number;
+   id:             number;
+   unitType:       string;
+   imgSrc:         string;
+   collider:       INumber;
+   popCost:        number;
+   moveSpeed:      number;
 
-   isSelected: boolean = false;
-   isMoving:   boolean = false;
+   position:       IPosition;
 
-   position:   IPosition;
+   startCell:      CellClass;
+   currentCell:    CellClass;
+   nextCell:       CellClass | undefined;
+   goalCell:       CellClass | undefined;
+   openSet:        Set<CellClass>;
+   closedSet:      Set<CellClass>;
+   path:           CellClass[];
 
-   startCell:   CellClass;
-   currentCell: CellClass;
-   nextCell:    CellClass | undefined = undefined;
-   goalCell:    CellClass | undefined = undefined;
-   openSet:     Set<CellClass>        = new Set();
-   closedSet:   Set<CellClass>        = new Set();
-   path:        [] = [];
+   img:            HTMLImageElement | undefined;
+   frameX:         number;
+   frameY:         number;
+   lastFrameY:     number;
+   animState:      number;
 
-   img:         HTMLImageElement | undefined = undefined;
-   frameX:      number = 0;
-   frameY:      number = 3;
-   lastFrameY:  number = 3;
-   animState:   number = 0;
+   isMoving:       boolean;
+   isSelected:     boolean;
+   isAttacking:    boolean;
 
-   isAttacking: boolean = false;
-
-   animSpecs:      {} = {
-      idle: {
-         index: 6,
-         spritesNumber: 1,
-      },
-   
-      walk: {
-         index: 6,
-         spritesNumber: 9,
-      },
-   
-      attack: {
-         index: 6,
-         spritesNumber: 5,
-      },
-   
-      died: {
-         index: 1,
-         spritesNumber: 10,
-      },
-   };
-
-   sprites:        {} = {
-      height:  64,
-      width:   64,
-      offsetY: 20,
-   };
-
-   specialSprites: {} = {
-      height:  64,
-      width:   192,
-   };
+   animSpecs:      {};
+   sprites:        {};
+   specialSprites: {}; 
 
    constructor(params: any) {
       
@@ -84,9 +56,6 @@ export class AgentClass {
       this.collider   = params.collider;
       this.popCost    = params.popCost;
       this.moveSpeed  = params.moveSpeed;
-      
-      this.isSelected;
-      this.isMoving;
 
       // Position
       this.position = {
@@ -97,23 +66,54 @@ export class AgentClass {
       // Pathfinding
       this.startCell   = params.startCell;
       this.currentCell = params.startCell;
-      this.nextCell;
-      this.goalCell;
-      this.openSet;
-      this.closedSet;
-      this.path;
+      this.nextCell    = undefined;
+      this.goalCell    = undefined;
+      this.openSet     = new Set();
+      this.closedSet   = new Set();
+      this.path        = [];
 
-      this.img;
-      this.frameX;
-      this.frameY;
-      this.lastFrameY;
-      this.animState;
+      this.img         = undefined;
+      this.frameX      = 0;
+      this.frameY      = 3;
+      this.lastFrameY  = 3;
+      this.animState   = 0;
 
-      this.isAttacking;
+      this.isMoving    = false;
+      this.isSelected  = false;
+      this.isAttacking = false;
 
-      this.animSpecs;
-      this.sprites;
-      this.specialSprites;
+      this.animSpecs   = {
+         idle: {
+            index: 6,
+            spritesNumber: 1,
+         },
+      
+         walk: {
+            index: 6,
+            spritesNumber: 9,
+         },
+      
+         attack: {
+            index: 6,
+            spritesNumber: 5,
+         },
+      
+         died: {
+            index: 1,
+            spritesNumber: 10,
+         },
+      };
+   
+      this.sprites     = {
+         height:  64,
+         width:   64,
+         offsetY: 20,
+      };
+   
+      this.specialSprites = {
+         height:  64,
+         width:   192,
+      };
 
       this.init();
    }
@@ -125,28 +125,32 @@ export class AgentClass {
       this.startCell.isVacant = false;
    }
 
-   isBlockedDiag(cellsList, nebID_List, neighbor) {
+   isBlockedDiag(
+      cellsList:  ICellClass,
+      nebID_List: IString,
+      neighbor:   CellClass,
+   ): boolean {
 
       const {
-         topLeft:     _0,
-         top:         _1,
-         topRight:    _2,
-         right:       _3,
-         bottomRight: _4,
-         bottom:      _5,
-         bottomLeft:  _6,
-         left:        _7 
+         topLeft,
+         top,
+         topRight,
+         right,
+         bottomRight,
+         bottom,
+         bottomLeft,
+         left,  
       } = nebID_List;
        
       const {
-         [_0]: topLeftNeb,
-         [_1]: topNeb,
-         [_2]: topRightNeb,
-         [_3]: rightNeb,
-         [_4]: bottomRightNeb,
-         [_5]: bottomNeb,
-         [_6]: bottomLeftNeb,
-         [_7]: leftNeb
+         [topLeft    ]: topLeftNeb,
+         [top        ]: topNeb,
+         [topRight   ]: topRightNeb,
+         [right      ]: rightNeb,
+         [bottomRight]: bottomRightNeb,
+         [bottom     ]: bottomNeb,
+         [bottomLeft ]: bottomLeftNeb,
+         [left       ]: leftNeb
       } = cellsList;
 
       const isBlocked = {
@@ -159,7 +163,9 @@ export class AgentClass {
       return isBlocked.topLeft() || isBlocked.topRight() || isBlocked.bottomLeft() || isBlocked.bottomRight();
    }
 
-   hasArrived(cell) {
+   hasArrived(
+      cell: CellClass,
+   ): boolean {
       
       const { x: posX,  y: posY  } = this.position;
       const { x: cellX, y: cellY } = cell.center;
@@ -173,14 +179,18 @@ export class AgentClass {
       return true;
    }
 
-   mathFloor_100(value) {
+   mathFloor_100(
+      value: number,
+   ): number {
 
       return Math.floor( value *100 ) /100;
    }
 
-   calcHeuristic(neighbor) {
+   calcHeuristic(
+      neighbor: CellClass,
+   ): number {
 
-      const { x: goalX, y: goalY } = this.goalCell.center;
+      const { x: goalX, y: goalY } = this.goalCell!.center;
       const { x: nebX,  y: nebY  } = neighbor.center;
       
       const deltaX = Math.abs(goalX -nebX);
@@ -250,7 +260,7 @@ export class AgentClass {
          && !neighbor.isBlocked
          && neighbor.isVacant) {
 
-            let possibleG = presentCell.agentList[ownID].gCost + 1;
+            let possibleG = presentCell.agentList[ownID].gCost +1;
             let nebData   = neighbor.agentList[ownID];
    
             if(!this.openSet.has(neighbor)

@@ -50,7 +50,7 @@ export class GridClass {
       // Set cells neighborsList
       for(let i in this.cellsList) {
 
-         this.cellsList[i].initNeighborsList();
+         this.cellsList[i].setNeighborsList();
       }
 
       this.cellRange = this.cellPerSide / this.cellSize;

@@ -70,7 +70,7 @@ export const glo = {
    Ctx:             {} as ICtx,
    Viewport:        emptySquare,
    ViewportSqr:     emptySquare,
-   GridAngle:       0,
+   GridAngle:       undefined as number    | undefined,
    Grid:            undefined as GridClass | undefined,
    ComputedCanvas:  undefined as DOMMatrix | undefined,
    

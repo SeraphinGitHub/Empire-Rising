@@ -5,7 +5,9 @@ import {
 } from "../classes/_Export";
 
 
-// --- List Interfaces ---
+// ==================================================================
+// Lists Interfaces
+// ==================================================================
 export interface IString {
    [key: string]: string,
 }
@@ -16,6 +18,14 @@ export interface IBoolean {
 
 export interface INumber {
    [key: string]: number,
+}
+
+export interface IPositionList {
+   [key: string]: IPosition,
+}
+
+export interface INumberList {
+   [key: string]: number[],
 }
 
 export interface ICanvas {
@@ -35,7 +45,9 @@ export interface IAgentClass {
 }
 
 
-// --- Normal Interfaces ---
+// ==================================================================
+// Normal Interfaces
+// ==================================================================
 export interface IPosition {
    x: number,
    y: number,

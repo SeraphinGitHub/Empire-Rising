@@ -10,12 +10,14 @@ import { glo } from "./utils/_GlobalVar";
 import { ext } from "./extended";
 import { AgentClass } from "./classes/Agent";
 
+// --- Tempory ---
 let randPathIntervals: any = [];
+// --- Tempory ---
 
 // ================================================================================================
 // Initialization Methods
 // ================================================================================================
-export const init_DOM = {
+export const set_DOM = {
    
    setViewportSize(document: Document) {
    
@@ -52,7 +54,7 @@ export const init_DOM = {
    
    setCanvasSize() {
       
-      Object.entries(glo.Canvas).forEach( ([key, value]: [string, unknown]) => {
+      Object.entries(glo.Canvas).forEach(([key, value]: [string, unknown]) => {
 
          const canvas = value as HTMLCanvasElement;
    
@@ -197,5 +199,15 @@ export const init_DOM = {
          } break;
       }
    },
+
+   init(document: Document) {
+
+      this.setViewportSize(document);
+      this.setCanvasSize();
+      this.setViewportSqr(); // ==> Tempory
+      this.setAvailableID();
+      this.setPosConvert();
+      this.peripherals_Input();
+   }
 
 }

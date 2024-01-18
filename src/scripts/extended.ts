@@ -374,6 +374,56 @@ export const ext = {
       glo.AgentsList[avID] = new AgentClass(agentParams);
    },
 
+   drawUnits(frame: number) {
+
+      ext.cycleList(glo.AgentsList, (agent: AgentClass) => {
+         let agentPos = ext.gridPos_toScreenPos(agent.position);
+   
+         agent.updateState(frame);
+         agent.walkPath();
+   
+         if(!ext.isWithinViewport(agentPos)) return;
+         
+         agent.drawSprite(glo.Ctx.units, agentPos, glo.ScrollOffset);
+         // agent.drawCollider(glo.Ctx.units, agentPos, glo.ScrollOffset);
+         agent.drawPath(glo.Ctx.isoSelect);
+      });
+   },
+   
+   drawBuildings() {
+   
+      ext.cycleList(glo.Grid.cellsList, (cell) => {
+         let cellPos = ext.gridPos_toScreenPos(cell.center);
+   
+         if(!ext.isWithinViewport(cellPos)) return;
+   
+         // cell.drawSprite(glo.Ctx.terrain, cellPos, glo.ScrollOffset);
+         cell.drawWall   (glo.Ctx.units, cellPos, glo.ScrollOffset);
+         cell.drawInfos  (glo.Ctx.isoSelect);
+         cell.drawVacancy(glo.Ctx.isoSelect);
+      }); 
+   },
+   
+   drawSelection() {
+   
+      ext.cycleList(glo.OldSelectList,     (agent) => {
+         let agentPos = ext.gridPos_toScreenPos(agent.position);
+   
+         if(!ext.isWithinViewport(agentPos)) return;
+         agent.drawSelect(glo.Ctx.isoSelect, "yellow");
+      });
+   },
+   
+   drawHover() {
+   
+      ext.cycleList(glo.CurrentSelectList, (agent) => {
+         let agentPos = ext.gridPos_toScreenPos(agent.position);
+   
+         if(!ext.isWithinViewport(agentPos)) return;
+         agent.drawSelect(glo.Ctx.isoSelect, "blue");
+      });
+   },
+
    Test_PathRandomize(agent) {
 
       let i = glo.Grid.rand(glo.Grid.cellRange);

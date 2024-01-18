@@ -2,16 +2,23 @@
 "use strict"
 
 import {
+   IString,
    IPosition,
+   IPositionList,
+   INumberList,
+   IAgentClass,
 } from "../utils/interfaces";
+
+import { CollisionClass } from "./_Export";
 
 // =====================================================================
 // Cell Class
 // =====================================================================
 export class CellClass {
-
+   
    id:             string;
-
+   Collision:      CollisionClass;
+   
    cellPerSide:    number;
    size:           number;
    i:              number;
@@ -20,12 +27,14 @@ export class CellClass {
    y:              number;
 
    center:         IPosition;
+   collider:       IPositionList;
+   nebSideList:    INumberList;
 
    img:  HTMLImageElement | undefined;
    zIndex:         number | undefined;
    agentID:        number | undefined;
-   agentList:      {};
-   neighborsList:  {};
+   agentList:      IAgentClass;
+   neighborsList:  IString;
 
    isBlocked:      boolean;
    isVacant:       boolean;
@@ -36,8 +45,9 @@ export class CellClass {
       i:           number,
       j:           number,
    ) {
-
-      this.id = `${i}-${j}`;
+      
+      this.id          = `${i}-${j}`;
+      this.Collision   = new CollisionClass;
 
       this.cellPerSide = cellPerSide;
       this.size        = size;
@@ -50,17 +60,41 @@ export class CellClass {
          x: this.x + size/2,
          y: this.y + size/2,
       };
+      
+      this.collider    = { // Diamond Collider
 
-      // this.neighborsList = [
-      //    `${this.i -1}-${this.j -1}`,
-      //    `${this.i   }-${this.j -1}`,
-      //    `${this.i +1}-${this.j -1}`,
-      //    `${this.i +1}-${this.j   }`,
-      //    `${this.i +1}-${this.j +1}`,
-      //    `${this.i   }-${this.j +1}`,
-      //    `${this.i -1}-${this.j +1}`,
-      //    `${this.i -1}-${this.j   }`,
-      // ];
+         top: {
+            x: this.center.x,
+            y: this.y,
+         },
+
+         right: {
+            x: this.x +this.size,
+            y: this.center.y,
+         },
+
+         bottom: {
+            x: this.center.x,
+            y: this.y +this.size,
+         },
+
+         left: {
+            x: this.x,
+            y: this.center.y,
+         },
+      }
+
+      this.nebSideList = {
+         top:         [ 0, -1],
+         right:       [ 1,  0],
+         bottom:      [ 0,  1],
+         left:        [-1,  0],
+
+         topLeft:     [-1, -1],
+         topRight:    [ 1, -1],
+         bottomRight: [ 1,  1],
+         bottomLeft:  [-1,  1],
+      };
 
       this.img           = undefined;
       this.zIndex        = undefined;
@@ -79,199 +113,53 @@ export class CellClass {
       this.img.src = "Terrain/Herb_01.png";
    }
 
-   // Collision
-   cellCollider(isDiamond) {
+   // Set Neighbors List
+   setNeighborsList() {
 
-      // Collider is a Diamond
-      if(isDiamond) return {
-
-         top: {
-            x: this.center.x,
-            y: this.y,
-         },
-
-         right: {
-            x: this.x +this.size,
-            y: this.center.y,
-         },
-
-         bottom: {
-            x: this.center.x,
-            y: this.y +this.size,
-         },
-
-         left: {
-            x: this.x,
-            y: this.center.y,
-         },
-      }
-
-      // Collider is a Square
-      else return {
-
-         top: {
-            x: this.x,
-            y: this.y,
-         },
-
-         right: {
-            x: this.x +this.size,
-            y: this.y,
-         },
-
-         bottom: {
-            x: this.x,
-            y: this.y +this.size,
-         },
-
-         left: {
-            x: this.x +this.size,
-            y: this.y +this.size,
-         },
-      };
-   }
-
-   line_toLine(lineA, lineB) {
-
-      const vectorA = {
-         x: lineA.endX -lineA.startX,
-         y: lineA.endY -lineA.startY,
-      }
-   
-      const vectorB = {
-         x: lineB.endX -lineB.startX,
-         y: lineB.endY -lineB.startY,
-      }
-   
-      const vectorC = {
-         x: lineA.startX -lineB.startX,
-         y: lineA.startY -lineB.startY,
-      }  
-   
-      let vectorValueA = vectorA.x *vectorC.y - vectorA.y *vectorC.x;
-      let vectorValueB = vectorB.x *vectorC.y - vectorB.y *vectorC.x;
-      let denominator = vectorB.y *vectorA.x - vectorB.x *vectorA.y;
-      
-      let rangeA = Math.floor(vectorValueA /denominator *1000) /1000;
-      let rangeB = Math.floor(vectorValueB /denominator *1000) /1000;
-      
-      if(rangeA >= 0 && rangeA <= 1
-      && rangeB >= 0 && rangeB <= 1) return true;
-      else return false;
-   }
-
-   line_toSquare(line, isDiamond) {
-
-      let rectCorner = this.cellCollider(isDiamond);     
-      
-      const rectSide = {
-
-         left: {
-            startX: rectCorner.bottom.x,
-            startY: rectCorner.bottom.y,
-            endX: rectCorner.top.x,
-            endY: rectCorner.top.y,
-         },
-
-         right: {
-            startX: rectCorner.right.x,
-            startY: rectCorner.right.y,
-            endX: rectCorner.bottom.x,
-            endY: rectCorner.bottom.y,
-         },
-
-         top: {
-            startX: rectCorner.top.x,
-            startY: rectCorner.top.y,
-            endX: rectCorner.right.x,
-            endY: rectCorner.right.y,
-         },
-
-         bottom: {
-            startX: rectCorner.bottom.x,
-            startY: rectCorner.bottom.y,
-            endX: rectCorner.left.x,
-            endY: rectCorner.left.y,
-         },
-      };
-
-      let topSide    = this.line_toLine(line, rectSide.top   );
-      let rightSide  = this.line_toLine(line, rectSide.right );
-      let bottomSide = this.line_toLine(line, rectSide.bottom);
-      let leftSide   = this.line_toLine(line, rectSide.left  );
-         
-      if(leftSide
-      || rightSide
-      || topSide
-      || bottomSide) return true;
-      else return false;
-   }
-   
-
-   // NeighborsList
-   initNeighborsList() {
-
-      this.setNeb_Top(   () => { this.addNeb("top"   ) });
-      this.setNeb_Right("right");
-      this.setNeb_Bottom(() => { this.addNeb("bottom") });
-      this.setNeb_Left ("left");
-
-      this.setNeb_Top(() => {
-         this.setNeb_Left ("topLeft");
-         this.setNeb_Right("topRight");
+      Object.entries(this.nebSideList).forEach(([sideName, sideArray]: [string, number[]]) => {
+         this.checkExistNeb(sideName, sideArray);
       });
+   }
+   
+   checkExistNeb(
+      sideName:  string,
+      sideArray: number[],
+   ) {
+   
+      const [horizSide, vertSide] = sideArray;
+      const [horizNeb,  vertNeb ] = [this.i +horizSide, this.j +vertSide];
+   
+      if(horizNeb >= 0
+      && vertNeb  >= 0
+      && horizNeb < this.cellPerSide
+      && vertNeb  < this.cellPerSide) {
 
-      this.setNeb_Bottom(() => {
-         this.setNeb_Right("bottomRight");
-         this.setNeb_Left ("bottomLeft");
+         this.addNeb(sideName);
+      }
+   }
+   
+   addNeb(side: string) {
+
+      const nebID: IString = {};
+
+      Object.entries(this.nebSideList).forEach(([sideName, sideArray]: [string, number[]]) => {
+
+         nebID[sideName] = `${this.i +sideArray[0]}-${this.j +sideArray[1]}`;
       });
-   } 
-
-   addNeb(side) {
-
-      const nebID = {
-         top:   `${this.i   }-${this.j -1}`,
-         right: `${this.i +1}-${this.j   }`,
-         bottom:`${this.i   }-${this.j +1}`,
-         left:  `${this.i -1}-${this.j   }`,
-
-         topLeft:    `${this.i -1}-${this.j -1}`,
-         topRight:   `${this.i +1}-${this.j -1}`,
-         bottomRight:`${this.i +1}-${this.j +1}`,
-         bottomLeft: `${this.i -1}-${this.j +1}`,
-      };
-
+   
       this.neighborsList[side] = nebID[side];
    }
 
 
-   // Set Neighbors
-   setNeb_Left(side) {
-      if(this.i -1 >= 0) this.addNeb(side);
-   }
-
-   setNeb_Right(side) {
-      if(this.i +1 < this.cellPerSide) this.addNeb(side); // Collums
-   }
-
-   setNeb_Top(callback) {
-      if(this.j -1 >= 0) callback();
-   }
-
-   setNeb_Bottom(callback) {
-      if(this.j +1 < this.cellPerSide) callback(); // Rows
-   }
-
-
    // Draw
-   drawInfos(ctx) {
+   drawInfos(ctx: CanvasRenderingContext2D) {
          
       this.drawFrame(ctx);
-      // this.drawCenter(ctx);
-      // this.drawID(ctx);
+      this.drawCenter(ctx);
+      this.drawID(ctx);
    }
 
-   drawCenter(ctx) {
+   drawCenter(ctx: CanvasRenderingContext2D) {
 
       ctx.fillStyle = "red";
       ctx.beginPath();
@@ -284,7 +172,7 @@ export class CellClass {
       ctx.closePath();
    }
 
-   drawFrame(ctx) {
+   drawFrame(ctx: CanvasRenderingContext2D) {
 
       ctx.strokeStyle = "black";
       ctx.lineWidth = 1;
@@ -297,7 +185,7 @@ export class CellClass {
       );
    }
 
-   drawID(ctx) {
+   drawID(ctx: CanvasRenderingContext2D) {
 
       ctx.fillStyle = "black";
       ctx.font = "16px Verdana";
@@ -310,54 +198,22 @@ export class CellClass {
       );
    }
 
-   drawData(ctx) {
+   drawWallCollider(ctx: CanvasRenderingContext2D) {
 
-      ctx.fillStyle = "white";
-      ctx.font = "18px Verdana";
-      ctx.textAlign = "left";
+      const { top, right, bottom, left } = this.collider;     
 
-      let offsetX = 27;
+      ctx.fillStyle = "red";
+      ctx.beginPath();
 
-      // hCost
-      ctx.fillText(
-         `h:${this.hCost}`,
-         this.center.x -offsetX,
-         this.center.y -12
-      );
+      ctx.moveTo(top.x,    top.y   );
+      ctx.lineTo(right.x,  right.y );
+      ctx.lineTo(bottom.x, bottom.y);
+      ctx.lineTo(left.x,   left.y  );
 
-      // gCost
-      ctx.fillText(
-         `g:${this.gCost}`,
-         this.center.x -offsetX,
-         this.center.y +5
-      );
-
-      // fCost
-      ctx.fillText(
-         `f:${this.fCost}`,
-         this.center.x -offsetX,
-         this.center.y +27
-      );      
+      ctx.fill();
    }
 
-   drawWallCollider(ctx, isDiamond, showWallCol) {
-
-      if(showWallCol) {
-         let rectCorner = this.cellCollider(isDiamond);     
-
-         ctx.fillStyle = "red";
-         ctx.beginPath();
-   
-         ctx.moveTo(rectCorner.top.x, rectCorner.top.y);
-         ctx.lineTo(rectCorner.right.x, rectCorner.right.y);
-         ctx.lineTo(rectCorner.bottom.x, rectCorner.bottom.y);
-         ctx.lineTo(rectCorner.left.x, rectCorner.left.y);
-   
-         ctx.fill();
-      }
-   }
-
-   drawPathWall(ctx, mouseCell) {
+   drawPathWall(ctx: CanvasRenderingContext2D, hoverCell: CellClass) {
 
       ctx.strokeStyle = "yellow";
       ctx.beginPath();
@@ -366,21 +222,21 @@ export class CellClass {
          this.center.y
       );
       ctx.lineTo(
-         mouseCell.center.x,
-         mouseCell.center.y
+         hoverCell.center.x,
+         hoverCell.center.y
       );
       ctx.lineWidth = 4;
       ctx.stroke();
    }
 
-   drawVacancy(ctx) {
+   drawVacancy(ctx: CanvasRenderingContext2D) {
 
       if(this.isVacant) return;
       
       this.drawColor(ctx, "rgba(255, 0, 0, 0.6)")
    }
 
-   drawColor(ctx, color) {
+   drawColor(ctx: CanvasRenderingContext2D, color: string) {
 
       ctx.fillStyle = color;
       ctx.fillRect(
@@ -391,9 +247,13 @@ export class CellClass {
       );
    }
 
-   drawSprite(ctx, gridPos, scrollOffset) {
 
-      // if(this.id !== "10-17") return;
+   // ------------------ Tempory ------------------
+   drawSprite(
+      ctx:          CanvasRenderingContext2D,
+      gridPos:      IPosition,
+      scrollOffset: IPosition,
+   ) {
 
       const frameX    = 0;
       const srcHeight = 1000;
@@ -403,7 +263,7 @@ export class CellClass {
       const offsetY   = 23;
 
       ctx.drawImage(
-         this.img,
+         this.img!,
 
          // Source
          frameX *srcWidth,
@@ -419,12 +279,15 @@ export class CellClass {
       );
    }
 
-   // --- Tempory ---
-   drawWall(ctx, gridPos, scrollOffset) {
+   drawWall(
+      ctx:          CanvasRenderingContext2D,
+      gridPos:      IPosition,
+      scrollOffset: IPosition,
+   ) {
 
       if(!this.isBlocked) return;
       
-      this.img.src = "Terrain/iso_stone.png";
+      this.img!.src = "Terrain/iso_stone.png";
 
       const srcSize  = 1024;
       const destSize = 55;
@@ -432,7 +295,7 @@ export class CellClass {
       const offsetY  = 40;
 
       ctx.drawImage(
-         this.img,
+         this.img!,
 
          // Source
          0,
@@ -447,4 +310,7 @@ export class CellClass {
          destSize,
       );
    }
+   // ------------------ Tempory ------------------
+
+
 }
