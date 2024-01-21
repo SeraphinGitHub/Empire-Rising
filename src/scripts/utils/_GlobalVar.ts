@@ -52,8 +52,8 @@ export const glo = {
          isometric: emptyPosition,
       },
 
-      height: undefined,
-      width:  undefined,
+      height: undefined as number | undefined,
+      width:  undefined as number | undefined,
 
       borderColor:  "dodgerblue",
       filledColor:  "rgba(30, 144, 255, 0.3)",

@@ -1,39 +1,47 @@
 
 "use strict"
 
-import { glo        } from "./utils/_GlobalVar";
-import { unitParams } from "./utils/unitParams";
+import {
+   IPosition,
+   ISquare,
+} from "./utils/interfaces";
 
 import {
    CollisionClass,
    AgentClass,
 } from "./classes/_Export";
 
+import { glo        } from "./utils/_GlobalVar";
+import { unitParams } from "./utils/unitParams";
+
+
 // ================================================================================================
 // Extended Methods
 // ================================================================================================
 export const ext = {
    
-   clearCanvas(canvas) {
+   clearCanvas(canvasName: string) {
 
-      if(canvas === "isoSelect") {
-         return glo.Ctx[canvas].clearRect(0, 0, glo.GridParams.gridSize, glo.GridParams.gridSize);
+      if(canvasName === "isoSelect") {
+         return glo.Ctx[canvasName].clearRect(0, 0, glo.GridParams.gridSize, glo.GridParams.gridSize);
       }
 
-      glo.Ctx[canvas].clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
+      glo.Ctx[canvasName].clearRect(0, 0, glo.Viewport.width, glo.Viewport.height);
    },
 
-   isEmptyObj(obj) {
+   isEmptyObj(obj: {}) {
       if(Object.keys(obj).length === 0) return true;
    },
    
-   isWithinGrid(isoGridPos) {
+   isWithinGrid(isoGridPos: IPosition) {
+
+      const { x, y }: IPosition = isoGridPos;
       
       if(isoGridPos
-      && isoGridPos.x > 0
-      && isoGridPos.x < glo.GridParams.gridSize
-      && isoGridPos.y > 0
-      && isoGridPos.y < glo.GridParams.gridSize) {
+      && x > 0
+      && x < glo.GridParams.gridSize
+      && y > 0
+      && y < glo.GridParams.gridSize) {
    
          return true;
       }
@@ -41,7 +49,7 @@ export const ext = {
       return false;
    },
 
-   isWithinViewport(gridPos) {
+   isWithinViewport(gridPos: IPosition) {
 
       const {
          x:      vpX,
@@ -54,11 +62,13 @@ export const ext = {
          x:      scrollX,
          y:      scrollY,
       } = glo.ScrollOffset;
+
+      const { x, y }: IPosition = gridPos;
    
-      if(gridPos.x >= vpX           -scrollX
-      && gridPos.x <= vpX +vpWidth  -scrollX
-      && gridPos.y >= vpY           -scrollY
-      && gridPos.y <= vpY +vpHeight -scrollY) {
+      if(x >= vpX           -scrollX
+      && x <= vpX +vpWidth  -scrollX
+      && y >= vpY           -scrollY
+      && y <= vpY +vpHeight -scrollY) {
    
          return true;
       }
@@ -66,14 +76,17 @@ export const ext = {
       return false;
    },
 
-   cycleList(list, callback) {
+   cycleList(
+      list:     any,
+      callback: Function,
+   ) {
 
       for(let i in list) {
          callback(list[i]);
       }
    },
 
-   getScreenPos(event) {
+   getScreenPos(event: MouseEvent) {
 
       let screenBound  = glo.Canvas.selection.getBoundingClientRect();
       let isoGridBound = glo.Canvas.isoSelect.getBoundingClientRect();
@@ -90,8 +103,8 @@ export const ext = {
          },
       }
    },
-   
-   screenPos_toGridPos(screenPos) {
+
+   screenPos_toGridPos(screenPos: IPosition) {
    
       const screenX        = screenPos.x;
       const doubleScreenY  = screenPos.y *2;
@@ -102,54 +115,69 @@ export const ext = {
          x:  Math.floor( (screenX -doubleScreenY) /glo.Cos_45deg  *0.5 ) +half_GridWidth,
          y:  Math.floor( (screenX +doubleScreenY) /glo.Cos_45deg  *0.5 ) -half_GridWidth,
       };
-   },
+   },    
    
-   gridPos_toScreenPos(gridPos) {
+   gridPos_toScreenPos(gridPos: IPosition) {
+
+      const {
+         x: gridX,
+         y: gridY,
+      }: IPosition = gridPos;
+
+      const {
+         x: offsetX,
+         y: offsetY,
+      }: IPosition = glo.ViewportOffset;
+      
+      const Cos_45: number = glo.Cos_45deg;
    
       // Cartesian <== Isometric
-      const TempX = Math.floor( (gridPos.x +gridPos.y) *glo.Cos_45deg );
-      const TempY = Math.floor( (gridPos.y +glo.GridAngle) *glo.Cos_45deg *2 -TempX ) /2;
+      const TempX = Math.floor( (gridX +gridY         ) *Cos_45 );
+      const TempY = Math.floor( (gridY +glo.GridAngle!) *Cos_45 *2 -TempX ) *0.5;
       
       return {
-         x: Math.floor( TempX +glo.ViewportOffset.x),
-         y: Math.floor( TempY +glo.ViewportOffset.x),
+         x: Math.floor( TempX +offsetX ),
+         y: Math.floor( TempY +offsetY ),
       };
    },
    
    getHoverCell() {
 
-      let isoGridPos = glo.IsoGridPos;
-      let cellSize   = glo.Grid.cellSize;
+      const cellSize: number = glo.Grid!.cellSize;
+      
+      const {
+         x: isoX,
+         y: isoY,
+      }: IPosition = glo.IsoGridPos;
 
-      const cellPos = {
-         x: isoGridPos.x - (isoGridPos.x % cellSize),
-         y: isoGridPos.y - (isoGridPos.y % cellSize),
+      const cellPos: IPosition = {
+         x: isoX - (isoX % cellSize),
+         y: isoY - (isoY % cellSize),
       };
    
-      const cellCenter = {
-         x: cellPos.x +cellSize /2,
-         y: cellPos.y +cellSize /2,
+      const cellCenter: IPosition = {
+         x: cellPos.x +cellSize *0.5,
+         y: cellPos.y +cellSize *0.5,
       };
-   
-      const screenPos = this.gridPos_toScreenPos(cellCenter);
    
       return {
          id:       `${cellPos.x /cellSize}-${cellPos.y /cellSize}`,
          center:    cellCenter,
          gridPos:   cellPos,
-         screenPos: screenPos,
+         screenPos: this.gridPos_toScreenPos(cellCenter),
       }
    },
    
    drawSelectArea() {
 
       let selected   = glo.SelectArea;
-      let oldPos     = selected.oldPos.cartesian;
-      let currentPos = selected.currentPos.cartesian;
+
+      const { x: oldX,     y: oldY     }: IPosition = selected.oldPos.cartesian;
+      const { x: currentX, y: currentY }: IPosition = selected.currentPos.cartesian;
 
       // Set rect size
-      selected.width  = currentPos.x -oldPos.x;
-      selected.height = currentPos.y -oldPos.y;
+      selected.width  = currentX -oldX;
+      selected.height = currentY -oldY;
 
       // Set rect params
       glo.Ctx.selection.lineWidth   = selected.lineWidth;
@@ -158,16 +186,16 @@ export const ext = {
 
       // Draw borders
       glo.Ctx.selection.strokeRect(
-         oldPos.x,
-         oldPos.y,
+         oldX,
+         oldY,
          selected.width,
          selected.height
       );
       
       // Draw filled rect
       glo.Ctx.selection.fillRect(
-         oldPos.x,
-         oldPos.y,
+         oldX,
+         oldY,
          selected.width,
          selected.height
       );
@@ -182,8 +210,8 @@ export const ext = {
       glo.Ctx.isoSelect.strokeRect(
          glo.HoverCell.gridPos.x,
          glo.HoverCell.gridPos.y,
-         glo.Grid.cellSize,
-         glo.Grid.cellSize,
+         glo.Grid!.cellSize,
+         glo.Grid!.cellSize,
       );
    },
 
@@ -191,53 +219,54 @@ export const ext = {
 
       const detSize = 50;
 
-      const vp = {
-         x: glo.ViewportSqr.x,
-         y: glo.ViewportSqr.y,
-         w: glo.ViewportSqr.width,
-         h: glo.ViewportSqr.height,
-      }
+      const {
+         x:      vpX,
+         y:      vpY,
+         width:  vpWidth,
+         height: vpHeight,
+      }: ISquare = glo.ViewportSqr;
 
-      const bounderies = {
+      const bounderies: any = {
 
          top: {
-            x:       vp.x,
-            y:       vp.y,
-            width:   vp.w,
+            x:       vpX,
+            y:       vpY,
+            width:   vpWidth,
             height:  detSize,
          },
 
          right: {
-            x:       vp.x +vp.w -detSize,
-            y:       vp.y,
+            x:       vpX +vpWidth -detSize,
+            y:       vpY,
             width:   detSize,
-            height:  vp.h,
+            height:  vpHeight,
          },
 
          bottom: {
-            x:       vp.x,
-            y:       vp.y +vp.h -detSize,
-            width:   vp.w,
+            x:       vpX,
+            y:       vpY +vpHeight -detSize,
+            width:   vpWidth,
             height:  detSize,
          },
 
          left: {
-            x:       vp.x,
-            y:       vp.y,
+            x:       vpX,
+            y:       vpY,
             width:   detSize,
-            height:  vp.h,
+            height:  vpHeight,
          },
       }
 
       for(let i in bounderies) {
-         let rect = bounderies[i];
+
+         const { x, y, width, height }: ISquare = bounderies[i];
 
          glo.Ctx.units.fillStyle = "rgba(255, 0, 255, 0.5)";
          glo.Ctx.units.fillRect(
-            rect.x,
-            rect.y,
-            rect.width,
-            rect.height
+            x,
+            y,
+            width,
+            height
          );
       }      
 
