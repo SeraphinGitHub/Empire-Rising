@@ -21,7 +21,7 @@ const reverseSide = (
 
 export class CollisionClass {
    
-   extractSides(
+   static extractSides(
       square: ISquare
    ) {         
       return {
@@ -56,7 +56,7 @@ export class CollisionClass {
       };
    }
 
-   checkIf(
+   static checkIf(
       isOverLaping: boolean,
    ): boolean {
 
@@ -64,7 +64,7 @@ export class CollisionClass {
       return false;
    }
 
-   calcDist(
+   static calcDist(
       first:  IPosition | ISquare,
       second: IPosition | ISquare,
    ): number {
@@ -75,7 +75,7 @@ export class CollisionClass {
       return Math.floor( Math.hypot(distX, distY) );
    }
    
-   square_toSquare(
+   static square_toSquare(
       first:  ISquare,
       second: ISquare,
    ): boolean {
@@ -93,7 +93,7 @@ export class CollisionClass {
       return this.checkIf(isOverLaping);
    }
 
-   square_toCircle(
+   static square_toCircle(
       square:    ISquare,
       circlePos: IPosition,
       circleRad: number,
@@ -126,7 +126,7 @@ export class CollisionClass {
       return this.checkIf(isOverLaping);
    }
 
-   circle_toCircle(
+   static circle_toCircle(
       firstPos:  IPosition,
       firstRad:  number,
       secondPos: IPosition,
@@ -143,7 +143,7 @@ export class CollisionClass {
       return this.checkIf(isOverLaping);
    }
 
-   point_toSquare(
+   static point_toSquare(
       point:  IPosition,
       square: ISquare,
    ): boolean {
@@ -158,7 +158,7 @@ export class CollisionClass {
       return this.checkIf(isOverLaping);
    }
 
-   point_toCircle(
+   static point_toCircle(
       point:  IPosition,
       circle: ICircle,
    ): boolean {
@@ -178,7 +178,7 @@ export class CollisionClass {
       return this.checkIf(isOverLaping);
    }
 
-   line_toLine(
+   static line_toLine(
       lineA: ILine,
       lineB: ILine,
    ): boolean {
@@ -213,7 +213,7 @@ export class CollisionClass {
       return this.checkIf(isOverLaping);
    }
 
-   line_toSquare(
+   static line_toSquare(
       line:   ILine,
       square: ISquare,
    ): boolean {  

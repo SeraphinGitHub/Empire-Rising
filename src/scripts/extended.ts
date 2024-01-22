@@ -7,8 +7,9 @@ import {
 } from "./utils/interfaces";
 
 import {
-   CollisionClass,
+   CollisionClass as Collision,
    AgentClass,
+   CellClass,
 } from "./classes/_Export";
 
 import { glo        } from "./utils/_GlobalVar";
@@ -274,86 +275,107 @@ export const ext = {
       
       if(mousePos) {
          
-         if(collision.point_toSquare(mousePos, bounderies.top   )) glo.ScrollOffset.y += glo.MouseSpeed;
-         if(collision.point_toSquare(mousePos, bounderies.right )) glo.ScrollOffset.x -= glo.MouseSpeed;
-         if(collision.point_toSquare(mousePos, bounderies.bottom)) glo.ScrollOffset.y -= glo.MouseSpeed;
-         if(collision.point_toSquare(mousePos, bounderies.left  )) glo.ScrollOffset.x += glo.MouseSpeed;
+         if(Collision.point_toSquare(mousePos, bounderies.top   )) glo.ScrollOffset.y += glo.MouseSpeed;
+         if(Collision.point_toSquare(mousePos, bounderies.right )) glo.ScrollOffset.x -= glo.MouseSpeed;
+         if(Collision.point_toSquare(mousePos, bounderies.bottom)) glo.ScrollOffset.y -= glo.MouseSpeed;
+         if(Collision.point_toSquare(mousePos, bounderies.left  )) glo.ScrollOffset.x += glo.MouseSpeed;
       }
       
-      glo.ComputedCanvas.e = glo.ScrollOffset.x;
-      glo.ComputedCanvas.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
+      glo.ComputedCanvas!.e = glo.ScrollOffset.x;
+      glo.ComputedCanvas!.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
       
-      glo.Canvas.isoSelect.style.transform = glo.ComputedCanvas.toString();
+      glo.Canvas.isoSelect.style.transform = glo.ComputedCanvas!.toString();
    },
 
-   updateUnitsList(collideCallback, first, second, agent) {
+   updateUnitsList(
+      collideCallback: Function,
+      first:  unknown,
+      second: unknown,
+      agent:  AgentClass
+   ) {
       
       if(collideCallback(first, second)) glo.CurrentSelectList[agent.id] = agent;
       else delete glo.CurrentSelectList[agent.id];
    },
    
    unitSelection() {
-      let isSelecting = glo.SelectArea.isSelecting;
-      let square;
+
+      let selectArea: unknown;
+      let isSelecting: boolean = glo.SelectArea.isSelecting;
+      
+      const {
+         oldPos,
+         currentPos,
+         height: selectHeight,
+         width:  selectWidth,
+      } = glo.SelectArea;
 
       if(isSelecting) {
          this.clearCanvas("selection");
          this.drawSelectArea();
 
-         square = {
-            x: glo.SelectArea.oldPos.cartesian.x,
-            y: glo.SelectArea.oldPos.cartesian.y,
-            height: glo.SelectArea.height,
-            width:  glo.SelectArea.width,
+         selectArea = {
+            x:      oldPos.cartesian.x,
+            y:      oldPos.cartesian.y,
+            height: selectHeight,
+            width:  selectWidth,
          };
       }
 
-      const point = {
-         x: glo.SelectArea.currentPos.cartesian.x,
-         y: glo.SelectArea.currentPos.cartesian.y,
+      const mousePos = {
+         x: currentPos.cartesian.x,
+         y: currentPos.cartesian.y,
       };
 
       // If collide with mouse or select area ==> Add agent to CurrentList 
-      this.cycleList(glo.AgentsList, (agent) => {
-         const agentPos = this.gridPos_toScreenPos(agent.position);
+      this.cycleList(glo.AgentsList, (agent: AgentClass) => {
          
+         const { x: agentX,  y: agentY  }: IPosition = this.gridPos_toScreenPos(agent.position);
+         const { x: scrollX, y: scrollY }: IPosition = glo.ScrollOffset;
+
          // Agent collider
-         const circle = {
-            x: agentPos.x +glo.ScrollOffset.x,
-            y: agentPos.y +glo.ScrollOffset.y,
+         const agentCollider = {
+            x:      agentX +scrollX,
+            y:      agentY +scrollY,
             radius: agent.collider.radius,
          };
 
          if(isSelecting) {
-            this.updateUnitsList(collision.square_toCircle, square, circle, agent);
+            return this.updateUnitsList(Collision.square_toCircle, selectArea, agentCollider, agent);
          }
-         else this.updateUnitsList(collision.point_toCircle, point, circle, agent);
+
+         this.updateUnitsList(Collision.point_toCircle, mousePos, agentCollider, agent);
       });
    },
 
    unitDiselection() {
+
       this.clearCanvas("selection");
       
       // If OldList === Empty ==> Set OldList
       if(this.isEmptyObj(glo.OldSelectList)) {
-         glo.OldSelectList = glo.CurrentSelectList;
+
+         glo.OldSelectList     = glo.CurrentSelectList;
          glo.CurrentSelectList = {};
-         this.cycleList(glo.OldSelectList, (agent) => agent.isSelected = true);
+
+         this.cycleList(glo.OldSelectList, (agent: AgentClass) => agent.isSelected = true);
       }
 
       // If OldList !== Empty && CurrentList !== Empty
       else if(!this.isEmptyObj(glo.CurrentSelectList)) {
 
          // Remove old selected agents
-         this.cycleList(glo.OldSelectList, (agent) => {
-            if(!Object.keys(glo.CurrentSelectList).includes(agent.id)) {
+         this.cycleList(glo.OldSelectList, (agent: AgentClass) => {
+
+            if(!Object.keys(glo.CurrentSelectList).includes( agent.id.toString() )) {
                agent.isSelected = false;
                delete glo.OldSelectList[agent.id];
             }
          });
 
          // Add new selected agents
-         this.cycleList(glo.CurrentSelectList, (agent) => {
+         this.cycleList(glo.CurrentSelectList, (agent: AgentClass) => {
+
             agent.isSelected = true;
             glo.OldSelectList[agent.id] = agent;
             delete glo.CurrentSelectList[agent.id];
@@ -361,7 +383,8 @@ export const ext = {
       }
 
       // If OldList === Empty && CurrentList !== Empty
-      else this.cycleList(glo.OldSelectList, (agent) => {
+      else this.cycleList(glo.OldSelectList, (agent: AgentClass) => {
+         
          if(agent.isSelected) {
             agent.isSelected = false;
             delete glo.OldSelectList[agent.id];
@@ -369,12 +392,17 @@ export const ext = {
       });
    },
 
-   createNewAgent(divisionName, typeName, cellID, diffImgSrc) {
+   createNewAgent(
+      divisionName: string, 
+      typeName :    string, 
+      cellID:       string, 
+      diffImgSrc:   string,
+   ) {
 
-      const avID     = glo.AvailableIDArray[0];
-      const division = unitParam[divisionName];
-      const unitType = division.unitType[typeName];
-
+      const avID:     number  = glo.AvailableIDArray[0];
+      const division: unknown = unitParams[divisionName];
+      const unitType: unknown = division.unitType[typeName];
+      
       let imgSrc     = unitType.imgSrc;
       if(diffImgSrc !== "") imgSrc = diffImgSrc;
    
@@ -388,10 +416,10 @@ export const ext = {
          moveSpeed:   unitType.moveSpeed,
          popCost:     division.popCost,
          collider:    division.collider,
-         startCell:   glo.Grid.cellsList[cellID], // <== Tempory until create JS file "BuildingsClass"
+         startCell:   glo.Grid!.cellsList[cellID], // <== Tempory until create JS file "BuildingsClass"
       };
 
-      this.cycleList(glo.Grid.cellsList, (cell) => {
+      this.cycleList(glo.Grid!.cellsList, (cell: CellClass) => {
          cell.agentList[avID] = {
             hCost: 0,
             gCost: 0,
@@ -405,65 +433,71 @@ export const ext = {
 
    drawUnits(frame: number) {
 
-      ext.cycleList(glo.AgentsList, (agent: AgentClass) => {
-         let agentPos = ext.gridPos_toScreenPos(agent.position);
+      this.cycleList(glo.AgentsList, (agent: AgentClass) => {
+         let agentPos = this.gridPos_toScreenPos(agent.position);
    
          agent.updateState(frame);
          agent.walkPath();
    
-         if(!ext.isWithinViewport(agentPos)) return;
+         if(!this.isWithinViewport(agentPos)) return;
          
-         agent.drawSprite(glo.Ctx.units, agentPos, glo.ScrollOffset);
-         // agent.drawCollider(glo.Ctx.units, agentPos, glo.ScrollOffset);
-         agent.drawPath(glo.Ctx.isoSelect);
+         const { units, isoSelect } = glo.Ctx;
+
+         agent.drawSprite(units, agentPos, glo.ScrollOffset);
+         // agent.drawCollider(units, agentPos, glo.ScrollOffset);
+         agent.drawPath(isoSelect);
       });
    },
    
    drawBuildings() {
    
-      ext.cycleList(glo.Grid.cellsList, (cell) => {
-         let cellPos = ext.gridPos_toScreenPos(cell.center);
+      this.cycleList(glo.Grid!.cellsList, (cell: CellClass) => {
+         let cellPos = this.gridPos_toScreenPos(cell.center);
    
-         if(!ext.isWithinViewport(cellPos)) return;
+         if(!this.isWithinViewport(cellPos)) return;
+
+         const { units, isoSelect, terrain } = glo.Ctx;
    
-         // cell.drawSprite(glo.Ctx.terrain, cellPos, glo.ScrollOffset);
-         cell.drawWall   (glo.Ctx.units, cellPos, glo.ScrollOffset);
-         cell.drawInfos  (glo.Ctx.isoSelect);
-         cell.drawVacancy(glo.Ctx.isoSelect);
+         // cell.drawSprite(terrain, cellPos, glo.ScrollOffset);
+         cell.drawWall   (units, cellPos, glo.ScrollOffset);
+         cell.drawInfos  (isoSelect);
+         cell.drawVacancy(isoSelect);
       }); 
    },
    
    drawSelection() {
    
-      ext.cycleList(glo.OldSelectList,     (agent) => {
-         let agentPos = ext.gridPos_toScreenPos(agent.position);
+      this.cycleList(glo.OldSelectList, (agent: AgentClass) => {
+         let agentPos = this.gridPos_toScreenPos(agent.position);
    
-         if(!ext.isWithinViewport(agentPos)) return;
+         if(!this.isWithinViewport(agentPos)) return;
+
          agent.drawSelect(glo.Ctx.isoSelect, "yellow");
       });
    },
    
    drawHover() {
    
-      ext.cycleList(glo.CurrentSelectList, (agent) => {
-         let agentPos = ext.gridPos_toScreenPos(agent.position);
+      this.cycleList(glo.CurrentSelectList, (agent: AgentClass) => {
+         let agentPos = this.gridPos_toScreenPos(agent.position);
    
-         if(!ext.isWithinViewport(agentPos)) return;
+         if(!this.isWithinViewport(agentPos)) return;
+
          agent.drawSelect(glo.Ctx.isoSelect, "blue");
       });
    },
 
-   Test_PathRandomize(agent) {
+   Test_PathRandomize(agent: AgentClass) {
 
-      let i = glo.Grid.rand(glo.Grid.cellRange);
-      let j = glo.Grid.rand(glo.Grid.cellRange);
+      let i = glo.Grid!.rand(glo.Grid!.cellRange);
+      let j = glo.Grid!.rand(glo.Grid!.cellRange);
       
-      const targetCell = glo.Grid.cellsList[`${i}-${j}`];
+      const targetCell = glo.Grid!.cellsList[`${i}-${j}`];
       
       if(targetCell.isBlocked) return;
       
-      agent.endCell = targetCell;
-      agent.searchPath(glo.Grid.cellsList);
+      agent.goalCell = targetCell;
+      agent.searchPath();
    },
    
    Test_GenerateUnits() {
@@ -476,14 +510,14 @@ export const ext = {
       
       while(pop > 0) {
    
-         let index = glo.Grid.rand(4);
-         let i = glo.Grid.rand(glo.Grid.cellRange);
-         let j = glo.Grid.rand(glo.Grid.cellRange);
+         let index = glo.Grid!.rand(4);
+         let i = glo.Grid!.rand(glo.Grid!.cellRange);
+         let j = glo.Grid!.rand(glo.Grid!.cellRange);
    
-         let unitType = glo.Grid.rand(2);
+         let unitType = glo.Grid!.rand(2);
    
-         if( glo.Grid.cellsList[`${i}-${j}`].isVacant
-         && !glo.Grid.cellsList[`${i}-${j}`].isBlocked) {
+         if( glo.Grid!.cellsList[`${i}-${j}`].isVacant
+         && !glo.Grid!.cellsList[`${i}-${j}`].isBlocked) {
    
             let color = "";
    
@@ -494,7 +528,7 @@ export const ext = {
             if(unitType === 0) this.createNewAgent("infantry", "swordsman", `${i}-${j}`, color);
             if(unitType === 1) this.createNewAgent("infantry", "worker", `${i}-${j}`, "");
             
-            glo.Grid.cellsList[`${i}-${j}`].isVacant = false;
+            glo.Grid!.cellsList[`${i}-${j}`].isVacant = false;
             pop--;
    
             glo.CurrentPop++;
