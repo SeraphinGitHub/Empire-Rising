@@ -6,10 +6,9 @@ import {
    IPosition,
    IPositionList,
    INumberList,
-   IAgentClass,
+   IAgentCost,
 } from "../utils/interfaces";
 
-import { CollisionClass } from "./_Export";
 
 // =====================================================================
 // Cell Class
@@ -17,8 +16,7 @@ import { CollisionClass } from "./_Export";
 export class CellClass {
    
    id:             string;
-   Collision:      CollisionClass;
-   
+
    cellPerSide:    number;
    size:           number;
    i:              number;
@@ -30,10 +28,10 @@ export class CellClass {
    collider:       IPositionList;
    nebSideList:    INumberList;
 
-   img:  HTMLImageElement | undefined;
-   zIndex:         number | undefined;
-   agentID:        number | undefined;
-   agentList:      IAgentClass;
+   img:            HTMLImageElement | undefined;
+   zIndex:         number           | undefined;
+   agentID:        number           | undefined;
+   agentCostList:  IAgentCost;
    neighborsList:  IString;
 
    isBlocked:      boolean;
@@ -47,7 +45,6 @@ export class CellClass {
    ) {
       
       this.id          = `${i}-${j}`;
-      this.Collision   = new CollisionClass;
 
       this.cellPerSide = cellPerSide;
       this.size        = size;
@@ -99,7 +96,7 @@ export class CellClass {
       this.img           = undefined;
       this.zIndex        = undefined;
       this.agentID       = undefined;
-      this.agentList     = {};
+      this.agentCostList = {};
       this.neighborsList = {};
       
       this.isBlocked     = false;
@@ -151,7 +148,7 @@ export class CellClass {
    }
 
 
-   // Draw
+   // Draw Methods
    drawInfos(ctx: CanvasRenderingContext2D) {
          
       this.drawFrame(ctx);

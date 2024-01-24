@@ -5,7 +5,7 @@ import {
    ISquare,
    ICircle,
    ILine,
-} from "../utils/interfaces";
+} from "./interfaces";
 
 // =====================================================================
 // Colision Class
@@ -19,9 +19,9 @@ const reverseSide = (
    return [first, second];
 }
 
-export class CollisionClass {
+export const Collision = {
    
-   static extractSides(
+   extractSides(
       square: ISquare
    ) {         
       return {
@@ -54,17 +54,17 @@ export class CollisionClass {
             endY:   square.y,
          },
       };
-   }
+   },
 
-   static checkIf(
+   checkIf(
       isOverLaping: boolean,
    ): boolean {
 
       if(isOverLaping) return true;
       return false;
-   }
+   },
 
-   static calcDist(
+   calcDist(
       first:  IPosition | ISquare,
       second: IPosition | ISquare,
    ): number {
@@ -73,9 +73,9 @@ export class CollisionClass {
       const distY = second.y -first.y;
 
       return Math.floor( Math.hypot(distX, distY) );
-   }
+   },
    
-   static square_toSquare(
+   square_toSquare(
       first:  ISquare,
       second: ISquare,
    ): boolean {
@@ -91,9 +91,9 @@ export class CollisionClass {
       ;
 
       return this.checkIf(isOverLaping);
-   }
+   },
 
-   static square_toCircle(
+   square_toCircle(
       square:    ISquare,
       circlePos: IPosition,
       circleRad: number,
@@ -124,9 +124,9 @@ export class CollisionClass {
       ;
 
       return this.checkIf(isOverLaping);
-   }
+   },
 
-   static circle_toCircle(
+   circle_toCircle(
       firstPos:  IPosition,
       firstRad:  number,
       secondPos: IPosition,
@@ -141,9 +141,9 @@ export class CollisionClass {
       ;
 
       return this.checkIf(isOverLaping);
-   }
+   },
 
-   static point_toSquare(
+   point_toSquare(
       point:  IPosition,
       square: ISquare,
    ): boolean {
@@ -156,9 +156,9 @@ export class CollisionClass {
       ;
 
       return this.checkIf(isOverLaping);
-   }
+   },
 
-   static point_toCircle(
+   point_toCircle(
       point:  IPosition,
       circle: ICircle,
    ): boolean {
@@ -176,9 +176,9 @@ export class CollisionClass {
       ;
 
       return this.checkIf(isOverLaping);
-   }
+   },
 
-   static line_toLine(
+   line_toLine(
       lineA: ILine,
       lineB: ILine,
    ): boolean {
@@ -211,9 +211,9 @@ export class CollisionClass {
       ;
 
       return this.checkIf(isOverLaping);
-   }
+   },
 
-   static line_toSquare(
+   line_toSquare(
       line:   ILine,
       square: ISquare,
    ): boolean {  
@@ -262,5 +262,6 @@ export class CollisionClass {
       ;
 
       return this.checkIf(isOverLaping);
-   }
+   },
+   
 }

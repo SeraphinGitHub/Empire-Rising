@@ -72,3 +72,12 @@ export interface ILine {
    endX:   number;
    endY:   number;
 }
+
+export interface IAgentCost {
+   [key: number]: {
+      hCost:        number,
+      gCost:        number,
+      fCost:        number,
+      cameFromCell: CellClass | undefined,
+   }
+}
