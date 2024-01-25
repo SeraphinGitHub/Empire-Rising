@@ -152,8 +152,8 @@ export class CellClass {
    drawInfos(ctx: CanvasRenderingContext2D) {
          
       this.drawFrame(ctx);
-      this.drawCenter(ctx);
-      this.drawID(ctx);
+      // this.drawCenter(ctx);
+      // this.drawID(ctx);
    }
 
    drawCenter(ctx: CanvasRenderingContext2D) {

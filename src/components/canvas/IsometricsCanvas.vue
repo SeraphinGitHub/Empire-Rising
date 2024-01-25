@@ -3,7 +3,7 @@
    <section class="flex">
 
       <div class="flex">
-         <canvas ref="isoSelectCanvas" class="flex canvas-isoSelect"></canvas>
+         <canvas ref="isoSelect" class="flex canvas-isoSelect"></canvas>
       </div>
 
    </section>
@@ -12,12 +12,12 @@
 <script lang="ts">
 
    // Scripts
-   import { ref } from "vue";
    import { glo } from "../../scripts/utils/_GlobalVar"
    
    export default {
 
       mounted() {
+
          const canvasName = "isoSelect";
          const canvasElem = this.$refs[canvasName] as HTMLCanvasElement;
 

@@ -765,7 +765,7 @@ export const GameHandler = {
       this.drawAllUnits(frame);
       this.drawAllBuildings();
       this.drawSelectUnit();
-      this.drawHoverUnit();   
+      this.drawHoverUnit();
       
       if(this.isWithinGrid(glo.IsoGridPos)) this.drawHoverCell();
    
@@ -805,7 +805,7 @@ export const GameHandler = {
       // this.Test_GenerateUnits();
       // --- Tempory ---
       
-
+      this.runAnimation = this.runAnimation.bind(this)
       this.runAnimation();
    },
 

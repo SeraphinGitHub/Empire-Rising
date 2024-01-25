@@ -17,7 +17,7 @@
    import CartCanvas  from "./components/canvas/CartesiansCanvas.vue"
 
    // Scripts
-   import { GameHandler }  from "./scripts/_GameHandler.ts"
+   import { GameHandler } from "./scripts/_GameHandler_Bis"
 
    export default {
       name: "App",

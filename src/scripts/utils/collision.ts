@@ -19,61 +19,61 @@ const reverseSide = (
    return [first, second];
 }
 
+const extractSides = (
+  square: ISquare
+) => {         
+   return {
+
+      top: {
+         startX: square.x,
+         startY: square.y,
+         endX:   square.x +square.width,
+         endY:   square.y,
+      },         
+
+      right: {
+         startX: square.x +square.width,
+         startY: square.y,
+         endX:   square.x +square.width,
+         endY:   square.y +square.height,
+      },
+
+      bottom: {
+         startX: square.x +square.width,
+         startY: square.y +square.height,
+         endX:   square.x,
+         endY:   square.y +square.height,
+      },
+
+      left: {
+         startX: square.x,
+         startY: square.y +square.height,
+         endX:   square.x,
+         endY:   square.y,
+      },
+   };
+}
+
+const checkIf = (
+   isOverLaping: boolean,
+): boolean => {
+
+   if(isOverLaping) return true;
+   return false;
+}
+
+const calcDist = (
+   first:  IPosition | ISquare,
+   second: IPosition | ISquare,
+): number => {
+
+   const distX = second.x -first.x;
+   const distY = second.y -first.y;
+
+   return Math.floor( Math.hypot(distX, distY) );
+}
+
 export const Collision = {
-   
-   extractSides(
-      square: ISquare
-   ) {         
-      return {
-
-         top: {
-            startX: square.x,
-            startY: square.y,
-            endX:   square.x +square.width,
-            endY:   square.y,
-         },         
-
-         right: {
-            startX: square.x +square.width,
-            startY: square.y,
-            endX:   square.x +square.width,
-            endY:   square.y +square.height,
-         },
-
-         bottom: {
-            startX: square.x +square.width,
-            startY: square.y +square.height,
-            endX:   square.x,
-            endY:   square.y +square.height,
-         },
-
-         left: {
-            startX: square.x,
-            startY: square.y +square.height,
-            endX:   square.x,
-            endY:   square.y,
-         },
-      };
-   },
-
-   checkIf(
-      isOverLaping: boolean,
-   ): boolean {
-
-      if(isOverLaping) return true;
-      return false;
-   },
-
-   calcDist(
-      first:  IPosition | ISquare,
-      second: IPosition | ISquare,
-   ): number {
-
-      const distX = second.x -first.x;
-      const distY = second.y -first.y;
-
-      return Math.floor( Math.hypot(distX, distY) );
-   },
    
    square_toSquare(
       first:  ISquare,
@@ -90,7 +90,7 @@ export const Collision = {
          ||axisY[0] + first.height < axisY[1])
       ;
 
-      return this.checkIf(isOverLaping);
+      return checkIf(isOverLaping);
    },
 
    square_toCircle(
@@ -123,7 +123,7 @@ export const Collision = {
          && circ.top    < axisY[1]
       ;
 
-      return this.checkIf(isOverLaping);
+      return checkIf(isOverLaping);
    },
 
    circle_toCircle(
@@ -133,14 +133,14 @@ export const Collision = {
       secondRad: number,
    ): boolean {
 
-      const distance    = this.calcDist(firstPos, secondPos);
+      const distance    = calcDist(firstPos, secondPos);
       const minDistance = firstRad +secondRad;
 
       const isOverLaping: boolean =
          distance <= minDistance
       ;
 
-      return this.checkIf(isOverLaping);
+      return checkIf(isOverLaping);
    },
 
    point_toSquare(
@@ -155,7 +155,7 @@ export const Collision = {
          && point.y < square.y +square.height
       ;
 
-      return this.checkIf(isOverLaping);
+      return checkIf(isOverLaping);
    },
 
    point_toCircle(
@@ -174,8 +174,8 @@ export const Collision = {
       const isOverLaping: boolean =
          distance < radiusSqr
       ;
-
-      return this.checkIf(isOverLaping);
+      
+      return checkIf(isOverLaping);
    },
 
    line_toLine(
@@ -210,7 +210,7 @@ export const Collision = {
          && rangeB >= 0 && rangeB <= 1
       ;
 
-      return this.checkIf(isOverLaping);
+      return checkIf(isOverLaping);
    },
 
    line_toSquare(
@@ -261,7 +261,7 @@ export const Collision = {
          || bottomSide
       ;
 
-      return this.checkIf(isOverLaping);
+      return checkIf(isOverLaping);
    },
    
 }

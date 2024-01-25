@@ -14,7 +14,6 @@
 <script lang="ts">
 
    // Scripts
-   import { ref } from "vue";
    import { glo } from "../../scripts/utils/_GlobalVar"
 
    export default {
@@ -31,9 +30,9 @@
 
       mounted() {
 
-         this.allCanvas.forEach(canvasName => {
-            const canvasElem = this.$refs[canvasName] as HTMLCanvasElement;
-
+         this.allCanvas.forEach((canvasName: string) => {
+            const canvasElem = this.$refs[canvasName][0] as HTMLCanvasElement;
+            
             glo.Canvas[canvasName] = canvasElem;
             glo.Ctx   [canvasName] = canvasElem.getContext("2d") as CanvasRenderingContext2D;
          });
