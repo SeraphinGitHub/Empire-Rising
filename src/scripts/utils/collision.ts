@@ -94,17 +94,16 @@ export const Collision = {
    },
 
    square_toCircle(
-      square:    ISquare,
-      circlePos: IPosition,
-      circleRad: number,
+      square: ISquare,
+      circle: ICircle,
    ): boolean {
 
       const circ: INumber = {
-         top:    circlePos.y -circleRad,
-         right:  circlePos.x +circleRad,
-         bottom: circlePos.y +circleRad,
-         left:   circlePos.x -circleRad,
-      }
+         top:    circle.y -circle.radius,
+         right:  circle.x +circle.radius,
+         bottom: circle.y +circle.radius,
+         left:   circle.x -circle.radius,
+      }   
 
       const sqr: INumber = {
          top:    square.y,

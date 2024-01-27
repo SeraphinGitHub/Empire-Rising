@@ -22,7 +22,7 @@
    import DebugMessage from "./DebugMessage.vue"
    
    // Scripts
-   import { glo } from "../../scripts/utils/_GlobalVar"
+   import { readGlo } from '../../scripts/utils/_GlobalVar';
 
    export default {
       components: {
@@ -39,17 +39,17 @@
          population() {
             return {
                popText:  `Population`,
-               popValue: `${glo.CurrentPop} / ${glo.MaxPop}`,
+               popValue: `${readGlo.CurrentPop} / ${readGlo.MaxPop}`,
             }
          },
-
+         
          screenCoord() {
             return {
                name: "Screen Coord:",
                classX: "cartX",
                classY: "cartY",
-               x: `x : ${glo.SelectArea.currentPos.cartesian.x}`,
-               y: `y : ${glo.SelectArea.currentPos.cartesian.y}`,
+               x: `x : ${readGlo.SelectArea.currentPos.cartesian.x}`,
+               y: `y : ${readGlo.SelectArea.currentPos.cartesian.y}`,
             }
          },
 
@@ -58,8 +58,8 @@
                name: "Grid Coord:",
                classX: "isoX",
                classY: "isoY",
-               x: `x : ${glo.IsoGridPos.x}`,
-               y: `y : ${glo.IsoGridPos.y}`,
+               x: `x : ${readGlo.IsoGridPos.x}`,
+               y: `y : ${readGlo.IsoGridPos.y}`,
             }
          },
 
@@ -68,8 +68,8 @@
                name: "Cell Coord:",
                classX: "cellX",
                classY: "cellY",
-               x: `x : ${glo.HoverCell.gridPos.x}`,
-               y: `y : ${glo.HoverCell.gridPos.y}`,
+               x: `x : ${readGlo.HoverCell.gridPos.x}`,
+               y: `y : ${readGlo.HoverCell.gridPos.y}`,
             }
          },
 
@@ -77,7 +77,7 @@
             return {
                name: "Cell ID:",
                classID: "ID-cell",
-               id: `id : ${glo.HoverCell.id}`,
+               id: `id : ${readGlo.HoverCell.id}`,
             }
          },
       },

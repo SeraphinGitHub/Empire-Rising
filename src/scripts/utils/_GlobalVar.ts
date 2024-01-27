@@ -2,8 +2,6 @@
 "use strict"
 
 import {
-   IPosition,
-   ISquare,
    ICanvas,
    ICtx,
    IAgentClass,
@@ -11,22 +9,12 @@ import {
 
 import { GridClass } from "../classes/GridClass"
 
-const emptyPosition: IPosition = {
-   x: 0,
-   y: 0,
-}
-
-const emptySquare: ISquare = {
-   x:      0,
-   y:      0,
-   height: 0,
-   width:  0,
-}
+import { reactive, readonly } from 'vue';
 
 // ================================================================================================
 // Global Variables
 // ================================================================================================
-export const glo = {
+export const glo = reactive({
 
    Faction: "Orange",
 
@@ -38,18 +26,33 @@ export const glo = {
    GridParams: {
       cellSize:  40,
       gridSize:  1440,
-      cellRange: 0,
    },
 
    SelectArea: {
       oldPos: {
-         cartesian: emptyPosition,
-         isometric: emptyPosition,
+
+         cartesian: {
+            x: 0,
+            y: 0,
+         },
+
+         isometric: {
+            x: 0,
+            y: 0,
+         },
       },
 
       currentPos: {
-         cartesian: emptyPosition,
-         isometric: emptyPosition,
+
+         cartesian: {
+            x: 0,
+            y: 0,
+         },
+
+         isometric: {
+            x: 0,
+            y: 0,
+         },
       },
 
       height: undefined as number | undefined,
@@ -66,22 +69,50 @@ export const glo = {
    Cos_30deg:  0.866,
    
    // --- DOM ---
-   Canvas:          {} as ICanvas,
-   Ctx:             {} as ICtx,
-   Viewport:        emptySquare,
-   ViewportSqr:     emptySquare,
+   Canvas:         {} as ICanvas,
+   Ctx:            {} as ICtx,
+
+   Viewport:       {
+      x:      0,
+      y:      0,
+      height: 0,
+      width:  0,
+   },
+
+   ViewportSqr:    {
+      x:      0,
+      y:      0,
+      height: 0,
+      width:  0,
+   },
+
    GridAngle:       undefined as number    | undefined,
    Grid:            undefined as GridClass | undefined,
    ComputedCanvas:  undefined as DOMMatrix | undefined,
    
    // --- Positions ---
-   ViewportOffset: emptyPosition,
-   ScrollOffset:   emptyPosition,
-   IsoGridPos:     emptyPosition,
+   ViewportOffset: {
+      x: 0,
+      y: 0,
+   },
 
-   HoverCell:  {
+   ScrollOffset:   {
+      x: 0,
+      y: 0,
+   },
+
+   IsoGridPos:     {
+      x: 0,
+      y: 0,
+   },
+
+   HoverCell:      {
       id: "",
-      gridPos: emptyPosition,
+
+      gridPos: {
+         x: 0,
+         y: 0,
+      },
    },
 
    // --- Lists ---
@@ -103,7 +134,9 @@ export const glo = {
       height: 650,  // *0.5 => y
    },
 
-}
+})
+
+export const readGlo = readonly(glo);
 
 
 // const files = {};

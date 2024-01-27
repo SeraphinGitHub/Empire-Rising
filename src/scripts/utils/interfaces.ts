@@ -66,6 +66,10 @@ export interface ICircle extends IPosition {
    radius: number,
 }
 
+export interface ICircle extends IPosition {
+   radius: number,
+}
+
 export interface ILine {
    startX: number;
    startY: number;

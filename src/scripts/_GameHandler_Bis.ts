@@ -450,7 +450,7 @@ const updateUnitsList = (
    second: unknown,
    agent:  AgentClass
 ) => {
-   
+
    if(collideCallback(first, second)) {
      return glo.CurrentSelectList[agent.id] = agent;
    }
@@ -460,7 +460,7 @@ const updateUnitsList = (
 
 const unitSelection = () => {
 
-   let selectArea: unknown;
+   let selectArea:  unknown;
    let isSelecting: boolean = glo.SelectArea.isSelecting;
    
    const {
@@ -637,7 +637,7 @@ const drawAllUnits = (frame: number) => {
       
       const { units, isoSelect } = glo.Ctx;
 
-      agent.drawSprite(units, agentPos, glo.ScrollOffset);
+      agent.drawSprite  (units, agentPos, glo.ScrollOffset);
       // agent.drawCollider(units, agentPos, glo.ScrollOffset);
       agent.drawPath(isoSelect);
    });
