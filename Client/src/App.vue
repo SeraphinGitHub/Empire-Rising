@@ -9,7 +9,9 @@
    </section>
 </template>
 
-<script>
+<script lang="ts">
+
+   import { io } from "socket.io-client";
 
    // Components 
    import Coordinates from "./components/debug/Coordinates.vue"
@@ -17,7 +19,7 @@
    import CartCanvas  from "./components/canvas/CartesiansCanvas.vue"
 
    // Scripts
-   import { GameHandler } from "./scripts/_GameHandler_Bis"
+   import { GameHandler } from "./scripts/_GameHandler"
 
    export default {
       name: "App",
@@ -28,8 +30,19 @@
          CartCanvas,
       },
 
+      data() {
+      return {
+         socket: null,
+      }},
+
       mounted() {
          GameHandler.init(document);
+         
+         this.socket = io();
+
+         this.socket.on('connect', () => {
+            console.log('Connected to server');
+         });
       },
    }
 </script>

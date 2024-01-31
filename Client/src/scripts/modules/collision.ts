@@ -5,7 +5,7 @@ import {
    ISquare,
    ICircle,
    ILine,
-} from "./interfaces";
+} from "../utils/interfaces";
 
 // =====================================================================
 // Colision Class

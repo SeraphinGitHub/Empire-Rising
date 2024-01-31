@@ -14,7 +14,7 @@ import {
 } from "./classes/_Export";
 
 import { glo        } from "./utils/_GlobalVar";
-import { Collision  } from "./utils/collision";
+import { Collision  } from "./modules/collision";
 import { unitParams } from "./utils/unitParams";
 
 
@@ -876,6 +876,8 @@ export const GameHandler = {
       // --- Tempory ---
 
       runAnimation();
+
+      
    },
 
 }
