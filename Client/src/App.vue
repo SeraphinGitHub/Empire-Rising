@@ -11,14 +11,13 @@
 
 <script lang="ts">
 
-   import { io } from "socket.io-client";
-
    // Components 
    import Coordinates from "./components/debug/Coordinates.vue"
    import IsoCanvas   from "./components/canvas/IsometricsCanvas.vue"
    import CartCanvas  from "./components/canvas/CartesiansCanvas.vue"
 
    // Scripts
+   import { io          } from "socket.io-client";
    import { GameHandler } from "./scripts/_GameHandler"
 
    export default {
@@ -32,17 +31,17 @@
 
       data() {
       return {
-         socket: null,
+         title: "Empire Rising",
+         URL:   "http://localhost:3000/",
       }},
 
-      mounted() {
-         GameHandler.init(document);
-         
-         this.socket = io();
+      async mounted() {
 
-         this.socket.on('connect', () => {
-            console.log('Connected to server');
-         });
+         document.title = this.title;
+         await fetch(this.URL);
+         const socket = io(this.URL);
+         
+         GameHandler.init(document /* , socket*/ );
       },
    }
 </script>

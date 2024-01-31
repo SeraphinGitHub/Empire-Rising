@@ -844,7 +844,10 @@ const Test_GenerateUnits = () => {
 
 export const GameHandler = {
 
-   init(document: Document) {
+   init(
+      document: Document,
+      // socket:   any,
+   ) {
 
       glo.Grid = new GridClass(glo.GridParams);
 
@@ -876,8 +879,6 @@ export const GameHandler = {
       // --- Tempory ---
 
       runAnimation();
-
-      
    },
 
 }

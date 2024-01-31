@@ -4,18 +4,16 @@ import {
    IPlayerClass
 } from "../utils/interfaces";
 
-import { appServer }       from "../_Server";
-import { PlayerClass }     from "../classes/_Export";
-import { Server, Socket }  from "socket.io";
-// import jwt                 from "jsonwebtoken";
-import dotenv              from "dotenv";
+import { Socket      } from "socket.io";
+import { PlayerClass } from "../classes/_Export";
+// import jwt             from "jsonwebtoken";
+import dotenv          from "dotenv";
 dotenv.config();
 
 
 // =====================================================================
 // Variables
 // =====================================================================
-const socketIO:   Server                   = new Server(appServer);
 const socketsMap: Map<number, Socket>      = new Map<number, Socket>();
 const playersMap: Map<number, PlayerClass> = new Map<number, PlayerClass>();
 // const syncRate:   number              = Math.floor(1000 / Number(process.env.FRAME_RATE));
@@ -28,7 +26,7 @@ let userID = 0;
 
 const battle_1 = {
    id: 12,
-   hostPlayerID: 2,
+   hostPlayerID: 1,
    playersList:  {} as IPlayerClass,
 }
 
@@ -155,12 +153,10 @@ const sync = () => {
 // =====================================================================
 export const Manager = {
 
-   start() {
-      socketIO.on("connection", (socket) => {
-      
-         connectPlayer   (socket);
-         disconnectPlayer(socket);
-      });
+   start(socket: Socket) {
+
+      connectPlayer   (socket);
+      disconnectPlayer(socket);
    },
 
 }

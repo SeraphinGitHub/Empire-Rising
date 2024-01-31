@@ -13,8 +13,8 @@ export class PlayerClass {
 
    constructor(params: any) {
       
-      this.id   = params.userID;
-      this.name = params.playerName;
+      this.id   = params.id;
+      this.name = params.name;
 
       this.unitsList     = {};
       this.buildingsList = {};
