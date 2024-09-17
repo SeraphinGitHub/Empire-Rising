@@ -19,6 +19,7 @@ import { unitParams } from "./utils/unitParams";
 
 
 let frame = 0;
+let isMouseScolling = false;
 let walls = [
    
    // Top
@@ -72,7 +73,13 @@ let walls = [
    "14-24",
    "14-25",
    "14-26",
-   "14-27",
+
+   "15-27",
+   "16-26",
+   "17-25",
+   "18-24",
+   "19-23",
+   "20-22",
 ];
 
 //  ------  Tempory  ------
@@ -334,7 +341,7 @@ const gridPos_toScreenPos = (gridPos: IPosition) => {
 // =========================================================================================
 const scrollCam = () => {
 
-   const detSize = 50;
+   const detSize = 55;
 
    const {
       x:      vpX,
@@ -401,6 +408,16 @@ const scrollCam = () => {
    glo.ComputedCanvas!.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
    
    glo.Canvas.isoSelect.style.transform = glo.ComputedCanvas!.toString();
+}
+
+const mouseScroll = () => {
+   
+   if(!isMouseScolling) return;
+   
+   const { x: mouseX,  y: mouseY  } = glo.SelectArea.currentPos.isometric;
+
+   glo.ScrollOffset.x = mouseX;
+   glo.ScrollOffset.y = mouseY;
 }
 
 const createNewAgent = (
@@ -625,25 +642,26 @@ const drawHoverUnit = () => {
    });
 }
 
-const drawAllUnits = (frame: number) => {
+const drawUnits = (
+   frame:     number,
+   agent:     AgentClass,
+   units:     CanvasRenderingContext2D,
+   isoSelect: CanvasRenderingContext2D,
+) => {
 
-   cycleList(glo.AgentsList, (agent: AgentClass) => {
-      let agentPos = gridPos_toScreenPos(agent.position);
+   let agentPos = gridPos_toScreenPos(agent.position);
 
-      agent.updateState(frame);
-      agent.walkPath();
+   agent.updateState(frame);
+   agent.walkPath();
 
-      if(!isWithinViewport(agentPos)) return;
-      
-      const { units, isoSelect } = glo.Ctx;
+   if(!isWithinViewport(agentPos)) return;
 
-      agent.drawSprite  (units, agentPos, glo.ScrollOffset);
-      // agent.drawCollider(units, agentPos, glo.ScrollOffset);
-      agent.drawPath(isoSelect);
-   });
+   agent.drawSprite  (units, agentPos, glo.ScrollOffset);
+   // agent.drawCollider(units, agentPos, glo.ScrollOffset);
+   agent.drawPath(isoSelect);
 }
 
-const drawAllBuildings = () => {
+const drawBuildingsAndUnits = (frame: number) => {
 
    cycleList(glo.Grid!.cellsList, (cell: CellClass) => {
       let cellPos = gridPos_toScreenPos(cell.center);
@@ -652,11 +670,21 @@ const drawAllBuildings = () => {
 
       const { units, isoSelect, terrain } = glo.Ctx;
 
-      // cell.drawSprite(terrain, cellPos, glo.ScrollOffset);
+      // *****************************************************
+      // Draw all units
+      // *****************************************************
+      if(cell.agentID) {
+         let agent = glo.AgentsList[cell.agentID];
+         drawUnits(frame, agent, units, isoSelect);
+      }
+
+      cell.setTransparency(glo.Grid!.cellsList);
+      
+      // cell.drawSprite (terrain, cellPos, glo.ScrollOffset);
       cell.drawWall   (units, cellPos, glo.ScrollOffset);
       cell.drawInfos  (isoSelect);
       cell.drawVacancy(isoSelect);
-   }); 
+   });
 }
 
 
@@ -667,8 +695,8 @@ const setPeripherals = () => {
 
    window.addEventListener("keydown",   (event) => keyboard_Input(event));
    window.addEventListener("mousemove", (event) => mouse_Move    (event));
-   window.addEventListener("mousedown", (event) => mouse_Input   (event, "Down"));
-   window.addEventListener("mouseup",   (event) => mouse_Input   (event, "Up"  ));
+   window.addEventListener("mousedown", (event) => mouse_Click   (event, "Down"));
+   window.addEventListener("mouseup",   (event) => mouse_Click   (event, "Up"  ));
 }
 
 const keyboard_Input = (event: KeyboardEvent) => {
@@ -691,16 +719,17 @@ const keyboard_Input = (event: KeyboardEvent) => {
 }
 
 const mouse_Move = (event: MouseEvent) => {
-   
-   glo.SelectArea.currentPos = getScreenPos(event);
-   glo.IsoGridPos            = screenPos_toGridPos(glo.SelectArea.currentPos.isometric);
+
+   const mousePos = getScreenPos(event);
+   glo.SelectArea.currentPos = mousePos;
+   glo.IsoGridPos            = screenPos_toGridPos(mousePos.isometric);
    
    if(isWithinGrid(glo.IsoGridPos)) glo.HoverCell = getHoverCell();
 
    unitSelection();
 }
 
-const mouse_Input = (event: MouseEvent, state: string) => {
+const mouse_Click = (event: MouseEvent, state: string) => {
 
    if(state === "Down") glo.SelectArea.oldPos = getScreenPos(event);
 
@@ -725,13 +754,13 @@ const mouse_Input = (event: MouseEvent, state: string) => {
       case 2: {
 
          if(state === "Down") {
-
+            isMouseScolling = true;
          }
-      
-         if(state === "Up") {
-
+         
+         if(state === "Up"  ) {
+            isMouseScolling = false;
          }
-
+         
       } break;
 
 
@@ -772,12 +801,11 @@ const runAnimation = () => {
    // clearCanvas("terrain");
    // clearCanvas("buildings");
    clearCanvas("units");
-
    
    scrollCam();
+   // mouseScroll();
 
-   drawAllUnits(frame);
-   drawAllBuildings();
+   drawBuildingsAndUnits(frame);
    drawSelectUnit();
    drawHoverUnit();
    
@@ -792,8 +820,8 @@ const runAnimation = () => {
 // =========================================================================================
 const Test_PathRandomize = (agent: AgentClass) => {
 
-   let i = glo.Grid!.rand(glo.Grid!.cellRange);
-   let j = glo.Grid!.rand(glo.Grid!.cellRange);
+   let i = glo.Grid!.rand(glo.Grid!.cellPerSide);
+   let j = glo.Grid!.rand(glo.Grid!.cellPerSide);
    
    const targetCell = glo.Grid!.cellsList[`${i}-${j}`];
    
@@ -814,8 +842,8 @@ const Test_GenerateUnits = () => {
    while(pop > 0) {
 
       let index = glo.Grid!.rand(4);
-      let i = glo.Grid!.rand(glo.Grid!.cellRange);
-      let j = glo.Grid!.rand(glo.Grid!.cellRange);
+      let i = glo.Grid!.rand(glo.Grid!.cellPerSide);
+      let j = glo.Grid!.rand(glo.Grid!.cellPerSide);
 
       let unitType = glo.Grid!.rand(2);
 
@@ -856,11 +884,10 @@ export const GameHandler = {
       setViewportSqr(); // ==> Tempory
       setAvailableID();
       setPosConvert ();
-      setPeripherals();
+      setPeripherals();     
       
       glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.Canvas.isoSelect).transform);
 
-      
       // --- Tempory ---
       walls.forEach(ID => glo.Grid!.cellsList[ID].isBlocked = true);
       

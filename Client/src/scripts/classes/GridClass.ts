@@ -16,7 +16,6 @@ export class GridClass {
    
    cellSize:    number;
    gridSize:    number;
-   cellRange:   number;
    cellPerSide: number;
 
    constructor(params: any) {
@@ -24,7 +23,6 @@ export class GridClass {
       this.cellSize    = params.cellSize;
       this.gridSize    = params.gridSize;
       this.cellPerSide = (this.gridSize -(this.gridSize %this.cellSize)) /this.cellSize;
-      this.cellRange   = this.cellPerSide / this.cellSize;
 
       this.init();
    }
@@ -42,7 +40,7 @@ export class GridClass {
       for(let i = 0; i < this.cellPerSide; i++) {  // Collums
          for(let j = 0; j < this.cellPerSide; j++) {  // Rows
             
-            const cell: CellClass = new CellClass(this.cellPerSide, this.cellSize, i, j);
+            const cell: CellClass = new CellClass(this.cellPerSide, this.cellSize, this.cellPerSide -i -1, j);
             this.cellsList[cell.id] = cell;
          }
       }

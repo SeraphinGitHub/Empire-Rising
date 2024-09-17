@@ -2,11 +2,7 @@
 <template>
    <section class="coordinates flex">
 
-      <DebugMessage
-         :title   ="title"
-         :message ="population"
-      />
-
+      <CoordSpan :coordType ="population"/>
       <CoordSpan :coordType ="screenCoord"/>
       <CoordSpan :coordType ="gridCoord"/>
       <CoordSpan :coordType ="cellCoord"/>
@@ -17,17 +13,13 @@
 
 
 <script>
-   // Components
-   import CoordSpan    from "./CoordSpan.vue"
-   import DebugMessage from "./DebugMessage.vue"
-   
-   // Scripts
+   import CoordSpan   from "./CoordSpan.vue"
+
    import { readGlo } from '../../scripts/utils/_GlobalVar';
 
    export default {
       components: {
          CoordSpan,
-         DebugMessage,
       },
 
       data() {
@@ -38,8 +30,9 @@
       computed: {
          population() {
             return {
-               popText:  `Population`,
-               popValue: `${readGlo.CurrentPop} / ${readGlo.MaxPop}`,
+               name: "Population:",
+               classID: "ID-cell",
+               id: `${readGlo.CurrentPop} / ${readGlo.MaxPop}`,
             }
          },
          
@@ -86,17 +79,25 @@
 
 
 <style scoped>
-   .coordinates {
-      justify-content: space-between;
-      align-content: space-between;
-      position: fixed;
-      top: 50%;
-      left: 15px;
+   p {
+      width: 100%;
+      font-size: 20px;
+      font-weight: 600;
+   }
 
-      transform: translate(0%, -50%);
-      padding-bottom: 5px;
-      height: 500px;
-      width: 185px;
+   .title {
+      margin: 10px;
+      color: darkviolet;
+      text-decoration: underline;
+   }
+
+   .coordinates {
+      justify-content: space-around;
+      align-content: flex-start;
+      position: fixed;
+      top: 10px;
+      height: auto;
+      width: 1400px;
       background: white;
    }
 </style>

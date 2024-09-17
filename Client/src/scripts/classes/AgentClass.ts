@@ -104,7 +104,7 @@ export class AgentClass {
          },
       };
    
-      this.sprites     = {
+      this.sprites = {
          height:  64,
          width:   64,
          offsetY: 20,
@@ -123,6 +123,7 @@ export class AgentClass {
       this.img.src = this.imgSrc;
 
       this.startCell.isVacant = false;
+      this.startCell.agentID  = this.id;
    }
 
    isBlockedDiag(
@@ -407,9 +408,8 @@ export class AgentClass {
       }
       
       // Occupied Cell
-      if(this.currentCell.agentID === undefined) this.currentCell.agentID = this.id;
+      this.currentCell.agentID  = this.id;
       this.currentCell.isVacant = false;
-
       this.startCell = this.path[1];
    }
 

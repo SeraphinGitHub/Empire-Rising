@@ -25,7 +25,7 @@
       position: relative;
       align-content: flex-start;
       height: 15%;
-      width: 100%;
+      width: 14%;
       margin: 10px;
    }
 

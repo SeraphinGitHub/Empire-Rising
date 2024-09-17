@@ -5,6 +5,10 @@
       <Coordinates/>
       <IsoCanvas/>
       <CartCanvas/>
+
+      <!-- <button class="flex" @click="sendData()" style="position: fixed; bottom: 100px; background: lime;">
+         Send data
+      </button> -->
       
    </section>
 </template>
@@ -32,21 +36,50 @@
       data() {
       return {
          title: "Empire Rising",
-         URL:   "http://localhost:3000/",
+         URL:   "http://localhost:3000",
+         socket: null,
       }},
 
       async mounted() {
 
          document.title = this.title;
-         await fetch(this.URL);
-         const socket = io(this.URL);
+         // this.connectWith_Express();
          
-         GameHandler.init(document /* , socket*/ );
+         // GameHandler.init(document, socket);
+         GameHandler.init(document);
+      },
+
+      methods: {
+         connectWith_Express() {
+            this.$nextTick(() => setTimeout(async () => {
+               
+               await fetch(`${this.URL}/login`)
+               .then((response: any) => {
+                  if(response.ok) this.connectWith_SocketIO();
+               }).catch((error) => console.log(error))
+
+            }, 0));
+         },
+
+         connectWith_SocketIO() {
+            this.socket = io(this.URL);
+
+            this.socket.on("sync", (data: any) => {
+               console.log(data);
+            });
+         },
+
+         sendData() {
+            if(this.socket === null) return;
+            this.socket.emit("connectSocketIO", { success: true });
+         },
       },
    }
 </script>
 
 <style>
+   button:active{ background: red !important;}
+
    #root {
       position: fixed;
       height: 100%;

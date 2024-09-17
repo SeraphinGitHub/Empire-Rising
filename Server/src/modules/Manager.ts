@@ -61,18 +61,22 @@ const setUser = () => {
 // SocketIO Connect
 // =====================================================================
 const connectPlayer = (socket: any) => {
-   console.log("Player Connected");
+   console.log("Player Connected --SocketIO");
+
+   // const user = setUser();
+
+   // const Player: PlayerClass = new PlayerClass(user);
    
-   const user = setUser();
+   // socket.id = user!.id;
 
-   const Player: PlayerClass = new PlayerClass(user);
-   
-   socket.id = user!.id;
+   // socketsMap.set(user!.id, socket);
+   // playersMap.set(user!.id, Player);
 
-   socketsMap.set(user!.id, socket);
-   playersMap.set(user!.id, Player);
+   // battle_1.playersList[user!.id] = Player;
 
-   battle_1.playersList[user!.id] = Player;
+   socket.on("connectSocketIO", (data: any) => {
+      console.log(data); // ******************************************************
+   });
 }
 
 
@@ -82,17 +86,17 @@ const connectPlayer = (socket: any) => {
 const disconnectPlayer = (socket: any) => {
    socket.on("disconnect", () => {
 
-      const playerID: number = socket.id;
+      // const playerID: number = socket.id;
       
-      if(socketsMap.get(playerID) === undefined
-      || playersMap.get(playerID) === undefined) {
-         return;
-      }
+      // if(socketsMap.get(playerID) === undefined
+      // || playersMap.get(playerID) === undefined) {
+      //    return;
+      // }
 
-      playersMap.delete(playerID);
-      socketsMap.delete(playerID);
+      // playersMap.delete(playerID);
+      // socketsMap.delete(playerID);
       
-      console.log("Player disconnected");
+      console.log("Player disconnected --SocketIO");
    });
 }
 
@@ -137,14 +141,16 @@ const sendSyncPack = () => {
    // });
 }
 
-const sync = () => {
+const sync = (socket: Socket) => {
 
-   // setInterval(() => {
+   setInterval(() => {
 
-   //    this.updateAll_Players();
-   //    this.sendSyncPack();
+      // this.updateAll_Players();
+      // this.sendSyncPack();
+      
+      socket.emit("sync", { playerID: 123, success: true, message: "syncEvent" });
 
-   // }, this.syncRate);
+   }, 1000);
 }
 
 
@@ -157,6 +163,7 @@ export const Manager = {
 
       connectPlayer   (socket);
       disconnectPlayer(socket);
+      // sync(socket);
    },
 
 }

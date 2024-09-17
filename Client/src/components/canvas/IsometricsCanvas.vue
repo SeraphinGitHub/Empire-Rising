@@ -36,8 +36,8 @@
       transform: translate(-50%, -50%);
 
       /* -----------------------------------  Tempory  ----------------------------------- */
-      width:  1000px !important;
-      height: 650px !important;
+      width:  1400px !important; /* Has to match _GlobalVar.TestViewport.width */
+      height: 800px !important;  /* Has to match _GlobalVar.TestViewport.heght */
       /* -----------------------------------  Tempory  ----------------------------------- */
 
       background-color: black;
@@ -57,7 +57,9 @@
       position: fixed;
       top: 50%;
       transform: translate(0%, -50%) rotateZ(-45deg);
-      background: mediumseagreen;
+      /* background: blue; */
+      /* background: mediumseagreen; */
+      background: yellowgreen;
    }
 
    /* --- Laptop 17,3" --- */

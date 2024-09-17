@@ -35,16 +35,45 @@ app.use((
    next();
 });
 
+
+// =================================================================================
+// Methods
+// =================================================================================
+const handleConnect = (
+   res:     Response,
+   status:  number,
+   message: string,
+   data?:   any,
+) => {
+   console.log(message);
+   res.status(status).send({ message, data });
+}
+
 // =================================================================================
 // Routes
 // =================================================================================
 app.get("/", (req, res) => {
 
-   socketIO.on("connection", (socket: Socket) => {
-      Manager.start(socket);
-   });
+   try {
+      handleConnect(res, 200, "Connected with Express !");
+   }
+   catch(error) {
+      handleConnect(res, 500, "Failed to connect with Express !");
+   }
+});
 
-   res.status(200).send({message: "Connected with SocketIO"});
+app.get("/login", (req, res) => {
+
+   try {
+      handleConnect(res, 200, "Logged in successfully !");
+   }
+   catch(error) {
+      handleConnect(res, 500, "Failed to log in !");
+   }
+});
+
+socketIO.on("connection", (socket: Socket) => {
+   Manager.start(socket);
 });
 
 

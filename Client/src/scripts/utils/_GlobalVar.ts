@@ -130,8 +130,8 @@ export const glo = reactive({
    TestViewport: {
       x: 0,
       y: 0,
-      width:  1000, // *0.5 => x
-      height: 650,  // *0.5 => y
+      width:  1400, // *0.5 => x ==> Has to match CSS IsometircsCanvas.vue
+      height: 800,  // *0.5 => y ==> Has to match CSS IsometircsCanvas.vue
    },
 
 })
