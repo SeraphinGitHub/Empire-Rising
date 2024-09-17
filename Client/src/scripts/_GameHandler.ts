@@ -19,8 +19,12 @@ import { unitParams } from "./utils/unitParams";
 
 
 let frame = 0;
+let showTerrain     = false;
+let isScrolling     = false;
 let isMouseScolling = false;
-let walls = [
+const highG_Src     = "Terrain/High_Grass.png";
+
+const walls: string[] = [
    
    // Top
    "21-6",
@@ -43,12 +47,14 @@ let walls = [
    "17-12",
    "18-12",
    "19-12",
+   "20-12",
 
    "20-13",
    "20-14",
    "20-15",
    "20-16",
    "20-17",
+   "20-18",
 
    "21-18",
    "22-18",
@@ -63,7 +69,8 @@ let walls = [
    "10-23",
    "9-23",
 
-   "14-17",
+   "14-13",
+   "14-14",
    "14-18",
    "14-19",
    "14-20",
@@ -81,6 +88,128 @@ let walls = [
    "19-23",
    "20-22",
 ];
+
+const tiles: string[] = [
+   "6-9",
+   "6-10",
+   "7-9",
+   "7-8",
+   "6-8",
+   "5-9",
+   "5-8",
+   "5-10",
+   "7-10",
+   "8-9",
+   "8-8",
+   "9-8",
+   "9-7",
+   "10-7",
+   "8-7",
+   "9-6",
+   "5-11",
+   "4-11",
+   "4-10",
+   "3-10",
+   "4-9",
+   "6-7",
+   "7-11",
+   "8-10",
+   "4-12",
+   "3-11",
+   "13-13",
+   "13-14",
+   "12-13",
+   "11-12",
+   "12-11",
+   "8-23",
+   "9-24",
+   "10-24",
+   "11-24",
+   "13-26",
+   "13-27",
+   "14-27",
+   "14-28",
+   "15-28",
+   "16-27",
+   "17-26",
+   "19-13",
+   "19-14",
+   "19-15",
+   "18-13",
+   "23-7",
+   "24-8",
+   "25-9",
+   "26-10",
+   "26-11",
+   "24-8",
+   "22-7",
+   "17-4",
+   "18-4",
+   "18-5",
+   "17-5",
+   "16-3",
+   "17-3",
+   "16-4",
+   "15-3",
+   "16-2",
+   "31-4",
+   "32-4",
+   "33-4",
+   "33-4",
+   "33-5",
+   "32-5",
+   "33-6",
+   "33-3",
+   "34-4",
+   "25-23",
+   "26-24",
+   "27-25",
+   "28-26",
+   "28-27",
+   "28-29",
+   "27-30",
+   "26-30",
+   "26-31",
+   "25-31",
+   "24-31",
+   "27-26",
+   "28-25",
+   "29-26",
+   "29-26",
+   "29-28",
+   "29-27",
+   "29-29",
+   "25-23",
+   "25-23",
+   "25-24",
+   "26-25",
+   "27-24",
+   "29-25",
+   "28-30",
+   "27-30",
+   "27-31",
+   "30-27",
+   "22-27",
+   "21-28",
+   "21-29",
+   "20-30",
+   "19-30",
+   "20-29",
+   "20-29",
+   "19-31",
+   "20-31",
+   "18-29",
+   "18-30",
+   "22-29",
+   "4-28",
+   "5-28",
+   "5-29",
+   "6-29",
+   "7-29",
+   "6-30",
+   "6-28",
+];
+
 
 //  ------  Tempory  ------
 let randPathIntervals: any = [];
@@ -339,7 +468,7 @@ const gridPos_toScreenPos = (gridPos: IPosition) => {
 // =========================================================================================
 // Methods
 // =========================================================================================
-const scrollCam = () => {
+const setScrollBounds = () => {
 
    const detSize = 55;
 
@@ -350,7 +479,7 @@ const scrollCam = () => {
       height: vpHeight,
    }: ISquare = glo.ViewportSqr;
 
-   const bounderies: any = {
+   return {
 
       top: {
          x:       vpX,
@@ -380,34 +509,36 @@ const scrollCam = () => {
          height:  vpHeight,
       },
    }
+}
 
-   for(let i in bounderies) {
+const scrollCam = () => {
 
-      const { x, y, width, height }: ISquare = bounderies[i];
-
-      glo.Ctx.units.fillStyle = "rgba(255, 0, 255, 0.5)";
-      glo.Ctx.units.fillRect(
-         x,
-         y,
-         width,
-         height
-      );
-   }
-
-   const mousePos = glo.SelectArea.currentPos.cartesian;
+   const scrollBounds = setScrollBounds();
+   const mousePos     = glo.SelectArea.currentPos.cartesian;
    
-   if(mousePos) {
+   if(!mousePos) return
       
-      if(Collision.point_toSquare(mousePos, bounderies.top   )) glo.ScrollOffset.y += glo.MouseSpeed;
-      if(Collision.point_toSquare(mousePos, bounderies.right )) glo.ScrollOffset.x -= glo.MouseSpeed;
-      if(Collision.point_toSquare(mousePos, bounderies.bottom)) glo.ScrollOffset.y -= glo.MouseSpeed;
-      if(Collision.point_toSquare(mousePos, bounderies.left  )) glo.ScrollOffset.x += glo.MouseSpeed;
+   const top:    boolean = Collision.point_toSquare(mousePos, scrollBounds.top);
+   const right:  boolean = Collision.point_toSquare(mousePos, scrollBounds.right);
+   const bottom: boolean = Collision.point_toSquare(mousePos, scrollBounds.bottom);
+   const left:   boolean = Collision.point_toSquare(mousePos, scrollBounds.left);
+
+   if(top || right || bottom || left) {
+
+      if(top   ) glo.ScrollOffset.y += glo.MouseSpeed;
+      if(right ) glo.ScrollOffset.x -= glo.MouseSpeed;
+      if(bottom) glo.ScrollOffset.y -= glo.MouseSpeed;
+      if(left  ) glo.ScrollOffset.x += glo.MouseSpeed;
+      
+      glo.ComputedCanvas!.e = glo.ScrollOffset.x;
+      glo.ComputedCanvas!.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
+      
+      glo.Canvas.isoSelect.style.transform = glo.ComputedCanvas!.toString();
+
+      return isScrolling = true;
    }
-   
-   glo.ComputedCanvas!.e = glo.ScrollOffset.x;
-   glo.ComputedCanvas!.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
-   
-   glo.Canvas.isoSelect.style.transform = glo.ComputedCanvas!.toString();
+
+   isScrolling = false;
 }
 
 const mouseScroll = () => {
@@ -513,7 +644,7 @@ const unitSelection = () => {
       // Agent collider
       const agentCollider = {
          x:      agentX +scrollX,
-         y:      agentY +scrollY,
+         y:      agentY +scrollY +agent.collider.offsetY,
          radius: agent.collider.radius,
       };
 
@@ -573,6 +704,24 @@ const unitDiselection = () => {
 // =========================================================================================
 // Draw Methods
 // =========================================================================================
+const drawScrollBounds = () => {
+   
+   const scrollBounds: any = setScrollBounds();
+
+   for(let i in scrollBounds) {
+
+      const { x, y, width, height }: ISquare = scrollBounds[i];
+
+      glo.Ctx.units.fillStyle = "rgba(255, 0, 255, 0.5)";
+      glo.Ctx.units.fillRect(
+         x,
+         y,
+         width,
+         height
+      );
+   }
+}
+
 const drawSelectArea = () => {
 
    let selected   = glo.SelectArea;
@@ -668,7 +817,7 @@ const drawBuildingsAndUnits = (frame: number) => {
 
       if(!isWithinViewport(cellPos)) return;
 
-      const { units, isoSelect, terrain } = glo.Ctx;
+      const { units, isoSelect } = glo.Ctx;
 
       // *****************************************************
       // Draw all units
@@ -680,10 +829,27 @@ const drawBuildingsAndUnits = (frame: number) => {
 
       cell.setTransparency(glo.Grid!.cellsList);
       
-      // cell.drawSprite (terrain, cellPos, glo.ScrollOffset);
+      // cell.drawWallCollider(isoSelect);
       cell.drawWall   (units, cellPos, glo.ScrollOffset);
       cell.drawInfos  (isoSelect);
       cell.drawVacancy(isoSelect);
+   });
+}
+
+const drawTerrain = () => {
+
+   if(!showTerrain) return;
+
+   clearCanvas("terrain");
+
+   cycleList(glo.Grid!.cellsList, (cell: CellClass) => {
+      let cellPos = gridPos_toScreenPos(cell.center);
+
+      if(!isWithinViewport(cellPos)) return;
+
+      const { terrain } = glo.Ctx;
+
+      cell.drawSprite(terrain, cellPos, glo.ScrollOffset);
    });
 }
 
@@ -727,6 +893,7 @@ const mouse_Move = (event: MouseEvent) => {
    if(isWithinGrid(glo.IsoGridPos)) glo.HoverCell = getHoverCell();
 
    unitSelection();
+   scrollCam();
 }
 
 const mouse_Click = (event: MouseEvent, state: string) => {
@@ -782,7 +949,7 @@ const mouse_Click = (event: MouseEvent, state: string) => {
          }
       
          if(state === "Up") {
-
+            
          }
 
       } break;
@@ -798,19 +965,23 @@ const runAnimation = () => {
    frame++;
 
    clearCanvas("isoSelect");
-   // clearCanvas("terrain");
    // clearCanvas("buildings");
    clearCanvas("units");
    
-   scrollCam();
-   // mouseScroll();
+   drawScrollBounds();
+
+   if(isScrolling) {
+      scrollCam();
+      // mouseScroll();
+      drawTerrain();
+   }
 
    drawBuildingsAndUnits(frame);
    drawSelectUnit();
    drawHoverUnit();
    
    if(isWithinGrid(glo.IsoGridPos)) drawHoverCell();
-
+   
    requestAnimationFrame(runAnimation);
 }
 
@@ -889,12 +1060,16 @@ export const GameHandler = {
       glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.Canvas.isoSelect).transform);
 
       // --- Tempory ---
-      walls.forEach(ID => glo.Grid!.cellsList[ID].isBlocked = true);
-      
-      createNewAgent("infantry", "swordsman", "7-16",  "");
-      createNewAgent("infantry", "swordsman", "7-19",  "");
+      walls.forEach(ID => glo.Grid!.cellsList[ID].isBlocked   = true);
+      tiles.forEach(ID => glo.Grid!.cellsList[ID].tileImg.src = highG_Src);
+
+      setTimeout(() => drawTerrain(), 100);
+
+      createNewAgent("infantry", "swordsman", "6-16",  "");
       createNewAgent("infantry", "swordsman", "10-16", "");
-      createNewAgent("infantry", "swordsman", "10-19", "");
+      createNewAgent("infantry", "swordsman", "9-20",  "");
+      createNewAgent("infantry", "swordsman", "10-27", "");
+      createNewAgent("infantry", "swordsman", "24-14", "");
 
       // createNewAgent("infantry",  "worker",    "5-3", "");
       // createNewAgent("cavalry",   "swordsman", "9-2", "");

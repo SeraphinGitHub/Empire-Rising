@@ -7,6 +7,7 @@ import {
    IPositionList,
    INumberList,
    IAgentCost,
+   ICellClass,
 } from "../utils/interfaces";
 
 
@@ -28,15 +29,17 @@ export class CellClass {
    collider:       IPositionList;
    nebSideList:    INumberList;
 
-   img:            HTMLImageElement | undefined;
-   zIndex:         number           | undefined;
-   agentID:        number           | undefined;
+   agentID:        number | undefined;
    agentCostList:  IAgentCost;
    neighborsList:  IString;
-
+   
    isBlocked:      boolean;
    isVacant:       boolean;
    isTransp:       boolean;
+   
+   walls_Src:      string;
+   flatG_Src:      string;
+   tileImg:        HTMLImageElement;
 
    constructor(
       cellPerSide: number,
@@ -94,8 +97,6 @@ export class CellClass {
          bottomLeft:  [-1,  1],
       };
 
-      this.img           = undefined;
-      this.zIndex        = undefined;
       this.agentID       = undefined;
       this.agentCostList = {};
       this.neighborsList = {};
@@ -104,11 +105,10 @@ export class CellClass {
       this.isVacant      = true;
       this.isTransp      = false;
       
-      this.init();
-   }
-
-   init() {
-      this.img = new Image();
+      this.walls_Src     = "Buildings/wall.png";
+      this.flatG_Src     = "Terrain/Flat_Grass.png";
+      this.tileImg       = new Image();
+      this.tileImg.src   = this.flatG_Src;
    }
 
    // Set Neighbors List
@@ -117,6 +117,19 @@ export class CellClass {
       Object.entries(this.nebSideList).forEach(([sideName, sideArray]: [string, number[]]) => {
          this.checkExistNeb(sideName, sideArray);
       });
+   }
+
+   getNeighbors(
+      cellsList: ICellClass,
+   ): ICellClass {
+      
+      const neighbors: ICellClass = {};
+
+      for(const [key, value] of Object.entries(this.neighborsList)) {
+         neighbors[key] = cellsList[value];
+      }
+
+      return neighbors;
    }
    
    checkExistNeb(
@@ -148,25 +161,50 @@ export class CellClass {
       this.neighborsList[side] = nebID[side];
    }
 
-   setTransparency(cellsList: any) {
-
-      if(this.isVacant) return;
-   
-      const {
-         left,
-         bottomLeft,
-         bottom,
-      } = this.neighborsList;
+   isBlockedDiag(
+      cellsList:  ICellClass,
+      neighbor:   CellClass,
+   ): boolean {
       
       const {
-         [left       ]: leftNeb,
-         [bottomLeft ]: bottomLeftNeb,
-         [bottom     ]: bottomNeb,
-      } = cellsList;
+         topLeft,
+         top,
+         topRight,
+         right,
+         bottomRight,
+         bottom,
+         bottomLeft,
+         left, 
+      } = this.getNeighbors(cellsList);
 
-      if(leftNeb       && leftNeb       .isBlocked && !leftNeb       .isTransp) leftNeb       .isTransp = true;
-      if(bottomLeftNeb && bottomLeftNeb .isBlocked && !bottomLeftNeb .isTransp) bottomLeftNeb .isTransp = true; 
-      if(bottomNeb     && bottomNeb     .isBlocked && !bottomNeb     .isTransp) bottomNeb     .isTransp = true; 
+      const isBlocked = {
+         topLeft:     () => top    && left  && top    .isBlocked && left  .isBlocked && neighbor === topLeft,
+         topRight:    () => top    && right && top    .isBlocked && right .isBlocked && neighbor === topRight,
+         bottomLeft:  () => bottom && left  && bottom .isBlocked && left  .isBlocked && neighbor === bottomLeft,
+         bottomRight: () => bottom && right && bottom .isBlocked && right .isBlocked && neighbor === bottomRight,
+      }
+      
+      return isBlocked.topLeft() || isBlocked.topRight() || isBlocked.bottomLeft() || isBlocked.bottomRight();
+   }
+
+   setTransparency(cellsList: ICellClass) {
+   
+      if(!this.isBlocked) return;
+
+      const {
+         top,
+         topRight,
+         right,
+      } = this.getNeighbors(cellsList);
+      
+      if(!top.isVacant
+      || !topRight.isVacant
+      || !right.isVacant) {
+         
+         return this.isTransp = true;
+      }
+
+      this.isTransp = false;
    }
 
 
@@ -275,16 +313,14 @@ export class CellClass {
    ) {
 
       const frameX    = 0;
-      const srcHeight = 1000;
-      const srcWidth  = 1500;
-      const destSize  = 600;
-      const offsetX   = 23;
-      const offsetY   = 50;
-
-      this.img!.src = "Terrain/Flat_Grass.png";
+      const srcHeight = 100;
+      const srcWidth  = 100;
+      const destSize  = 55;
+      const offsetX   = 25;
+      const offsetY   = 15;
 
       ctx.drawImage(
-         this.img!,
+         this.tileImg,
 
          // Source
          frameX *srcWidth,
@@ -295,7 +331,7 @@ export class CellClass {
          // Destination
          gridPos.x -offsetX +scrollOffset.x,
          gridPos.y -offsetY +scrollOffset.y,
-         destSize +100,
+         destSize,
          destSize,
       );
    }
@@ -307,14 +343,8 @@ export class CellClass {
    ) {
 
       if(!this.isBlocked) return;
-      
-      this.img!.src = "Buildings/wall.png";
-      // this.img!.src = "Terrain/iso_stone.png";
 
-      // const srcSize  = 1024;
-      // const destSize = 55;
-      // const offsetX  = 30;
-      // const offsetY  = 40;
+      this.tileImg.src = this.walls_Src;
 
       const srcSize  = 280;
       const destSize = 90;
@@ -326,7 +356,7 @@ export class CellClass {
          ctx.globalAlpha = 0.5;
    
          ctx.drawImage(
-            this.img!,
+            this.tileImg!,
    
             // Source
             0,
@@ -346,7 +376,7 @@ export class CellClass {
       }
    
       ctx.drawImage(
-         this.img!,
+         this.tileImg!,
 
          // Source
          0,

@@ -74,8 +74,8 @@ export class AgentClass {
 
       this.img         = undefined;
       this.frameX      = 0;
-      this.frameY      = 3;
-      this.lastFrameY  = 3;
+      this.frameY      = 11;
+      this.lastFrameY  = 11;
       this.animState   = 0;
 
       this.isMoving    = false;
@@ -124,44 +124,6 @@ export class AgentClass {
 
       this.startCell.isVacant = false;
       this.startCell.agentID  = this.id;
-   }
-
-   isBlockedDiag(
-      cellsList:  ICellClass,
-      nebID_List: IString,
-      neighbor:   CellClass,
-   ): boolean {
-
-      const {
-         topLeft,
-         top,
-         topRight,
-         right,
-         bottomRight,
-         bottom,
-         bottomLeft,
-         left,  
-      } = nebID_List;
-       
-      const {
-         [topLeft    ]: topLeftNeb,
-         [top        ]: topNeb,
-         [topRight   ]: topRightNeb,
-         [right      ]: rightNeb,
-         [bottomRight]: bottomRightNeb,
-         [bottom     ]: bottomNeb,
-         [bottomLeft ]: bottomLeftNeb,
-         [left       ]: leftNeb
-      } = cellsList;
-
-      const isBlocked = {
-         topLeft:     () => topNeb    && leftNeb  && topNeb.isBlocked    && leftNeb.isBlocked  && neighbor === topLeftNeb,
-         topRight:    () => topNeb    && rightNeb && topNeb.isBlocked    && rightNeb.isBlocked && neighbor === topRightNeb,
-         bottomLeft:  () => bottomNeb && leftNeb  && bottomNeb.isBlocked && leftNeb.isBlocked  && neighbor === bottomLeftNeb,
-         bottomRight: () => bottomNeb && rightNeb && bottomNeb.isBlocked && rightNeb.isBlocked && neighbor === bottomRightNeb,
-      }
-      
-      return isBlocked.topLeft() || isBlocked.topRight() || isBlocked.bottomLeft() || isBlocked.bottomRight();
    }
 
    hasArrived(
@@ -268,7 +230,7 @@ export class AgentClass {
             let nebData   = neighbor.agentCostList[ownID];
    
             if(!this.openSet.has(neighbor)
-            && !this.isBlockedDiag(cellsList, nebID_List, neighbor)) {
+            && !presentCell.isBlockedDiag(cellsList, neighbor)) {
                
                this.openSet.add(neighbor);
             }
@@ -510,7 +472,7 @@ export class AgentClass {
       scrollOffset: IPosition,
    ) {
 
-      ctx.fillStyle = "red";
+      ctx.fillStyle = "lime";
       ctx.beginPath();
       ctx.arc(
          gridPos.x + scrollOffset.x,

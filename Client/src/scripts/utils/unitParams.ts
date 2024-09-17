@@ -12,8 +12,8 @@ export const unitParams = {
       popCost: 1,
 
       collider: {
-         offsetY: 0,
-         radius:  glo.GridParams.cellSize *0.3,
+         offsetY: -10,
+         radius:  glo.GridParams.cellSize *0.4,
       },
 
       unitType: {

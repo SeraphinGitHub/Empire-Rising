@@ -122,7 +122,7 @@ export const glo = reactive({
    CurrentSelectList: {} as IAgentClass,
 
    // --- Ints ---
-   MouseSpeed: 5,
+   MouseSpeed: 6,
    MaxPop:     2000,
    CurrentPop: 0,
 
