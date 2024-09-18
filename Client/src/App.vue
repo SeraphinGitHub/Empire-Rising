@@ -2,13 +2,15 @@
 <template>
    <section class="flex" id="root">
 
-      <Coordinates/>
-      <IsoCanvas/>
+      <!-- <Coordinates/> -->
       <CartCanvas/>
+      <IsoCanvas/>
 
-      <!-- <button class="flex" @click="sendData()" style="position: fixed; bottom: 100px; background: lime;">
-         Send data
-      </button> -->
+      <div class="flex btn-bar">
+         <!-- <button class="flex" @click="sendData()"   >Send data</button> -->
+         <button class="flex" @click="toggleFrame()">Toggle mouse frame</button>
+         <button class="flex" @click="toggleGrid()" >Toggle grid</button>
+      </div>
       
    </section>
 </template>
@@ -38,6 +40,11 @@
          title: "Empire Rising",
          URL:   "http://localhost:3000",
          socket: null,
+         
+         params: {
+            isGridHidden:  false,
+            isFrameHidden: false,
+         }
       }},
 
       async mounted() {
@@ -46,7 +53,7 @@
          // this.connectWith_Express();
          
          // GameHandler.init(document, socket);
-         GameHandler.init(document);
+         GameHandler.init(document, this.params);
       },
 
       methods: {
@@ -73,12 +80,37 @@
             if(this.socket === null) return;
             this.socket.emit("connectSocketIO", { success: true });
          },
+
+         toggleFrame() {
+            this.params.isFrameHidden = !this.params.isFrameHidden;
+         },
+
+         toggleGrid() {
+            this.params.isGridHidden = !this.params.isGridHidden;
+         },
       },
    }
 </script>
 
-<style>
+<style lang="scss">
    button:active{ background: red !important;}
+
+   .btn-bar {
+      position: fixed;
+      justify-content: space-between !important;
+      bottom: 10px;
+      height: 100px;
+      width: 650px;
+      // background: white;
+
+      button {
+         height: 60px;
+         width: 200px;
+         border: 4px double green;
+         border-radius: 10px;
+         background: lime;
+      }
+   }
 
    #root {
       position: fixed;

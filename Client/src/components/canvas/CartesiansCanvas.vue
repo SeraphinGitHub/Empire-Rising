@@ -2,11 +2,13 @@
 <template>
    <section class="flex">
 
-      <canvas v-for="canvasName in allCanvas"
-         :key="canvasName"
-         :ref="canvasName"
-         :class="`flex canvas-${canvasName}`"
-      ></canvas>
+      <div class="flex div-terrain">
+         <canvas ref="terrain" class="canvas-terrain"/>
+      </div>
+
+      <canvas ref="buildings" class="cnvs canvas-buildings"/>
+      <canvas ref="units"     class="cnvs canvas-units"    />
+      <canvas ref="selection" class="cnvs canvas-selection"/>
 
    </section>
 </template>
@@ -31,8 +33,7 @@
       mounted() {
 
          this.allCanvas.forEach((canvasName: string) => {
-            const canvasElem = this.$refs[canvasName][0] as HTMLCanvasElement;
-            
+            const canvasElem       = this.$refs[canvasName] as HTMLCanvasElement;
             glo.Canvas[canvasName] = canvasElem;
             glo.Ctx   [canvasName] = canvasElem.getContext("2d") as CanvasRenderingContext2D;
          });
@@ -47,13 +48,21 @@
       transform: translate(0%, -50%);
       height: 1080px;
       width: 1920px;
+      overflow: hidden;
+
+      /* -----------------------------------  Tempory  ----------------------------------- */
+      width:  1400px !important; /* Has to match _GlobalVar.TestViewport.width */
+      height:  800px !important; /* Has to match _GlobalVar.TestViewport.heght */
+      /* -----------------------------------  Tempory  ----------------------------------- */
+     
+      background: black;
    }
 
-   canvas {
+   .cnvs,
+   .div-terrain {
       position: fixed;
       height: 100%;
       width: 100%;
-      /* opacity: 30%; */
    }
 
    .canvas-terrain {

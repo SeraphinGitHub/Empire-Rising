@@ -10,6 +10,7 @@ import {
    ICellClass,
 } from "../utils/interfaces";
 
+import { glo } from "../utils/_GlobalVar";
 
 // =====================================================================
 // Cell Class
@@ -36,10 +37,10 @@ export class CellClass {
    isBlocked:      boolean;
    isVacant:       boolean;
    isTransp:       boolean;
-   
-   walls_Src:      string;
-   flatG_Src:      string;
-   tileImg:        HTMLImageElement;
+
+   // ----------- Tempory -----------
+   isDiffTile:     boolean;
+   // ----------- Tempory -----------
 
    constructor(
       cellPerSide: number,
@@ -104,11 +105,10 @@ export class CellClass {
       this.isBlocked     = false;
       this.isVacant      = true;
       this.isTransp      = false;
-      
-      this.walls_Src     = "Buildings/wall.png";
-      this.flatG_Src     = "Terrain/Flat_Grass.png";
-      this.tileImg       = new Image();
-      this.tileImg.src   = this.flatG_Src;
+
+      // ----------- Tempory -----------
+      this.isDiffTile    = false;
+      // ----------- Tempory -----------
    }
 
    // Set Neighbors List
@@ -212,8 +212,11 @@ export class CellClass {
    drawInfos(ctx: CanvasRenderingContext2D) {
          
       this.drawFrame(ctx);
-      // this.drawCenter(ctx);
+      this.drawBlocked(ctx);
+      this.drawVacancy(ctx);
       // this.drawID(ctx);
+      // this.drawCenter(ctx);
+      // this.drawWallCollider(ctx);
    }
 
    drawCenter(ctx: CanvasRenderingContext2D) {
@@ -286,11 +289,18 @@ export class CellClass {
       ctx.stroke();
    }
 
+   drawBlocked(ctx: CanvasRenderingContext2D) {
+
+      if(!this.isBlocked) return;
+      
+      this.drawColor(ctx, "rgba(255, 0, 0, 0.7)")
+   }
+
    drawVacancy(ctx: CanvasRenderingContext2D) {
 
       if(this.isVacant) return;
       
-      this.drawColor(ctx, "rgba(255, 0, 0, 0.6)")
+      this.drawColor(ctx, "rgba(0, 255, 255, 0.7)")
    }
 
    drawColor(ctx: CanvasRenderingContext2D, color: string) {
@@ -307,20 +317,23 @@ export class CellClass {
 
    // ------------------ Tempory ------------------
    drawSprite(
-      ctx:          CanvasRenderingContext2D,
-      gridPos:      IPosition,
-      scrollOffset: IPosition,
+      ctx:     CanvasRenderingContext2D,
+      gridPos: IPosition,
    ) {
 
       const frameX    = 0;
-      const srcHeight = 100;
-      const srcWidth  = 100;
-      const destSize  = 55;
-      const offsetX   = 25;
-      const offsetY   = 15;
+      const srcHeight = 500;
+      const srcWidth  = 500;
+      const destSize  = 58;
+      const offsetX   = 26;
+      const offsetY   = 12;
+
+      let tileImg = glo.flatG_Img;
+
+      if(this.isDiffTile) tileImg = glo.highG_Img;
 
       ctx.drawImage(
-         this.tileImg,
+         tileImg,
 
          // Source
          frameX *srcWidth,
@@ -329,22 +342,20 @@ export class CellClass {
          srcHeight,
          
          // Destination
-         gridPos.x -offsetX +scrollOffset.x,
-         gridPos.y -offsetY +scrollOffset.y,
+         gridPos.x -offsetX +glo.TerrainOffset.x,
+         gridPos.y -offsetY +glo.TerrainOffset.y,
          destSize,
          destSize,
       );
    }
 
    drawWall(
-      ctx:          CanvasRenderingContext2D,
-      gridPos:      IPosition,
-      scrollOffset: IPosition,
+      ctx:      CanvasRenderingContext2D,
+      gridPos:  IPosition,
+      scroll:   IPosition,
    ) {
 
       if(!this.isBlocked) return;
-
-      this.tileImg.src = this.walls_Src;
 
       const srcSize  = 280;
       const destSize = 90;
@@ -356,7 +367,7 @@ export class CellClass {
          ctx.globalAlpha = 0.5;
    
          ctx.drawImage(
-            this.tileImg!,
+            glo.walls_Img,
    
             // Source
             0,
@@ -365,8 +376,8 @@ export class CellClass {
             srcSize,
             
             // Destination
-            gridPos.x -offsetX +scrollOffset.x,
-            gridPos.y -offsetY +scrollOffset.y,
+            gridPos.x -offsetX +scroll.x,
+            gridPos.y -offsetY +scroll.y,
             destSize +10,
             destSize,
          );
@@ -376,7 +387,7 @@ export class CellClass {
       }
    
       ctx.drawImage(
-         this.tileImg!,
+         glo.walls_Img,
 
          // Source
          0,
@@ -385,8 +396,8 @@ export class CellClass {
          srcSize,
          
          // Destination
-         gridPos.x -offsetX +scrollOffset.x,
-         gridPos.y -offsetY +scrollOffset.y,
+         gridPos.x -offsetX +scroll.x,
+         gridPos.y -offsetY +scroll.y,
          destSize +10,
          destSize,
       );

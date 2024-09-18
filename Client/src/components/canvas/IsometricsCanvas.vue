@@ -34,13 +34,14 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      opacity: 50%;
+      height: 1080px;
+      width: 1920px;
 
       /* -----------------------------------  Tempory  ----------------------------------- */
       width:  1400px !important; /* Has to match _GlobalVar.TestViewport.width */
-      height: 800px !important;  /* Has to match _GlobalVar.TestViewport.heght */
+      height:  800px !important; /* Has to match _GlobalVar.TestViewport.heght */
       /* -----------------------------------  Tempory  ----------------------------------- */
-
-      background-color: black;
    }
 
    div {
@@ -49,7 +50,6 @@
       transform: translate(0%, -50%) rotateX(60deg);
       width: 100%;
       height: 100%;
-      /* background-color: blue; */
    }
 
    canvas {
@@ -57,24 +57,21 @@
       position: fixed;
       top: 50%;
       transform: translate(0%, -50%) rotateZ(-45deg);
-      /* background: blue; */
-      /* background: mediumseagreen; */
-      background: yellowgreen;
    }
 
    /* --- Laptop 17,3" --- */
    @media screen and (min-width : 1367px) and (max-width : 1600px) {
       section {
-         height: 900px;
          width: 1600px;
+         height: 900px;
       }
    }
    
    /* --- Laptop 15,6" --- */
    @media screen and (max-width : 1366px) {
       section {
-         height: 768px;
          width: 1366px;
+         height: 768px;
       }
    }
 </style>

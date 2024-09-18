@@ -19,10 +19,8 @@ import { unitParams } from "./utils/unitParams";
 
 
 let frame = 0;
-let showTerrain     = false;
 let isScrolling     = false;
 let isMouseScolling = false;
-const highG_Src     = "Terrain/High_Grass.png";
 
 const walls: string[] = [
    
@@ -230,18 +228,18 @@ const setViewportSize = (document: Document) => {
    const viewport_1080p: ISquare = {
       x: 0,
       y: 0,
-      height: 1080,
       width: 1920,
+      height: 1080,
    };
 
    const laptop_17pcs: ISize = {
-      height: 900,
       width: 1600,
+      height: 900,
    };
 
    const laptop_15pcs: ISize = {
-      height: 768,
       width: 1366,
+      height: 768,
    };
 
    if(document.body.clientWidth <= laptop_17pcs.width
@@ -255,7 +253,14 @@ const setViewportSize = (document: Document) => {
       viewport_1080p.width  = laptop_15pcs.width;
    }
 
-   glo.Viewport = viewport_1080p;
+   // glo.Viewport = viewport_1080p;
+
+   glo.Viewport = {
+      x: 0,
+      y: 0,
+      width: 1400,
+      height: 800,
+   };
 }
 
 const setCanvasSize = () => {
@@ -263,6 +268,13 @@ const setCanvasSize = () => {
    Object.entries(glo.Canvas).forEach(([key, value]: [string, unknown]) => {
 
       const canvas = value as HTMLCanvasElement;
+
+      if(key === "terrain") {
+         const { terrainWidth, terrainHeight} = setTerrainSize();
+         canvas.width  = terrainWidth;
+         canvas.height = terrainHeight;
+         return;
+      }
 
       if(key === "isoSelect") {
          canvas.width  = glo.Grid!.gridSize;
@@ -273,6 +285,25 @@ const setCanvasSize = () => {
       canvas.width  = glo.Viewport.width;
       canvas.height = glo.Viewport.height;
    });
+}
+
+const setTerrainSize = () => {
+
+   const hypotenuse    = glo.Grid!.gridSize;
+   const angleDegrees  = 26.565;  // ==> Fake isometric angle value
+   const angleRadians  = angleDegrees * (Math.PI / 180);
+   const terrainWidth  = Math.floor( hypotenuse * Math.cos(angleRadians) *2 ) +50; // +50 ==> some margin
+   const terrainHeight = Math.floor( hypotenuse * Math.sin(angleRadians) *2 ) +50; // +50 ==> some margin
+
+   glo.TerrainOffset = {
+      x:  Math.floor( (terrainWidth  -glo.Viewport.width ) /2 ),
+      y:  Math.floor( (terrainHeight -glo.Viewport.height) /2 ),
+   }
+
+   return {
+      terrainWidth,
+      terrainHeight,
+   }
 }
 
 const setViewportSqr = () => {
@@ -353,7 +384,7 @@ const isWithinViewport = (gridPos: IPosition) => {
    const {
       x:      scrollX,
       y:      scrollY,
-   } = glo.ScrollOffset;
+   } = glo.Scroll;
 
    const { x, y }: IPosition = gridPos;
 
@@ -470,14 +501,14 @@ const gridPos_toScreenPos = (gridPos: IPosition) => {
 // =========================================================================================
 const setScrollBounds = () => {
 
-   const detSize = 55;
+   const detSize = glo.DetectSize;
 
    const {
       x:      vpX,
       y:      vpY,
       width:  vpWidth,
       height: vpHeight,
-   }: ISquare = glo.ViewportSqr;
+   }: ISquare = glo.Viewport;
 
    return {
 
@@ -523,22 +554,24 @@ const scrollCam = () => {
    const bottom: boolean = Collision.point_toSquare(mousePos, scrollBounds.bottom);
    const left:   boolean = Collision.point_toSquare(mousePos, scrollBounds.left);
 
-   if(top || right || bottom || left) {
+   if(!top && !right && !bottom && !left) return isScrolling = false;
 
-      if(top   ) glo.ScrollOffset.y += glo.MouseSpeed;
-      if(right ) glo.ScrollOffset.x -= glo.MouseSpeed;
-      if(bottom) glo.ScrollOffset.y -= glo.MouseSpeed;
-      if(left  ) glo.ScrollOffset.x += glo.MouseSpeed;
-      
-      glo.ComputedCanvas!.e = glo.ScrollOffset.x;
-      glo.ComputedCanvas!.f = glo.ScrollOffset.y *2 -glo.GridParams.gridSize /2;
-      
-      glo.Canvas.isoSelect.style.transform = glo.ComputedCanvas!.toString();
+   if(top    && glo.Scroll.y <  glo.max_Y) glo.Scroll.y += glo.MouseSpeed;
+   if(right  && glo.Scroll.x > -glo.max_X) glo.Scroll.x -= glo.MouseSpeed;
+   if(bottom && glo.Scroll.y > -glo.max_Y) glo.Scroll.y -= glo.MouseSpeed;
+   if(left   && glo.Scroll.x <  glo.max_X) glo.Scroll.x += glo.MouseSpeed;
 
-      return isScrolling = true;
-   }
+   // IsoSelect Canvas
+   glo.IsoSelectComputed!.e = glo.Scroll.x;
+   glo.IsoSelectComputed!.f = glo.Scroll.y *2 -glo.GridParams.gridSize *0.5;
+   glo.Canvas.isoSelect.style.transform = glo.IsoSelectComputed!.toString();
+   
+   // Terrain Canvas
+   glo.TerrainComputed!.e = glo.Scroll.x;
+   glo.TerrainComputed!.f = glo.Scroll.y;
+   glo.Canvas.terrain.style.transform   = glo.TerrainComputed!.toString();
 
-   isScrolling = false;
+   isScrolling = true;
 }
 
 const mouseScroll = () => {
@@ -547,8 +580,8 @@ const mouseScroll = () => {
    
    const { x: mouseX,  y: mouseY  } = glo.SelectArea.currentPos.isometric;
 
-   glo.ScrollOffset.x = mouseX;
-   glo.ScrollOffset.y = mouseY;
+   glo.Scroll.x = mouseX;
+   glo.Scroll.y = mouseY;
 }
 
 const createNewAgent = (
@@ -639,7 +672,7 @@ const unitSelection = () => {
    cycleList(glo.AgentsList, (agent: AgentClass) => {
       
       const { x: agentX,  y: agentY  }: IPosition = gridPos_toScreenPos(agent.position);
-      const { x: scrollX, y: scrollY }: IPosition = glo.ScrollOffset;
+      const { x: scrollX, y: scrollY }: IPosition = glo.Scroll;
 
       // Agent collider
       const agentCollider = {
@@ -705,6 +738,8 @@ const unitDiselection = () => {
 // Draw Methods
 // =========================================================================================
 const drawScrollBounds = () => {
+
+   if(glo.Params.isFrameHidden) return;
    
    const scrollBounds: any = setScrollBounds();
 
@@ -805,18 +840,25 @@ const drawUnits = (
 
    if(!isWithinViewport(agentPos)) return;
 
-   agent.drawSprite  (units, agentPos, glo.ScrollOffset);
-   // agent.drawCollider(units, agentPos, glo.ScrollOffset);
+   agent.drawSprite(units, agentPos, glo.Scroll);
+   // agent.drawCollider(units, agentPos, glo.Scroll);
    agent.drawPath(isoSelect);
+}
+
+const drawTerrain = () => {
+
+   cycleList(glo.Grid!.cellsList, (cell: CellClass) => {
+      let cellPos = gridPos_toScreenPos(cell.center);
+
+      cell.drawSprite(glo.Ctx.terrain, cellPos);
+   });   
 }
 
 const drawBuildingsAndUnits = (frame: number) => {
 
    cycleList(glo.Grid!.cellsList, (cell: CellClass) => {
+      
       let cellPos = gridPos_toScreenPos(cell.center);
-
-      if(!isWithinViewport(cellPos)) return;
-
       const { units, isoSelect } = glo.Ctx;
 
       // *****************************************************
@@ -827,29 +869,12 @@ const drawBuildingsAndUnits = (frame: number) => {
          drawUnits(frame, agent, units, isoSelect);
       }
 
-      cell.setTransparency(glo.Grid!.cellsList);
-      
-      // cell.drawWallCollider(isoSelect);
-      cell.drawWall   (units, cellPos, glo.ScrollOffset);
-      cell.drawInfos  (isoSelect);
-      cell.drawVacancy(isoSelect);
-   });
-}
-
-const drawTerrain = () => {
-
-   if(!showTerrain) return;
-
-   clearCanvas("terrain");
-
-   cycleList(glo.Grid!.cellsList, (cell: CellClass) => {
-      let cellPos = gridPos_toScreenPos(cell.center);
-
       if(!isWithinViewport(cellPos)) return;
-
-      const { terrain } = glo.Ctx;
-
-      cell.drawSprite(terrain, cellPos, glo.ScrollOffset);
+      
+      cell.setTransparency(glo.Grid!.cellsList);
+      cell.drawWall(units, cellPos, glo.Scroll);
+         
+      if(!glo.Params.isGridHidden) cell.drawInfos(isoSelect);
    });
 }
 
@@ -893,7 +918,7 @@ const mouse_Move = (event: MouseEvent) => {
    if(isWithinGrid(glo.IsoGridPos)) glo.HoverCell = getHoverCell();
 
    unitSelection();
-   scrollCam();
+   isScrolling = true;
 }
 
 const mouse_Click = (event: MouseEvent, state: string) => {
@@ -968,14 +993,13 @@ const runAnimation = () => {
    // clearCanvas("buildings");
    clearCanvas("units");
    
-   drawScrollBounds();
-
+   
    if(isScrolling) {
       scrollCam();
       // mouseScroll();
-      drawTerrain();
    }
-
+   
+   drawScrollBounds();
    drawBuildingsAndUnits(frame);
    drawSelectUnit();
    drawHoverUnit();
@@ -1045,11 +1069,26 @@ export const GameHandler = {
 
    init(
       document: Document,
+      params:   any,
       // socket:   any,
    ) {
+      
+      glo.Params = params;
+      glo.Grid   = new GridClass(glo.GridParams);
 
-      glo.Grid = new GridClass(glo.GridParams);
 
+      // Set scrollCam max Bounds
+      glo.max_X *= glo.Grid!.gridSize;
+      glo.max_Y *= glo.Grid!.gridSize;
+      
+
+      // Set tiles Images
+      glo.flatG_Img.src = glo.flatG_Src;
+      glo.highG_Img.src = glo.highG_Src;
+      glo.walls_Img.src = glo.walls_Src;
+
+
+      // Set DOM & some data
       setViewportSize(document);
       setCanvasSize ();
       setViewportSqr(); // ==> Tempory
@@ -1057,13 +1096,17 @@ export const GameHandler = {
       setPosConvert ();
       setPeripherals();     
       
-      glo.ComputedCanvas = new DOMMatrix(window.getComputedStyle(glo.Canvas.isoSelect).transform);
+
+      // CSS ScrollCanvas
+      glo.IsoSelectComputed = new DOMMatrix(window.getComputedStyle(glo.Canvas.isoSelect).transform);
+      glo.TerrainComputed   = new DOMMatrix(window.getComputedStyle(glo.Canvas.terrain  ).transform);
+
 
       // --- Tempory ---
-      walls.forEach(ID => glo.Grid!.cellsList[ID].isBlocked   = true);
-      tiles.forEach(ID => glo.Grid!.cellsList[ID].tileImg.src = highG_Src);
+      walls.forEach(ID => glo.Grid!.cellsList[ID].isBlocked  = true);
+      tiles.forEach(ID => glo.Grid!.cellsList[ID].isDiffTile = true);
 
-      setTimeout(() => drawTerrain(), 100);
+      setTimeout(() => drawTerrain(), 0);
 
       createNewAgent("infantry", "swordsman", "6-16",  "");
       createNewAgent("infantry", "swordsman", "10-16", "");

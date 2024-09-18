@@ -18,14 +18,11 @@ export const glo = reactive({
 
    Faction: "Orange",
 
-   Debug: {
-      showWallCol: false,
-      hoverColor: "blue",
-   },
+   Params: {} as any,
    
    GridParams: {
       cellSize:  40,
-      gridSize:  1440,
+      gridSize:  1600,
    },
 
    SelectArea: {
@@ -86,9 +83,10 @@ export const glo = reactive({
       width:  0,
    },
 
-   GridAngle:       undefined as number    | undefined,
-   Grid:            undefined as GridClass | undefined,
-   ComputedCanvas:  undefined as DOMMatrix | undefined,
+   GridAngle:         undefined as number    | undefined,
+   Grid:              undefined as GridClass | undefined,
+   IsoSelectComputed: undefined as DOMMatrix | undefined,
+   TerrainComputed:   undefined as DOMMatrix | undefined,
    
    // --- Positions ---
    ViewportOffset: {
@@ -96,7 +94,12 @@ export const glo = reactive({
       y: 0,
    },
 
-   ScrollOffset:   {
+   TerrainOffset: {
+      x: 0,
+      y: 0,
+   },
+
+   Scroll:   {
       x: 0,
       y: 0,
    },
@@ -122,17 +125,31 @@ export const glo = reactive({
    CurrentSelectList: {} as IAgentClass,
 
    // --- Ints ---
-   MouseSpeed: 6,
+   MouseSpeed: 7,
+   DetectSize: 60,
    MaxPop:     2000,
    CurrentPop: 0,
+   max_X:      0.7,
+   max_Y:      0.7 *0.5,
 
    // --- TEST ---
    TestViewport: {
       x: 0,
       y: 0,
-      width:  1400, // *0.5 => x ==> Has to match CSS IsometircsCanvas.vue
-      height: 800,  // *0.5 => y ==> Has to match CSS IsometircsCanvas.vue
+      // width:  1400 +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+      // height: 800  +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+
+      width:  1400 +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+      height: 800  +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
    },
+
+   flatG_Img: new Image(),
+   highG_Img: new Image(),
+   walls_Img: new Image(),
+
+   flatG_Src: "Terrain/Flat_Grass.png",
+   highG_Src: "Terrain/High_Grass.png",
+   walls_Src: "Buildings/wall.png",
 
 })
 

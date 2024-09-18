@@ -401,24 +401,24 @@ export class AgentClass {
 
    // Draw
    drawPath(ctx: CanvasRenderingContext2D) {
-      if(this.path.length > 0) {
+      
+      if(glo.Params.isGridHidden) return;
+      if(this.path.length <= 0  ) return;
 
-         // Display scanned neighbors   
-         this.closedSet.forEach(cell => {
-            cell.drawColor(ctx, "rgba(255, 145, 0, 0.4)");
-            // cell.drawData(ctx);
-         });
-   
-         // Display path
-         for(let i = 0; i < this.path.length; i++) {
-   
-            let currentCell = this.path[i];
-            this.drawWalkPath(ctx, i, currentCell);
-            
-            if(i +1 < this.path.length) {
-               let nextCell = this.path[i +1];
-               this.drawPathLine(ctx, currentCell, nextCell);
-            }
+      // Display scanned neighbors   
+      this.closedSet.forEach(cell => {
+         cell.drawColor(ctx, "rgba(255, 145, 0, 0.6)");
+      });
+
+      // Display path
+      for(let i = 0; i < this.path.length; i++) {
+
+         let currentCell = this.path[i];
+         this.drawWalkPath(ctx, i, currentCell);
+         
+         if(i +1 < this.path.length) {
+            let nextCell = this.path[i +1];
+            this.drawPathLine(ctx, currentCell, nextCell);
          }
       }
    }
@@ -469,14 +469,14 @@ export class AgentClass {
    drawCollider(
       ctx:          CanvasRenderingContext2D,
       gridPos:      IPosition,
-      scrollOffset: IPosition,
+      scroll: IPosition,
    ) {
 
       ctx.fillStyle = "lime";
       ctx.beginPath();
       ctx.arc(
-         gridPos.x + scrollOffset.x,
-         gridPos.y + this.collider.offsetY +scrollOffset.y,
+         gridPos.x + scroll.x,
+         gridPos.y + this.collider.offsetY +scroll.y,
          this.collider.radius, 0, Math.PI * 2
       );
       ctx.fill();
@@ -486,7 +486,7 @@ export class AgentClass {
    drawSprite(
       ctx:          CanvasRenderingContext2D,
       position:     IPosition,
-      scrollOffset: IPosition,
+      scroll: IPosition,
    ) {
       
       let spritesWidth  = this.sprites.width;
@@ -504,8 +504,8 @@ export class AgentClass {
          spritesHeight,      
          
          // Destination
-         position.x - spritesWidth /2 +scrollOffset.x,
-         position.y - spritesHeight/2 - this.sprites.offsetY +scrollOffset.y,
+         position.x - spritesWidth /2 +scroll.x,
+         position.y - spritesHeight/2 - this.sprites.offsetY +scroll.y,
          spritesWidth,
          spritesHeight,
       );
