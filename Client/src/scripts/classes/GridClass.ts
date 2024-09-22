@@ -1,10 +1,6 @@
 
 "use strict"
 
-import {
-   ICellClass,
-} from "../utils/interfaces";
-
 import { CellClass } from "../classes/_Export";
 
 // =====================================================================
@@ -12,11 +8,13 @@ import { CellClass } from "../classes/_Export";
 // =====================================================================
 export class GridClass {
 
-   cellsList:   ICellClass = {};
+   cellsList:     Map<string, CellClass> = new Map();
+   blockedCells:  Set<CellClass>         = new Set();
+   occupiedCells: Set<CellClass>         = new Set();
    
-   cellSize:    number;
-   gridSize:    number;
-   cellPerSide: number;
+   cellSize:      number;
+   gridSize:      number;
+   cellPerSide:   number;
 
    constructor(params: any) {
 
@@ -35,21 +33,27 @@ export class GridClass {
    }
 
    init() {
+      let cellCount = 0;
 
       // Init grid
       for(let i = 0; i < this.cellPerSide; i++) {  // Collums
          for(let j = 0; j < this.cellPerSide; j++) {  // Rows
             
-            const cell: CellClass = new CellClass(this.cellPerSide, this.cellSize, this.cellPerSide -i -1, j);
-            this.cellsList[cell.id] = cell;
+            const cell: CellClass = new CellClass(
+               cellCount,
+               this.cellPerSide,
+               this.cellSize,
+               this.cellPerSide -i -1,
+               j
+            );
+            
+            this.cellsList.set(cell.id, cell);
+            cellCount++;
          }
       }
 
       // Set cells neighborsList
-      for(let i in this.cellsList) {
-
-         this.cellsList[i].setNeighborsList();
-      }
+      this.cellsList.forEach((cell) => cell.setNeighborsList());
    }
    
 }

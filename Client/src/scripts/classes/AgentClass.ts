@@ -1,8 +1,6 @@
 
 import {
-   ICellClass,
    INumber,
-   IString,
    IPosition,
 } from "../utils/interfaces";
 
@@ -122,8 +120,8 @@ export class AgentClass {
       this.img     = new Image();
       this.img.src = this.imgSrc;
 
-      this.startCell.isVacant = false;
-      this.startCell.agentID  = this.id;
+      // this.startCell.isVacant = false;
+      // this.startCell.agentID  = this.id;
    }
 
    hasArrived(
@@ -219,7 +217,7 @@ export class AgentClass {
       const cellsList = glo.Grid!.cellsList;
 
       for(let i in nebID_List) {
-         let neighbor = cellsList[ nebID_List[i] ];
+         let neighbor = cellsList.get(nebID_List[i])!;
 
          // If this neighbor hasn't been scanned yet
          if(!this.closedSet.has(neighbor)
@@ -361,29 +359,33 @@ export class AgentClass {
 
    setCellVacancy() {
 
-      // Vacant Cell
+      // Cell is Vacant
       if(this.currentCell !== this.startCell) {
          
-         this.currentCell.agentID  = undefined;
+         // this.currentCell.agentID  = undefined;
          this.currentCell.isVacant = true;
          this.currentCell = this.startCell;
+
+         glo.Grid!.occupiedCells.delete(this.currentCell);
       }
       
-      // Occupied Cell
-      this.currentCell.agentID  = this.id;
+      // Cell is Occupied
+      // this.currentCell.agentID  = this.id;
       this.currentCell.isVacant = false;
       this.startCell = this.path[1];
+      glo.Grid!.occupiedCells.add(this.currentCell);
    }
 
    searchVacancy(currentCell: CellClass) { // <== Tempory (Need Recast)
 
-      if(currentCell.isVacant || currentCell.agentID === this.id) return;
+      // if(currentCell.isVacant || currentCell.agentID === this.id) return;
+      if(glo.Grid!.occupiedCells.has(currentCell)) return;
 
       let nebID_List = currentCell.neighborsList;
       let vacantPath = [];
 
       for(let i in nebID_List) {
-         let neighbor = glo.Grid!.cellsList[ nebID_List[i] ];
+         let neighbor = glo.Grid!.cellsList.get(nebID_List[i])!;
          vacantPath.push(neighbor);
       }
 

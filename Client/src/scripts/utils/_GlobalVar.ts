@@ -4,10 +4,12 @@
 import {
    ICanvas,
    ICtx,
-   IAgentClass,
 } from "./interfaces"
 
-import { GridClass } from "../classes/GridClass"
+import {
+   GridClass,
+   AgentClass,
+} from "../classes/_Export"
 
 import { reactive, readonly } from 'vue';
 
@@ -120,9 +122,9 @@ export const glo = reactive({
 
    // --- Lists ---
    AvailableIDArray:  [] as number[],
-   AgentsList:        {} as IAgentClass,
-   OldSelectList:     {} as IAgentClass,
-   CurrentSelectList: {} as IAgentClass,
+   AgentsList:        new Map() as Map<number, AgentClass>,
+   OldSelectList:     new Set() as Set<AgentClass>,
+   CurrentSelectList: new Set() as Set<AgentClass>,
 
    // --- Ints ---
    MouseSpeed: 7,

@@ -7,7 +7,6 @@ import {
    IPositionList,
    INumberList,
    IAgentCost,
-   ICellClass,
 } from "../utils/interfaces";
 
 import { glo } from "../utils/_GlobalVar";
@@ -18,7 +17,8 @@ import { glo } from "../utils/_GlobalVar";
 export class CellClass {
    
    id:             string;
-
+   
+   count:          number;
    cellPerSide:    number;
    size:           number;
    i:              number;
@@ -30,7 +30,7 @@ export class CellClass {
    collider:       IPositionList;
    nebSideList:    INumberList;
 
-   agentID:        number | undefined;
+   // agentID:        number | undefined;
    agentCostList:  IAgentCost;
    neighborsList:  IString;
    
@@ -43,6 +43,7 @@ export class CellClass {
    // ----------- Tempory -----------
 
    constructor(
+      count:       number,
       cellPerSide: number,
       size:        number,
       i:           number,
@@ -50,7 +51,8 @@ export class CellClass {
    ) {
       
       this.id          = `${i}-${j}`;
-
+      
+      this.count       = count;
       this.cellPerSide = cellPerSide;
       this.size        = size;
       this.i           = i;
@@ -98,7 +100,7 @@ export class CellClass {
          bottomLeft:  [-1,  1],
       };
 
-      this.agentID       = undefined;
+      // this.agentID       = undefined;
       this.agentCostList = {};
       this.neighborsList = {};
       
@@ -120,13 +122,13 @@ export class CellClass {
    }
 
    getNeighbors(
-      cellsList: ICellClass,
-   ): ICellClass {
+      cellsList: Map<string, CellClass>,
+   ): any {
       
-      const neighbors: ICellClass = {};
+      const neighbors: any = {};
 
       for(const [key, value] of Object.entries(this.neighborsList)) {
-         neighbors[key] = cellsList[value];
+         neighbors[key] = cellsList.get(value);
       }
 
       return neighbors;
@@ -162,7 +164,7 @@ export class CellClass {
    }
 
    isBlockedDiag(
-      cellsList:  ICellClass,
+      cellsList:  Map<string, CellClass>,
       neighbor:   CellClass,
    ): boolean {
       
@@ -187,7 +189,7 @@ export class CellClass {
       return isBlocked.topLeft() || isBlocked.topRight() || isBlocked.bottomLeft() || isBlocked.bottomRight();
    }
 
-   setTransparency(cellsList: ICellClass) {
+   setTransparency(cellsList: Map<string, CellClass>) {
    
       if(!this.isBlocked) return;
 

@@ -36,14 +36,6 @@ export interface ICtx {
    [key: string]: CanvasRenderingContext2D,
 }
 
-export interface ICellClass {
-   [key: string]: CellClass,
-}
-
-export interface IAgentClass {
-   [key: number]: AgentClass,
-}
-
 
 // ==================================================================
 // Normal Interfaces
