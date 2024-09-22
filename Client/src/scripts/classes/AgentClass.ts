@@ -120,8 +120,9 @@ export class AgentClass {
       this.img     = new Image();
       this.img.src = this.imgSrc;
 
-      // this.startCell.isVacant = false;
-      // this.startCell.agentID  = this.id;
+      this.startCell.isVacant = false;
+      this.startCell.agentID  = this.id;
+      glo.Grid!.setOccupiedMap(this.startCell);
    }
 
    hasArrived(
@@ -359,27 +360,26 @@ export class AgentClass {
 
    setCellVacancy() {
 
-      // Cell is Vacant
+      // Set as Vacant
       if(this.currentCell !== this.startCell) {
-         
-         // this.currentCell.agentID  = undefined;
+         glo.Grid!.occupiedCells.delete(this.currentCell);
+
+         this.currentCell.agentID  = undefined;
          this.currentCell.isVacant = true;
          this.currentCell = this.startCell;
-
-         glo.Grid!.occupiedCells.delete(this.currentCell);
       }
       
-      // Cell is Occupied
-      // this.currentCell.agentID  = this.id;
+      // Set as Occupied
+      this.currentCell.agentID  = this.id;
       this.currentCell.isVacant = false;
       this.startCell = this.path[1];
-      glo.Grid!.occupiedCells.add(this.currentCell);
+      
+      glo.Grid!.setOccupiedMap(this.currentCell);
    }
 
    searchVacancy(currentCell: CellClass) { // <== Tempory (Need Recast)
 
-      // if(currentCell.isVacant || currentCell.agentID === this.id) return;
-      if(glo.Grid!.occupiedCells.has(currentCell)) return;
+      if(currentCell.isVacant || currentCell.agentID === this.id) return;
 
       let nebID_List = currentCell.neighborsList;
       let vacantPath = [];

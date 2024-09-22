@@ -55,5 +55,18 @@ export class GridClass {
       // Set cells neighborsList
       this.cellsList.forEach((cell) => cell.setNeighborsList());
    }
+
+   setOccupiedMap(cell: CellClass) {
+
+      this.occupiedCells.add(cell);
+      let tempArray: CellClass[] = [];
+
+      this.occupiedCells.forEach((cell: CellClass) => {
+         tempArray.push(cell);
+      });
+
+      tempArray.sort((a: any, b: any) => a.count -b.count);
+      this.occupiedCells = new Set(tempArray);
+   }
    
 }

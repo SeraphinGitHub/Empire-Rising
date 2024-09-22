@@ -71,18 +71,11 @@ export const glo = reactive({
    Canvas:         {} as ICanvas,
    Ctx:            {} as ICtx,
 
-   Viewport:       {
-      x:      0,
-      y:      0,
-      height: 0,
-      width:  0,
-   },
-
-   ViewportSqr:    {
-      x:      0,
-      y:      0,
-      height: 0,
-      width:  0,
+   Viewport: {
+      x: 0,
+      y: 0,
+      width:  1400, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+      height: 800,  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
    },
 
    GridAngle:         undefined as number    | undefined,
@@ -101,17 +94,17 @@ export const glo = reactive({
       y: 0,
    },
 
-   Scroll:   {
+   Scroll: {
       x: 0,
       y: 0,
    },
 
-   IsoGridPos:     {
+   IsoGridPos: {
       x: 0,
       y: 0,
    },
 
-   HoverCell:      {
+   HoverCell: {
       id: "",
 
       gridPos: {
@@ -133,17 +126,6 @@ export const glo = reactive({
    CurrentPop: 0,
    max_X:      0.7,
    max_Y:      0.7 *0.5,
-
-   // --- TEST ---
-   TestViewport: {
-      x: 0,
-      y: 0,
-      // width:  1400 +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-      // height: 800  +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-
-      width:  1400 +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-      height: 800  +200, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-   },
 
    flatG_Img: new Image(),
    highG_Img: new Image(),

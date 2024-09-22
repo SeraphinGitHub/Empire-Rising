@@ -51,8 +51,8 @@
       overflow: hidden;
 
       /* -----------------------------------  Tempory  ----------------------------------- */
-      width:  1400px !important; /* Has to match _GlobalVar.TestViewport.width */
-      height:  800px !important; /* Has to match _GlobalVar.TestViewport.heght */
+      width:  1400px !important; /* Has to match _GlobalVar.Viewport.width */
+      height:  800px !important; /* Has to match _GlobalVar.Viewport.heght */
       /* -----------------------------------  Tempory  ----------------------------------- */
      
       background: black;

@@ -27,10 +27,11 @@ export class CellClass {
    y:              number;
 
    center:         IPosition;
+   screenPos:      IPosition;
    collider:       IPositionList;
    nebSideList:    INumberList;
 
-   // agentID:        number | undefined;
+   agentID:        number | undefined;
    agentCostList:  IAgentCost;
    neighborsList:  IString;
    
@@ -64,6 +65,11 @@ export class CellClass {
          x: this.x + size/2,
          y: this.y + size/2,
       };
+
+      this.screenPos   = {
+         x: 0,
+         y: 0,
+      }
       
       this.collider    = { // Diamond Collider
 
@@ -100,7 +106,7 @@ export class CellClass {
          bottomLeft:  [-1,  1],
       };
 
-      // this.agentID       = undefined;
+      this.agentID       = undefined;
       this.agentCostList = {};
       this.neighborsList = {};
       
