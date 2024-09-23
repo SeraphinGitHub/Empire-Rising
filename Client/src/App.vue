@@ -2,7 +2,7 @@
 <template>
    <section class="flex" id="root">
 
-      <!-- <Coordinates/> -->
+      <Coordinates/>
       <CartCanvas/>
       <IsoCanvas/>
 
@@ -42,8 +42,8 @@
          socket: null,
          
          params: {
-            isGridHidden:  false,
-            isFrameHidden: false,
+            isGridHidden:  true,
+            isFrameHidden: true,
          }
       }},
 

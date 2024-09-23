@@ -33,14 +33,14 @@ export class GridClass {
    }
 
    init() {
-      let cellCount = 0;
+      let zIndex = 0;
 
       // Init grid
       for(let i = 0; i < this.cellPerSide; i++) {  // Collums
          for(let j = 0; j < this.cellPerSide; j++) {  // Rows
             
             const cell: CellClass = new CellClass(
-               cellCount,
+               zIndex,
                this.cellPerSide,
                this.cellSize,
                this.cellPerSide -i -1,
@@ -48,7 +48,7 @@ export class GridClass {
             );
             
             this.cellsList.set(cell.id, cell);
-            cellCount++;
+            zIndex++;
          }
       }
 
@@ -56,16 +56,13 @@ export class GridClass {
       this.cellsList.forEach((cell) => cell.setNeighborsList());
    }
 
-   setOccupiedMap(cell: CellClass) {
+   addToOccupiedMap(cell: CellClass) {
 
-      this.occupiedCells.add(cell);
-      let tempArray: CellClass[] = [];
+      let tempArray: CellClass[] = [...this.occupiedCells];
+      
+      tempArray.push(cell);
+      tempArray.sort((cell: any, nextCell: any) => cell.zIndex -nextCell.zIndex);
 
-      this.occupiedCells.forEach((cell: CellClass) => {
-         tempArray.push(cell);
-      });
-
-      tempArray.sort((a: any, b: any) => a.count -b.count);
       this.occupiedCells = new Set(tempArray);
    }
    

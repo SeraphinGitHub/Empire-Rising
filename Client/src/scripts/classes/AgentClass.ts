@@ -105,7 +105,7 @@ export class AgentClass {
       this.sprites = {
          height:  64,
          width:   64,
-         offsetY: 20,
+         offsetY: 25,
       };
    
       this.specialSprites = {
@@ -122,7 +122,7 @@ export class AgentClass {
 
       this.startCell.isVacant = false;
       this.startCell.agentID  = this.id;
-      glo.Grid!.setOccupiedMap(this.startCell);
+      glo.Grid!.addToOccupiedMap(this.startCell);
    }
 
    hasArrived(
@@ -374,7 +374,7 @@ export class AgentClass {
       this.currentCell.isVacant = false;
       this.startCell = this.path[1];
       
-      glo.Grid!.setOccupiedMap(this.currentCell);
+      glo.Grid!.addToOccupiedMap(this.currentCell);
    }
 
    searchVacancy(currentCell: CellClass) { // <== Tempory (Need Recast)

@@ -5,7 +5,6 @@ import {
    ISize,
    ISquare,
    IPosition,
-   IPositionList,
 } from "./utils/interfaces";
 
 import {
@@ -24,7 +23,7 @@ let isScrolling     = false;
 let isMouseScolling = false;
 
 const walls: string[] = [
-   
+   "9-21",
    // Top
    "21-6",
    "22-6",
@@ -213,7 +212,7 @@ const tiles: string[] = [
 //  ------  Tempory  ------
 let randPathIntervals: any = [];
 
-const setWallsList = () => {
+const setWallsList_Old = () => {
 
    let tempArray: any = [];
 
@@ -228,8 +227,22 @@ const setWallsList = () => {
       tempArray.push(cell);
    });
 
-   tempArray.sort((a: any, b: any) => a.count -b.count);
+   tempArray.sort((a: any, b: any) => a.zIndex -b.zIndex);
    glo.Grid!.blockedCells = new Set(tempArray);
+}
+
+const setWallsList = () => {
+
+   walls.forEach((cellID) => {
+      const cell:     CellClass = glo.Grid!.cellsList.get(cellID)!;
+      const { x, y }: IPosition = gridPos_toScreenPos(cell.center);
+      
+      cell.isBlocked   = true;
+      cell.screenPos.x = x;
+      cell.screenPos.y = y;
+
+      glo.Grid!.addToOccupiedMap(cell);
+   });
 }
 //  ------  Tempory  ------
 
@@ -700,7 +713,7 @@ const setComputed = () => {
       cell.screenPos.y = cellPos.y;
    });
 
-   drawBuildings();
+   // drawBuildings();
 }
 
 const scrollCam = () => {
@@ -865,7 +878,7 @@ const drawTerrain = () => {
 }
 
 const drawUnits = (frame: number) => {
-   const { units, isoSelect } = glo.Ctx;
+   const { units, buildings, isoSelect } = glo.Ctx;
 
    glo.Grid!.occupiedCells.forEach((cell: CellClass) => {
       const agent    = glo.AgentsList.get(cell.agentID!)!;
@@ -934,6 +947,75 @@ const drawBuildings = () => {
          destSize +10,
          destSize,
       );
+   });
+}
+
+const draw_UnitsAndBuild = (frame: number) => {
+
+   const { units, isoSelect } = glo.Ctx;
+
+   glo.Grid!.occupiedCells.forEach((cell: CellClass) => {
+
+      if(cell.agentID) {
+         const agent    = glo.AgentsList.get(cell.agentID!)!;
+         const agentPos = gridPos_toScreenPos(agent.position);
+   
+         agent.updateState(frame);
+         agent.walkPath();
+      
+         if(!isWithinViewport(agentPos)) return;
+      
+         agent.drawSprite(units, agentPos, glo.Scroll);
+         // agent.drawCollider(units, agentPos, glo.Scroll);
+         agent.drawPath(isoSelect);
+      }
+
+      if(cell.isBlocked) {
+         const srcSize  = 280;
+         const destSize = 90;
+         const offsetX  = 48;
+         const offsetY  = 75;
+
+         if(cell.isTransp) {
+            units.save();
+            units.globalAlpha = 0.5;
+      
+            units.drawImage(
+               glo.walls_Img,
+      
+               // Source
+               0,
+               0,
+               srcSize,
+               srcSize,
+               
+               // Destination
+               cell.screenPos.x -offsetX + glo.Scroll.x,
+               cell.screenPos.y -offsetY + glo.Scroll.y,
+               destSize +10,
+               destSize,
+            );
+            
+            units.restore();
+            return;
+         }
+      
+         units.drawImage(
+            glo.walls_Img,
+
+            // Source
+            0,
+            0,
+            srcSize,
+            srcSize,
+            
+            // Destination
+            cell.screenPos.x -offsetX +glo.Scroll.x,
+            cell.screenPos.y -offsetY +glo.Scroll.y,
+            destSize +10,
+            destSize,
+         );
+      }
    });
 }
 
@@ -1052,18 +1134,27 @@ const runAnimation = () => {
 
    frame++;
 
+   // clearCanvas("assets");
+   // clearCanvas("gameObjects");
+   // clearCanvas("worldItems");
+
    clearCanvas("isoSelect");
+   clearCanvas("buildings");
    clearCanvas("units");
    
    scrollCam();
    
    drawScrollBounds();
-   drawUnits(frame);
+
+   // drawUnits(frame);
+   // drawBuildings();
+   draw_UnitsAndBuild(frame);
+
    drawHoverUnit();
    drawSelectUnit();
    drawGrid();
    drawHoverCell();
-   
+
    requestAnimationFrame(runAnimation);
 }
 
@@ -1163,13 +1254,14 @@ export const GameHandler = {
 
       setTimeout(() => {
          drawTerrain();
-         drawBuildings();
+         // drawBuildings();
       }, 0);
 
       createNewAgent("infantry", "swordsman", "6-16",  "");
-      createNewAgent("infantry", "swordsman", "10-16", "");
       createNewAgent("infantry", "swordsman", "9-20",  "");
-      createNewAgent("infantry", "swordsman", "10-27", "");
+      createNewAgent("infantry", "swordsman", "9-22",  "");
+      createNewAgent("infantry", "swordsman", "9-24",  "");
+      createNewAgent("infantry", "swordsman", "13-24", "");
       createNewAgent("infantry", "swordsman", "24-14", "");
 
       // createNewAgent("infantry",  "worker",    "5-3", "");

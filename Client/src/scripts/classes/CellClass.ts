@@ -18,7 +18,7 @@ export class CellClass {
    
    id:             string;
    
-   count:          number;
+   zIndex:         number;
    cellPerSide:    number;
    size:           number;
    i:              number;
@@ -44,7 +44,7 @@ export class CellClass {
    // ----------- Tempory -----------
 
    constructor(
-      count:       number,
+      zIndex:      number,
       cellPerSide: number,
       size:        number,
       i:           number,
@@ -53,7 +53,7 @@ export class CellClass {
       
       this.id          = `${i}-${j}`;
       
-      this.count       = count;
+      this.zIndex      = zIndex;
       this.cellPerSide = cellPerSide;
       this.size        = size;
       this.i           = i;
