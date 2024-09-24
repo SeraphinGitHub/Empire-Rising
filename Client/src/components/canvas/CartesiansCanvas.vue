@@ -6,8 +6,7 @@
          <canvas ref="terrain" class="canvas-terrain"/>
       </div>
 
-      <canvas ref="buildings" class="cnvs canvas-buildings"/>
-      <canvas ref="units"     class="cnvs canvas-units"    />
+      <canvas ref="assets"    class="cnvs canvas-assets"   />
       <canvas ref="selection" class="cnvs canvas-selection"/>
 
    </section>
@@ -24,8 +23,7 @@
       return {
          allCanvas: [
             "terrain",
-            "buildings",
-            "units",
+            "assets",
             "selection",
          ],
       }},

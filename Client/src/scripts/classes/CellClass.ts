@@ -2,11 +2,11 @@
 "use strict"
 
 import {
-   IString,
    IPosition,
    IPositionList,
-   INumberList,
-   IAgentCost,
+   ICost,
+   ICoordArray,
+   INebList,
 } from "../utils/interfaces";
 
 import { glo } from "../utils/_GlobalVar";
@@ -29,11 +29,10 @@ export class CellClass {
    center:         IPosition;
    screenPos:      IPosition;
    collider:       IPositionList;
-   nebSideList:    INumberList;
+   nebCoordList:   ICoordArray;
 
    agentID:        number | undefined;
-   agentCostList:  IAgentCost;
-   neighborsList:  IString;
+   neighborsList:  INebList;
    
    isBlocked:      boolean;
    isVacant:       boolean;
@@ -94,20 +93,18 @@ export class CellClass {
          },
       }
 
-      this.nebSideList = {
-         top:         [ 0, -1],
-         right:       [ 1,  0],
-         bottom:      [ 0,  1],
-         left:        [-1,  0],
-
-         topLeft:     [-1, -1],
-         topRight:    [ 1, -1],
-         bottomRight: [ 1,  1],
-         bottomLeft:  [-1,  1],
+      this.nebCoordList = {
+         top:         [ 0, -1,  false], // isDiagonal ==> false
+         topRight:    [ 1, -1,  true ], // isDiagonal ==> true
+         right:       [ 1,  0,  false],
+         bottomRight: [ 1,  1,  true ],
+         bottom:      [ 0,  1,  false],
+         bottomLeft:  [-1,  1,  true ],
+         left:        [-1,  0,  false],
+         topLeft:     [-1, -1,  true ],
       };
 
       this.agentID       = undefined;
-      this.agentCostList = {};
       this.neighborsList = {};
       
       this.isBlocked     = false;
@@ -122,9 +119,11 @@ export class CellClass {
    // Set Neighbors List
    setNeighborsList() {
 
-      Object.entries(this.nebSideList).forEach(([sideName, sideArray]: [string, number[]]) => {
-         this.checkExistNeb(sideName, sideArray);
-      });
+      for(const nebName in this.nebCoordList) {
+         const nebArray = this.nebCoordList[nebName];
+
+         this.checkExistNeb(nebName, nebArray);
+      }
    }
 
    getNeighbors(
@@ -132,20 +131,22 @@ export class CellClass {
    ): any {
       
       const neighbors: any = {};
+      
+      for(const nebName in this.neighborsList) {
+         const nebData = this.neighborsList[nebName];
 
-      for(const [key, value] of Object.entries(this.neighborsList)) {
-         neighbors[key] = cellsList.get(value);
+         neighbors[nebName] = cellsList.get(nebData.id);
       }
 
       return neighbors;
    }
    
    checkExistNeb(
-      sideName:  string,
-      sideArray: number[],
+      nebName:  string,
+      nebArray: [number, number, boolean],
    ) {
    
-      const [horizSide, vertSide] = sideArray;
+      const [horizSide, vertSide] = nebArray;
       const [horizNeb,  vertNeb ] = [this.i +horizSide, this.j +vertSide];
    
       if(horizNeb >= 0
@@ -153,20 +154,24 @@ export class CellClass {
       && horizNeb < this.cellPerSide
       && vertNeb  < this.cellPerSide) {
 
-         this.addNeb(sideName);
+         this.addNeb(nebName);
       }
    }
    
    addNeb(side: string) {
 
-      const nebID: IString = {};
+      const neighbor: any = {};
 
-      Object.entries(this.nebSideList).forEach(([sideName, sideArray]: [string, number[]]) => {
+      for(const nebName in this.nebCoordList) {
+         const nebArray = this.nebCoordList[nebName];
 
-         nebID[sideName] = `${this.i +sideArray[0]}-${this.j +sideArray[1]}`;
-      });
+         neighbor[nebName] = {
+            id:         `${this.i +nebArray[0]}-${this.j +nebArray[1]}`,
+            isDiagonal: nebArray[2],
+         };
+      }
    
-      this.neighborsList[side] = nebID[side];
+      this.neighborsList[side] = neighbor[side];
    }
 
    isBlockedDiag(
@@ -185,14 +190,13 @@ export class CellClass {
          left, 
       } = this.getNeighbors(cellsList);
 
-      const isBlocked = {
-         topLeft:     () => top    && left  && top    .isBlocked && left  .isBlocked && neighbor === topLeft,
-         topRight:    () => top    && right && top    .isBlocked && right .isBlocked && neighbor === topRight,
-         bottomLeft:  () => bottom && left  && bottom .isBlocked && left  .isBlocked && neighbor === bottomLeft,
-         bottomRight: () => bottom && right && bottom .isBlocked && right .isBlocked && neighbor === bottomRight,
-      }
+      const isBlocked_TopLeft     = top    && left  && top    .isBlocked && left  .isBlocked && neighbor.id === topLeft    .id;
+      const isBlocked_TopRight    = top    && right && top    .isBlocked && right .isBlocked && neighbor.id === topRight   .id;
+      const isBlocked_BottomLeft  = bottom && left  && bottom .isBlocked && left  .isBlocked && neighbor.id === bottomLeft .id;
+      const isBlocked_BottomRight = bottom && right && bottom .isBlocked && right .isBlocked && neighbor.id === bottomRight.id;
       
-      return isBlocked.topLeft() || isBlocked.topRight() || isBlocked.bottomLeft() || isBlocked.bottomRight();
+      return isBlocked_TopLeft || isBlocked_TopRight || isBlocked_BottomLeft || isBlocked_BottomRight;
+   
    }
 
    setTransparency(cellsList: Map<string, CellClass>) {
@@ -243,6 +247,7 @@ export class CellClass {
    drawFrame(ctx: CanvasRenderingContext2D) {
 
       ctx.strokeStyle = "black";
+      // ctx.strokeStyle = "white";
       ctx.lineWidth = 1;
    
       ctx.strokeRect(
@@ -256,7 +261,7 @@ export class CellClass {
    drawID(ctx: CanvasRenderingContext2D) {
 
       ctx.fillStyle = "black";
-      ctx.font = "16px Verdana";
+      ctx.font      = "16px Verdana";
       ctx.textAlign = "center";
 
       ctx.fillText(
@@ -264,6 +269,37 @@ export class CellClass {
          this.center.x,
          this.center.y
       );
+   }
+
+   drawData(ctx: CanvasRenderingContext2D, costData: ICost) {
+
+      ctx.fillStyle = "white";
+      ctx.font      = "18px Verdana";
+      ctx.textAlign = "left";
+
+      const { hCost, gCost, fCost } = costData;
+      const offsetX = 27;
+
+      // hCost
+      ctx.fillText(
+         `h: ${hCost}`,
+         this.center.x -offsetX,
+         this.center.y -12
+      );
+
+      // gCost
+      ctx.fillText(
+         `g: ${gCost}`,
+         this.center.x -offsetX,
+         this.center.y +5
+      );
+
+      // fCost
+      ctx.fillText(
+         `f: ${fCost}`,
+         this.center.x -offsetX,
+         this.center.y +27
+      );      
    }
 
    drawWallCollider(ctx: CanvasRenderingContext2D) {
@@ -281,7 +317,7 @@ export class CellClass {
       ctx.fill();
    }
 
-   drawPathWall(ctx: CanvasRenderingContext2D, hoverCell: CellClass) {
+   drawPath_WallLine(ctx: CanvasRenderingContext2D, hoverCell: CellClass) {
 
       ctx.strokeStyle = "yellow";
       ctx.beginPath();

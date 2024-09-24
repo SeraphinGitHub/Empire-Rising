@@ -212,25 +212,6 @@ const tiles: string[] = [
 //  ------  Tempory  ------
 let randPathIntervals: any = [];
 
-const setWallsList_Old = () => {
-
-   let tempArray: any = [];
-
-   walls.forEach((cellID) => {
-      const cell:     CellClass = glo.Grid!.cellsList.get(cellID)!;
-      const { x, y }: IPosition = gridPos_toScreenPos(cell.center);
-      
-      cell.isBlocked   = true;
-      cell.screenPos.x = x;
-      cell.screenPos.y = y;
-      
-      tempArray.push(cell);
-   });
-
-   tempArray.sort((a: any, b: any) => a.zIndex -b.zIndex);
-   glo.Grid!.blockedCells = new Set(tempArray);
-}
-
 const setWallsList = () => {
 
    walls.forEach((cellID) => {
@@ -507,18 +488,19 @@ const createNewAgent = (
    diffImgSrc:   string,
 ) => {
 
-   const unitParameters: any = unitParams;
+   const unitParameters: any  = unitParams;
 
-   const avID:     number = glo.AvailableIDArray[0];
-   const division: any    = unitParameters[divisionName];
-   const unitType: any    = division.unitType[typeName];
+   const avID:      number    = glo.AvailableIDArray[0];
+   const division:  any       = unitParameters[divisionName];
+   const unitType:  any       = division.unitType[typeName];
+   const startCell: CellClass = glo.Grid!.cellsList.get(cellID)!;
    
    let imgSrc     = unitType.imgSrc;
    if(diffImgSrc !== "") imgSrc = diffImgSrc;
 
    glo.CurrentPop += division.popCost;
    glo.AvailableIDArray.splice(0, division.popCost);
-   
+
    const agentParams = {
       id:          avID,
       unitType,
@@ -526,19 +508,10 @@ const createNewAgent = (
       moveSpeed:   unitType.moveSpeed,
       popCost:     division.popCost,
       collider:    division.collider,
-      startCell:   glo.Grid!.cellsList.get(cellID), // <== Tempory until create JS file "BuildingsClass"
+      startCell,   // <== Tempory until create JS file "BuildingsClass"
    };
-
-   glo.Grid!.cellsList.forEach((cell: CellClass) => {
-      cell.agentCostList[avID] = {
-         hCost: 0,
-         gCost: 0,
-         fCost: 0,
-         cameFromCell: undefined,
-      }
-   });
    
-   glo.AgentsList.set(avID,  new AgentClass(agentParams));
+   glo.AgentsList.set(avID, new AgentClass(agentParams));
 }
 
 const updateUnitsList = (
@@ -703,17 +676,6 @@ const setComputed = () => {
    glo.TerrainComputed!.e = glo.Scroll.x;
    glo.TerrainComputed!.f = glo.Scroll.y;
    glo.Canvas.terrain.style.transform   = glo.TerrainComputed!.toString();
-
-   glo.Grid!.cellsList.forEach((cell: CellClass) => {
-      const cellPos = gridPos_toScreenPos(cell.center);
-      
-      if(!isWithinViewport(cellPos)) return;
-         
-      cell.screenPos.x = cellPos.x;
-      cell.screenPos.y = cellPos.y;
-   });
-
-   // drawBuildings();
 }
 
 const scrollCam = () => {
@@ -771,8 +733,8 @@ const drawScrollBounds = () => {
 
       const { x, y, width, height }: ISquare = scrollBounds[i];
 
-      glo.Ctx.units.fillStyle = "rgba(255, 0, 255, 0.5)";
-      glo.Ctx.units.fillRect(
+      glo.Ctx.assets.fillStyle = "rgba(255, 0, 255, 0.5)";
+      glo.Ctx.assets.fillRect(
          x,
          y,
          width,
@@ -856,10 +818,14 @@ const drawGrid = () => {
    if(glo.Params.isGridHidden) return;
 
    const { isoSelect } = glo.Ctx;
-
+   
    glo.Grid!.cellsList.forEach((cell: CellClass) => {
-      if(!isWithinViewport(cell.screenPos)) return;
+      const cellPos = gridPos_toScreenPos(cell.center);
+      
+      if(!isWithinViewport(cellPos)) return;
          
+      cell.screenPos.x = cellPos.x;
+      cell.screenPos.y = cellPos.y;
       cell.drawInfos(isoSelect);
    });
 }
@@ -877,82 +843,9 @@ const drawTerrain = () => {
    });   
 }
 
-const drawUnits = (frame: number) => {
-   const { units, buildings, isoSelect } = glo.Ctx;
-
-   glo.Grid!.occupiedCells.forEach((cell: CellClass) => {
-      const agent    = glo.AgentsList.get(cell.agentID!)!;
-      const agentPos = gridPos_toScreenPos(agent.position);
-
-      agent.updateState(frame);
-      agent.walkPath();
-   
-      if(!isWithinViewport(agentPos)) return;
-   
-      agent.drawSprite(units, agentPos, glo.Scroll);
-      // agent.drawCollider(units, agentPos, glo.Scroll);
-      agent.drawPath(isoSelect);
-   });
-}
-
-const drawBuildings = () => {
-
-   clearCanvas("buildings");
-   
-   const ctx = glo.Ctx.buildings;
-
-   glo.Grid!.blockedCells.forEach((cell: CellClass) => {
-
-      const srcSize  = 280;
-      const destSize = 90;
-      const offsetX  = 48;
-      const offsetY  = 75;
-
-      if(cell.isTransp) {
-         ctx.save();
-         ctx.globalAlpha = 0.5;
-   
-         ctx.drawImage(
-            glo.walls_Img,
-   
-            // Source
-            0,
-            0,
-            srcSize,
-            srcSize,
-            
-            // Destination
-            cell.screenPos.x -offsetX + glo.Scroll.x,
-            cell.screenPos.y -offsetY + glo.Scroll.y,
-            destSize +10,
-            destSize,
-         );
-         
-         ctx.restore();
-         return;
-      }
-   
-      ctx.drawImage(
-         glo.walls_Img,
-
-         // Source
-         0,
-         0,
-         srcSize,
-         srcSize,
-         
-         // Destination
-         cell.screenPos.x -offsetX +glo.Scroll.x,
-         cell.screenPos.y -offsetY +glo.Scroll.y,
-         destSize +10,
-         destSize,
-      );
-   });
-}
-
 const draw_UnitsAndBuild = (frame: number) => {
 
-   const { units, isoSelect } = glo.Ctx;
+   const { assets, isoSelect } = glo.Ctx;
 
    glo.Grid!.occupiedCells.forEach((cell: CellClass) => {
 
@@ -965,7 +858,7 @@ const draw_UnitsAndBuild = (frame: number) => {
       
          if(!isWithinViewport(agentPos)) return;
       
-         agent.drawSprite(units, agentPos, glo.Scroll);
+         agent.drawSprite(assets, agentPos, glo.Scroll);
          // agent.drawCollider(units, agentPos, glo.Scroll);
          agent.drawPath(isoSelect);
       }
@@ -977,10 +870,10 @@ const draw_UnitsAndBuild = (frame: number) => {
          const offsetY  = 75;
 
          if(cell.isTransp) {
-            units.save();
-            units.globalAlpha = 0.5;
+            assets.save();
+            assets.globalAlpha = 0.5;
       
-            units.drawImage(
+            assets.drawImage(
                glo.walls_Img,
       
                // Source
@@ -996,11 +889,11 @@ const draw_UnitsAndBuild = (frame: number) => {
                destSize,
             );
             
-            units.restore();
+            assets.restore();
             return;
          }
       
-         units.drawImage(
+         assets.drawImage(
             glo.walls_Img,
 
             // Source
@@ -1134,22 +1027,13 @@ const runAnimation = () => {
 
    frame++;
 
-   // clearCanvas("assets");
-   // clearCanvas("gameObjects");
-   // clearCanvas("worldItems");
-
    clearCanvas("isoSelect");
-   clearCanvas("buildings");
-   clearCanvas("units");
+   clearCanvas("assets");
    
    scrollCam();
    
    drawScrollBounds();
-
-   // drawUnits(frame);
-   // drawBuildings();
    draw_UnitsAndBuild(frame);
-
    drawHoverUnit();
    drawSelectUnit();
    drawGrid();
@@ -1251,10 +1135,9 @@ export const GameHandler = {
       // --- Tempory ---
       setWallsList();
       tiles.forEach(ID => glo.Grid!.cellsList.get(ID)!.isDiffTile = true);
-
+      
       setTimeout(() => {
          drawTerrain();
-         // drawBuildings();
       }, 0);
 
       createNewAgent("infantry", "swordsman", "6-16",  "");
@@ -1263,7 +1146,7 @@ export const GameHandler = {
       createNewAgent("infantry", "swordsman", "9-24",  "");
       createNewAgent("infantry", "swordsman", "13-24", "");
       createNewAgent("infantry", "swordsman", "24-14", "");
-
+      
       // createNewAgent("infantry",  "worker",    "5-3", "");
       // createNewAgent("cavalry",   "swordsman", "9-2", "");
       // createNewAgent("cavalry",   "bowman",    "2-6", "");

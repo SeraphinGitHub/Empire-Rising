@@ -1,6 +1,5 @@
 
 import {
-   AgentClass,
    CellClass,
 } from "../classes/_Export";
 
@@ -24,8 +23,15 @@ export interface IPositionList {
    [key: string]: IPosition,
 }
 
-export interface INumberList {
-   [key: string]: number[],
+export interface ICoordArray {
+   [key: string]: [number, number, boolean],
+}
+
+export interface INebList {
+   [key: string]: {
+      id:         string,
+      isDiagonal: boolean,
+   },
 }
 
 export interface ICanvas {
@@ -69,11 +75,9 @@ export interface ILine {
    endY:   number;
 }
 
-export interface IAgentCost {
-   [key: number]: {
-      hCost:        number,
-      gCost:        number,
-      fCost:        number,
-      cameFromCell: CellClass | undefined,
-   }
+export interface ICost {
+   hCost:        number,
+   gCost:        number,
+   fCost:        number,
+   cameFromCell: CellClass | undefined,
 }

@@ -25,6 +25,8 @@ export const glo = reactive({
    GridParams: {
       cellSize:  40,
       gridSize:  1600,
+      // cellSize:  80,
+      // gridSize:  800,
    },
 
    SelectArea: {

@@ -42,7 +42,7 @@
          socket: null,
          
          params: {
-            isGridHidden:  true,
+            isGridHidden:  false,
             isFrameHidden: true,
          }
       }},

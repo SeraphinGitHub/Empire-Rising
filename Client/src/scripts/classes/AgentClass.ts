@@ -2,6 +2,7 @@
 import {
    INumber,
    IPosition,
+   ICost,
 } from "../utils/interfaces";
 
 import {
@@ -14,6 +15,10 @@ import { glo } from "../utils/_GlobalVar";
 // Agent Class
 // =====================================================================
 export class AgentClass {
+
+   updateSet:      Set<any>;
+   skipSet:        Set<any>;
+
 
    id:             number;
    unitType:       string;
@@ -30,6 +35,8 @@ export class AgentClass {
    goalCell:       CellClass | undefined;
    openSet:        Set<CellClass>;
    closedSet:      Set<CellClass>;
+   costMap:        Map<string, ICost>;
+   emptyCost:      ICost;
    path:           CellClass[];
 
    img:            HTMLImageElement | undefined;
@@ -44,10 +51,13 @@ export class AgentClass {
 
    animSpecs:      any;
    sprites:        INumber;
-   specialSprites: INumber; 
+   specialSprites: INumber;
 
    constructor(params: any) {
       
+      this.updateSet     = new Set();
+      this.skipSet       = new Set();
+
       this.id         = params.id;
       this.unitType   = params.unitType;
       this.imgSrc     = params.imgSrc;
@@ -64,6 +74,14 @@ export class AgentClass {
       // Pathfinding
       this.startCell   = params.startCell;
       this.currentCell = params.startCell;
+      this.costMap     = new Map();
+      this.emptyCost   = {
+         hCost: 0,
+         gCost: 0,
+         fCost: 0,
+         cameFromCell: undefined,
+      }
+
       this.nextCell    = undefined;
       this.goalCell    = undefined;
       this.openSet     = new Set();
@@ -166,7 +184,8 @@ export class AgentClass {
    // Pathfinder
    searchPath() {
 
-      const ownID = this.id;
+      this.costMap.clear();
+      this.costMap.set(this.startCell.id, this.emptyCost);
 
       this.openSet   = new Set([this.startCell]);
       this.closedSet = new Set();
@@ -174,15 +193,14 @@ export class AgentClass {
 
       while(this.openSet.size > 0) {
 
-         const presentCell = this.lowerFCostCell(ownID)!;
+         const presentCell = this.lowestFCostCell()!;
 
-         this.scanNeighbors(presentCell, ownID);
+         this.scanNeighbors(presentCell);
 
          // If reached destination
-         if(presentCell!.id === this.goalCell!.id) {
+         if(presentCell.id === this.goalCell!.id) {
             
-            this.foundPath(presentCell, ownID);
-            this.resetNeighbors(ownID);
+            this.foundPath(presentCell);
             this.isMoving = true;
             return;
          }
@@ -191,56 +209,63 @@ export class AgentClass {
       this.isMoving = false;
    }
 
-   lowerFCostCell(ownID: number) {
+   lowestFCostCell(): CellClass | null {
 
       // Bring up lowest fCost cell
-      let presentCell = null;
-      let lowestFCost = Infinity;
+      let lowestFCost: number           = Infinity;
+      let presentCell: CellClass | null = null;
 
-      for(let cell of this.openSet) {
-         const cellData = cell.agentCostList[ownID];
+      this.openSet.forEach((cell: CellClass) => {
+         const cellData: ICost = this.costMap.get(cell.id)!;
          
-         if(cellData.fCost < lowestFCost) {
+         if(cellData.fCost  <  lowestFCost
+         || cellData.fCost === lowestFCost
+         && cellData.hCost  <  this.costMap.get(presentCell!.id)!.hCost) {
+
             lowestFCost = cellData.fCost;
             presentCell = cell;
          }
-      }
+      });
 
       return presentCell;
    }
 
-   scanNeighbors(
-      presentCell: CellClass,
-      ownID:       number,
-   ) {
+   scanNeighbors(presentCell: CellClass) {
 
-      let nebID_List = presentCell.neighborsList;
+      const nebList   = presentCell.neighborsList;
       const cellsList = glo.Grid!.cellsList;
-
-      for(let i in nebID_List) {
-         let neighbor = cellsList.get(nebID_List[i])!;
+      
+      // Cycle all neighbors if exists
+      for(const sideName in nebList) {
+         const { id: nebID, isDiagonal } = nebList[sideName];
+         const neighbor: CellClass       = cellsList.get(nebID)!;
 
          // If this neighbor hasn't been scanned yet
          if(!this.closedSet.has(neighbor)
          && !neighbor.isBlocked
-         && neighbor.isVacant) {
+         &&  neighbor.isVacant) {
+            
+            const gValue:      number = isDiagonal ? 1.5 : 1;
+            const new_gCost:   number = (this.costMap.get(presentCell.id)!.gCost +gValue) *2;
+            const nebCostData: ICost | undefined = this.costMap.get(nebID);
+            
+            // If neighbor already valid && worse gCost || blockedDiag ==> skip this neb
+            if((this.openSet.has(neighbor) && nebCostData && new_gCost > nebCostData.gCost)
+            || presentCell.isBlockedDiag(cellsList, neighbor)) {
 
-            let possibleG = presentCell.agentCostList[ownID].gCost +1;
-            let nebData   = neighbor.agentCostList[ownID];
-   
-            if(!this.openSet.has(neighbor)
-            && !presentCell.isBlockedDiag(cellsList, neighbor)) {
-               
-               this.openSet.add(neighbor);
+               continue;
             }
-            else if(possibleG >= nebData.gCost) continue;
 
-            nebData.hCost = this.calcHeuristic(neighbor);
-            nebData.gCost = possibleG;
-            nebData.fCost = nebData.gCost +nebData.hCost;
-            nebData.cameFromCell = presentCell;
+            this.openSet.add(neighbor);
 
-            neighbor.agentCostList[ownID] = nebData;
+            const hCost = this.calcHeuristic(neighbor);
+
+            this.costMap.set(nebID, {
+               hCost,
+               gCost:        new_gCost,
+               fCost:        hCost +new_gCost,
+               cameFromCell: presentCell,
+            });
          }
       }
 
@@ -248,38 +273,21 @@ export class AgentClass {
       this.closedSet.add(presentCell);
    }
 
-   foundPath(
-      presentCell: CellClass,
-      ownID:       number,
-   ) {
+   foundPath(presentCell: CellClass) {
             
       this.path.push(presentCell);
-      let cameFromCell = presentCell.agentCostList[ownID].cameFromCell;
+      let cameFromCell = this.costMap.get(presentCell.id)!.cameFromCell;
       
       // Set found path
       while(cameFromCell) {
 
          this.path.push(cameFromCell);
-         cameFromCell = cameFromCell.agentCostList[ownID].cameFromCell;
+         cameFromCell = this.costMap.get(cameFromCell.id)!.cameFromCell;
       }
 
       this.path.reverse();
       this.nextCell  = this.path[0];
       this.animState = 1;
-   }
-
-   resetNeighbors(ownID: number) {
-
-      this.closedSet.forEach(cell => {
-         let cellData = cell.agentCostList[ownID];
-
-         cellData.hCost = 0;
-         cellData.gCost = 0;
-         cellData.fCost = 0;
-         cellData.cameFromCell = undefined;
-
-         cell.agentCostList[ownID] = cellData;
-      });
    }
 
 
@@ -304,7 +312,7 @@ export class AgentClass {
          this.animState = 0;
          this.frameY    = this.lastFrameY;
          
-         this.searchVacancy(this.currentCell);
+         // this.searchVacancy(this.currentCell);
       }
    }
 
@@ -381,15 +389,17 @@ export class AgentClass {
 
       if(currentCell.isVacant || currentCell.agentID === this.id) return;
 
-      let nebID_List = currentCell.neighborsList;
+      const nebList  = currentCell.neighborsList;
       let vacantPath = [];
 
-      for(let i in nebID_List) {
-         let neighbor = glo.Grid!.cellsList.get(nebID_List[i])!;
+      for(const sideName in nebList) {
+         const nebID:    string    = nebList[sideName].id;
+         const neighbor: CellClass = glo.Grid!.cellsList.get(nebID)!;
+         
          vacantPath.push(neighbor);
       }
-
-      vacantPath.sort((neb) => neb.agentCostList[this.id].fCost);
+      
+      vacantPath.sort((neb: CellClass) => this.costMap.get(neb.id)!.fCost);
 
       while(vacantPath.length > 0) {
       
@@ -397,7 +407,6 @@ export class AgentClass {
          this.searchPath();
          vacantPath.shift();
       }
-      
    }
 
 
@@ -407,22 +416,28 @@ export class AgentClass {
       if(glo.Params.isGridHidden) return;
       if(this.path.length <= 0  ) return;
 
-      // Display scanned neighbors   
-      this.closedSet.forEach(cell => {
-         cell.drawColor(ctx, "rgba(255, 145, 0, 0.6)");
-      });
-
       // Display path
       for(let i = 0; i < this.path.length; i++) {
-
-         let currentCell = this.path[i];
-         this.drawWalkPath(ctx, i, currentCell);
+         const currentCell = this.path[i];
          
          if(i +1 < this.path.length) {
-            let nextCell = this.path[i +1];
+            const nextCell = this.path[i +1];
             this.drawPathLine(ctx, currentCell, nextCell);
          }
       }
+
+      // this.drawScanNebs(ctx);
+   }
+
+   drawScanNebs(ctx: CanvasRenderingContext2D) {
+      
+      // Display scanned neighbors   
+      this.closedSet.forEach(cell => {
+         cell.drawColor(ctx, "rgba(255, 145, 0, 0.6)");
+         
+         // const costData = this.costMap.get(cell.id)!;
+         // cell.drawData (ctx, costData);
+      });
    }
 
    drawPathLine(
@@ -441,37 +456,14 @@ export class AgentClass {
          nextCell.center.x,
          nextCell.center.y
       );
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 6;
       ctx.stroke();
    }
 
-   drawWalkPath(
-      ctx:         CanvasRenderingContext2D,
-      i:           number,
-      currentCell: CellClass,
-   ) {
-      
-      let ratio = 0.7; // 70%
-      
-      setTimeout(() => {
-         
-         ctx.fillStyle = "blue";
-         ctx.fillRect(
-            currentCell.center.x -currentCell.size /2 *ratio,
-            currentCell.center.y -currentCell.size /2 *ratio,
-            currentCell.size *ratio,
-            currentCell.size *ratio
-         );
-
-         currentCell.drawInfos(ctx);         
-
-      }, 100 *i);
-   }
-
    drawCollider(
-      ctx:          CanvasRenderingContext2D,
-      gridPos:      IPosition,
-      scroll: IPosition,
+      ctx:     CanvasRenderingContext2D,
+      gridPos: IPosition,
+      scroll:  IPosition,
    ) {
 
       ctx.fillStyle = "lime";
@@ -486,9 +478,9 @@ export class AgentClass {
    }
 
    drawSprite(
-      ctx:          CanvasRenderingContext2D,
-      position:     IPosition,
-      scroll: IPosition,
+      ctx:      CanvasRenderingContext2D,
+      position: IPosition,
+      scroll:   IPosition,
    ) {
       
       let spritesWidth  = this.sprites.width;
