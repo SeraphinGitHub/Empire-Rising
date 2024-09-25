@@ -23,9 +23,7 @@ let isScrolling     = false;
 let isMouseScolling = false;
 
 const walls: string[] = [
-
    "9-21",
-
    // Top
    "21-6",
    "22-6",
@@ -87,72 +85,6 @@ const walls: string[] = [
    "18-24",
    "19-23",
    "20-22",
-
-
-
-
-
-   // Top
-   "41-6",
-   "42-6",
-   "43-6",
-   
-   "44-7",
-   "45-8",
-   "46-9",
-   "47-10",
-   "47-11",
-   "47-12",
-
-   // Middle
-   "42-12",
-   "43-12",
-   "44-12",
-   "45-12",
-   "46-12",
-   "47-12",
-   "48-12",
-   "49-12",
-   "40-12",
-
-   "40-13",
-   "40-14",
-   "40-15",
-   "40-16",
-   "40-17",
-   "40-18",
-
-   "41-18",
-   "42-18",
-   "43-18",
-   "44-18",
-   "45-18",
-
-   // Bottom
-   "43-23",
-   "42-23",
-   "41-23",
-   "40-23",
-   "9-43",
-
-   "44-13",
-   "44-14",
-   "14-48",
-   "44-19",
-   "14-40",
-   "44-21",
-   "14-42",
-   "44-23",
-   "14-44",
-   "44-25",
-   "14-46",
-
-   "15-47",
-   "16-46",
-   "47-25",
-   "48-24",
-   "19-43",
-   "20-42",
 ];
 
 const tiles: string[] = [
@@ -915,20 +847,24 @@ const draw_UnitsAndBuild = (frame: number) => {
 
    const { assets, isoSelect } = glo.Ctx;
 
-   glo.Grid!.occupiedCells.forEach((cell: CellClass) => {
+   for(const cell of glo.Grid!.occupiedCells) {
+         
+      if(cell.agentIDset.size > 0) {
+         
+         for(const agentID of cell.agentIDset) {
 
-      if(cell.agentID) {
-         const agent    = glo.AgentsList.get(cell.agentID!)!;
-         const agentPos = gridPos_toScreenPos(agent.position);
-   
-         agent.updateState(frame);
-         agent.walkPath();
+            const agent    = glo.AgentsList.get(agentID)!;
+            const agentPos = gridPos_toScreenPos(agent.position);
       
-         if(!isWithinViewport(agentPos)) return;
-      
-         agent.drawSprite(assets, agentPos, glo.Scroll);
-         // agent.drawCollider(units, agentPos, glo.Scroll);
-         agent.drawPath(isoSelect);
+            agent.updateState(frame);
+            agent.walkPath();
+         
+            if(!isWithinViewport(agentPos)) continue;
+         
+            agent.drawSprite(assets, agentPos, glo.Scroll);
+            // agent.drawCollider(units, agentPos, glo.Scroll);
+            agent.drawPath(isoSelect);
+         }
       }
 
       if(cell.isBlocked) {
@@ -977,7 +913,7 @@ const draw_UnitsAndBuild = (frame: number) => {
             destSize,
          );
       }
-   });
+   }
 }
 
 

@@ -31,8 +31,8 @@ export class CellClass {
    cellPerSide: number;
 
    // Collider and neighbors
-   agentID:        number | undefined;
    collider:       IPositionList;
+   agentIDset:     Set<number> = new Set();
    neighborsList:  INebList    = {};
    nebCoordList:   ICoordArray = {
       top:         [ 0, -1,  false], // isDiagonal ==> false

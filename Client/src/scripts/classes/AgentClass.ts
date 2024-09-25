@@ -17,7 +17,11 @@ import { glo } from "../utils/_GlobalVar";
 // =====================================================================
 export class AgentClass {
 
-   startDate:  number = 0;
+   // ----- Debug -----
+   startDate_1:  number = 0;
+   startDate_2:  number = 0;
+   // ----- Debug -----
+
 
    // Basic Information
    id:          number;
@@ -37,7 +41,6 @@ export class AgentClass {
    closedSet:   Set<CellClass>        = new Set();
    costMap:     Map<string, ICost>    = new Map();
    path:        CellClass[]           = [];
-   modifyer:    number                = 1; // over 1 ==> slower but accurate
    emptyCost:   ICost = {
       hCost: 0,
       gCost: 0,
@@ -46,11 +49,11 @@ export class AgentClass {
    };
 
    // Image and Animation
-   img:        HTMLImageElement | undefined = undefined;
-   frameX:     number = 0;
-   frameY:     number = 11;
-   lastFrameY: number = 11;
-   animState:  number = 0;
+   img:         HTMLImageElement | undefined = undefined;
+   frameX:      number = 0;
+   frameY:      number = 11;
+   lastFrameY:  number = 11;
+   animState:   number = 0;
 
    // States
    isMoving:    boolean = false;
@@ -95,8 +98,27 @@ export class AgentClass {
       this.img.src = this.imgSrc;
 
       this.startCell.isVacant = false;
-      this.startCell.agentID  = this.id;
+      this.startCell.agentIDset.add(this.id);
+
       glo.Grid!.addToOccupiedMap(this.startCell);
+   }
+
+   Debug_SearchTime(presentCell: CellClass) {
+
+      console.log(
+         "hCost: ", Math.floor(this.costMap.get(this.path[1].id)!.hCost),
+         "gCost: ", Math.floor(this.costMap.get(presentCell.id)!.gCost),
+         "fCost: ", Math.floor(this.costMap.get(presentCell.id)!.fCost),
+         "                                                                 ",
+         `Path was found in: ${ Date.now() -this.startDate_1 } ms`,
+         "                                                                 ",
+         `Unit moved: ${ this.path.length } cells`,
+      );
+   }
+
+   Debug_MoveTime() {
+
+      console.log(`Unit spend: ${ (Date.now() -this.startDate_2) /1000 } s to reach goal`);
    }
 
    hasArrived(
@@ -139,8 +161,10 @@ export class AgentClass {
 
    // Pathfinder
    searchPath() {
-      
-      this.startDate = Date.now();
+
+      // ***************************
+      // this.startDate_1 = Date.now();
+      // ***************************
 
       this.costMap.clear();
       this.costMap.set(this.startCell.id, this.emptyCost);
@@ -160,16 +184,12 @@ export class AgentClass {
             
             this.foundPath(presentCell);
             this.isMoving = true;
-            
-            console.log(
-               "hCost: ", Math.floor(this.costMap.get(this.path[1].id)!.hCost),
-               "gCost: ", Math.floor(this.costMap.get(presentCell.id)!.gCost),
-               "fCost: ", Math.floor(this.costMap.get(presentCell.id)!.fCost),
-               "                                                                 ",
-               `Path was found in: ${ Date.now() -this.startDate } ms`,
-               "                                                                 ",
-               `You walk : ${ this.path.length } cells`,
-            ); // ******************************************************
+
+            // ***************************
+            // this.startDate_2 = Date.now();
+            // this.Debug_SearchTime(presentCell);
+            // ***************************
+
             return;
          }
       }
@@ -200,11 +220,14 @@ export class AgentClass {
 
    scanNeighbors(presentCell: CellClass) {
 
-      const nebList   = presentCell.neighborsList;
-      const cellsList = glo.Grid!.cellsList;
+      const nebList       = presentCell.neighborsList;
+      const cellsList     = glo.Grid!.cellsList;
+      const straightValue = presentCell.size *0.5;
+      const diagValue     = 1.4 *straightValue;
       
       // Cycle all neighbors if exists
       for(const sideName in nebList) {
+
          const { id: nebID, isDiagonal } = nebList[sideName];
          const neighbor: CellClass       = cellsList.get(nebID)!;
 
@@ -214,8 +237,8 @@ export class AgentClass {
          &&  neighbor.isVacant) {
             
             const gCost:       number = this.costMap.get(presentCell.id)!.gCost;
-            const gValue:      number = isDiagonal ? 1.4 : 1;
-            const new_gCost:   number = (gCost +gValue) *this.modifyer;
+            const gValue:      number = isDiagonal ? diagValue : straightValue;
+            const new_gCost:   number = gCost +gValue;
             const nebCostData: ICost | undefined = this.costMap.get(nebID);
             
             // If neighbor already valid && worse gCost || blockedDiag ==> skip this neb
@@ -226,9 +249,8 @@ export class AgentClass {
             }
 
             this.openSet.add(neighbor);
-
             const hCost = this.calcHeuristic(neighbor);
-
+            
             this.costMap.set(nebID, {
                hCost,
                gCost:        new_gCost,
@@ -282,6 +304,10 @@ export class AgentClass {
          this.frameY    = this.lastFrameY;
          
          // this.searchVacancy(this.currentCell);
+
+         // ***************************
+         // this.Debug_MoveTime();
+         // ***************************
       }
    }
 
@@ -337,17 +363,20 @@ export class AgentClass {
 
    setCellVacancy() {
 
-      // Set as Vacant
+      // Set old cell as Vacant
       if(this.currentCell !== this.startCell) {
-         glo.Grid!.occupiedCells.delete(this.currentCell);
+         this.currentCell.agentIDset.delete(this.id);
+         
+         if(this.currentCell.agentIDset.size === 0) {
+            glo.Grid!.occupiedCells.delete(this.currentCell);
+            this.currentCell.isVacant = true;
+         }
 
-         this.currentCell.agentID  = undefined;
-         this.currentCell.isVacant = true;
          this.currentCell = this.startCell;
       }
       
-      // Set as Occupied
-      this.currentCell.agentID  = this.id;
+      // Set new cell as Occupied
+      this.currentCell.agentIDset.add(this.id);
       this.currentCell.isVacant = false;
       this.startCell = this.path[1];
       
@@ -356,7 +385,7 @@ export class AgentClass {
 
    searchVacancy(currentCell: CellClass) { // <== Tempory (Need Recast)
 
-      if(currentCell.isVacant || currentCell.agentID === this.id) return;
+      if(currentCell.isVacant || currentCell.agentIDset.has(this.id)) return;
 
       const nebList  = currentCell.neighborsList;
       let vacantPath = [];
