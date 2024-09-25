@@ -11,125 +11,81 @@ import {
 
 import { glo } from "../utils/_GlobalVar";
 
+
 // =====================================================================
 // Agent Class
 // =====================================================================
 export class AgentClass {
 
-   updateSet:      Set<any>;
-   skipSet:        Set<any>;
+   startDate:  number = 0;
 
+   // Basic Information
+   id:          number;
+   popCost:     number;
+   moveSpeed:   number;
+   unitType:    string;
+   imgSrc:      string;
+   collider:    INumber;
+   position:    IPosition;
 
-   id:             number;
-   unitType:       string;
-   imgSrc:         string;
-   collider:       INumber;
-   popCost:        number;
-   moveSpeed:      number;
+   // Pathfinding
+   startCell:   CellClass;
+   currentCell: CellClass;
+   nextCell:    CellClass | undefined = undefined;
+   goalCell:    CellClass | undefined = undefined;
+   openSet:     Set<CellClass>        = new Set();
+   closedSet:   Set<CellClass>        = new Set();
+   costMap:     Map<string, ICost>    = new Map();
+   path:        CellClass[]           = [];
+   modifyer:    number                = 1; // over 1 ==> slower but accurate
+   emptyCost:   ICost = {
+      hCost: 0,
+      gCost: 0,
+      fCost: 0,
+      cameFromCell: undefined,
+   };
 
-   position:       IPosition;
+   // Image and Animation
+   img:        HTMLImageElement | undefined = undefined;
+   frameX:     number = 0;
+   frameY:     number = 11;
+   lastFrameY: number = 11;
+   animState:  number = 0;
 
-   startCell:      CellClass;
-   currentCell:    CellClass;
-   nextCell:       CellClass | undefined;
-   goalCell:       CellClass | undefined;
-   openSet:        Set<CellClass>;
-   closedSet:      Set<CellClass>;
-   costMap:        Map<string, ICost>;
-   emptyCost:      ICost;
-   path:           CellClass[];
+   // States
+   isMoving:    boolean = false;
+   isSelected:  boolean = false;
+   isAttacking: boolean = false;
 
-   img:            HTMLImageElement | undefined;
-   frameX:         number;
-   frameY:         number;
-   lastFrameY:     number;
-   animState:      number;
+   // Animation Specifications
+   animSpecs = {
+      idle:    { index: 6, spritesNumber: 1  },
+      walk:    { index: 6, spritesNumber: 9  },
+      attack:  { index: 6, spritesNumber: 5  },
+      died:    { index: 1, spritesNumber: 10 },
+   };
 
-   isMoving:       boolean;
-   isSelected:     boolean;
-   isAttacking:    boolean;
+   // Sprite Sizes
+   sprites:        INumber = { height: 64, width: 64, offsetY: 25 };
+   specialSprites: INumber = { height: 64, width: 192 };
 
-   animSpecs:      any;
-   sprites:        INumber;
-   specialSprites: INumber;
 
    constructor(params: any) {
-      
-      this.updateSet     = new Set();
-      this.skipSet       = new Set();
 
-      this.id         = params.id;
-      this.unitType   = params.unitType;
-      this.imgSrc     = params.imgSrc;
-      this.collider   = params.collider;
-      this.popCost    = params.popCost;
-      this.moveSpeed  = params.moveSpeed;
+      this.id        = params.id;
+      this.popCost   = params.popCost;
+      this.moveSpeed = params.moveSpeed;
+      this.unitType  = params.unitType;
+      this.imgSrc    = params.imgSrc;
+      this.collider  = params.collider;
 
-      // Position
-      this.position = {
-         x: params.startCell.center.x, // Tempory
-         y: params.startCell.center.y, // Tempory
+      this.position  = {
+         x: params.startCell.center.x, // Temporary
+         y: params.startCell.center.y, // Temporary
       };
       
-      // Pathfinding
       this.startCell   = params.startCell;
       this.currentCell = params.startCell;
-      this.costMap     = new Map();
-      this.emptyCost   = {
-         hCost: 0,
-         gCost: 0,
-         fCost: 0,
-         cameFromCell: undefined,
-      }
-
-      this.nextCell    = undefined;
-      this.goalCell    = undefined;
-      this.openSet     = new Set();
-      this.closedSet   = new Set();
-      this.path        = [];
-
-      this.img         = undefined;
-      this.frameX      = 0;
-      this.frameY      = 11;
-      this.lastFrameY  = 11;
-      this.animState   = 0;
-
-      this.isMoving    = false;
-      this.isSelected  = false;
-      this.isAttacking = false;
-
-      this.animSpecs   = {
-         idle: {
-            index: 6,
-            spritesNumber: 1,
-         },
-      
-         walk: {
-            index: 6,
-            spritesNumber: 9,
-         },
-      
-         attack: {
-            index: 6,
-            spritesNumber: 5,
-         },
-      
-         died: {
-            index: 1,
-            spritesNumber: 10,
-         },
-      };
-   
-      this.sprites = {
-         height:  64,
-         width:   64,
-         offsetY: 25,
-      };
-   
-      this.specialSprites = {
-         height:  64,
-         width:   192,
-      };
 
       this.init();
    }
@@ -175,7 +131,7 @@ export class AgentClass {
       
       const deltaX = Math.abs(goalX -nebX);
       const deltaY = Math.abs(goalY -nebY);
-      const dist   = Math.floor(Math.hypot(deltaX, deltaY));
+      const dist   = Math.hypot(deltaX, deltaY);
 
       return dist;
    }
@@ -183,6 +139,8 @@ export class AgentClass {
 
    // Pathfinder
    searchPath() {
+      
+      this.startDate = Date.now();
 
       this.costMap.clear();
       this.costMap.set(this.startCell.id, this.emptyCost);
@@ -202,6 +160,16 @@ export class AgentClass {
             
             this.foundPath(presentCell);
             this.isMoving = true;
+            
+            console.log(
+               "hCost: ", Math.floor(this.costMap.get(this.path[1].id)!.hCost),
+               "gCost: ", Math.floor(this.costMap.get(presentCell.id)!.gCost),
+               "fCost: ", Math.floor(this.costMap.get(presentCell.id)!.fCost),
+               "                                                                 ",
+               `Path was found in: ${ Date.now() -this.startDate } ms`,
+               "                                                                 ",
+               `You walk : ${ this.path.length } cells`,
+            ); // ******************************************************
             return;
          }
       }
@@ -245,8 +213,9 @@ export class AgentClass {
          && !neighbor.isBlocked
          &&  neighbor.isVacant) {
             
-            const gValue:      number = isDiagonal ? 1.5 : 1;
-            const new_gCost:   number = (this.costMap.get(presentCell.id)!.gCost +gValue) *2;
+            const gCost:       number = this.costMap.get(presentCell.id)!.gCost;
+            const gValue:      number = isDiagonal ? 1.4 : 1;
+            const new_gCost:   number = (gCost +gValue) *this.modifyer;
             const nebCostData: ICost | undefined = this.costMap.get(nebID);
             
             // If neighbor already valid && worse gCost || blockedDiag ==> skip this neb
@@ -426,7 +395,7 @@ export class AgentClass {
          }
       }
 
-      // this.drawScanNebs(ctx);
+      this.drawScanNebs(ctx);
    }
 
    drawScanNebs(ctx: CanvasRenderingContext2D) {

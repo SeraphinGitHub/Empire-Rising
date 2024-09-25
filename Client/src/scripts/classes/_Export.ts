@@ -1,4 +1,4 @@
 
-export { GridClass      } from "./GridClass";
-export { CellClass      } from "./CellClass";
-export { AgentClass     } from "./AgentClass";
+export { GridClass  } from "./GridClass";
+export { CellClass  } from "./CellClass";
+export { AgentClass } from "./AgentClass";

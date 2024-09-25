@@ -16,27 +16,39 @@ import { glo } from "../utils/_GlobalVar";
 // =====================================================================
 export class CellClass {
    
-   id:             string;
+   id: string;
+
+   i:  number;
+   j:  number;
+   x:  number;
+   y:  number;
+
+   center:     IPosition;
+   screenPos:  IPosition = { x: 0, y: 0 }; // ==> Temp
    
-   zIndex:         number;
-   cellPerSide:    number;
-   size:           number;
-   i:              number;
-   j:              number;
-   x:              number;
-   y:              number;
+   zIndex:      number;
+   size:        number;
+   cellPerSide: number;
 
-   center:         IPosition;
-   screenPos:      IPosition;
-   collider:       IPositionList;
-   nebCoordList:   ICoordArray;
-
+   // Collider and neighbors
    agentID:        number | undefined;
-   neighborsList:  INebList;
-   
-   isBlocked:      boolean;
-   isVacant:       boolean;
-   isTransp:       boolean;
+   collider:       IPositionList;
+   neighborsList:  INebList    = {};
+   nebCoordList:   ICoordArray = {
+      top:         [ 0, -1,  false], // isDiagonal ==> false
+      topRight:    [ 1, -1,  true ], // isDiagonal ==> true
+      right:       [ 1,  0,  false],
+      bottomRight: [ 1,  1,  true ],
+      bottom:      [ 0,  1,  false],
+      bottomLeft:  [-1,  1,  true ],
+      left:        [-1,  0,  false],
+      topLeft:     [-1, -1,  true ],
+   };
+
+   // States
+   isBlocked: boolean = false;
+   isVacant:  boolean = true;
+   isTransp:  boolean = false;
 
    // ----------- Tempory -----------
    isDiffTile:     boolean;
@@ -50,66 +62,27 @@ export class CellClass {
       j:           number,
    ) {
       
-      this.id          = `${i}-${j}`;
-      
+      this.id = `${i}-${j}`;
+      this.i  = i;
+      this.j  = j;
+      this.x  = i *size;
+      this.y  = j *size;
+
+      this.center = {
+         x: this.x + size *0.5,
+         y: this.y + size *0.5,
+      };
+
       this.zIndex      = zIndex;
-      this.cellPerSide = cellPerSide;
       this.size        = size;
-      this.i           = i;
-      this.j           = j;
-      this.x           = i *size;
-      this.y           = j *size;
+      this.cellPerSide = cellPerSide;
       
-      this.center      = {
-         x: this.x + size/2,
-         y: this.y + size/2,
+      this.collider = {
+         top:    { x: this.center.x,      y: this.y             },
+         right:  { x: this.x + this.size, y: this.center.y      },
+         bottom: { x: this.center.x,      y: this.y + this.size },
+         left:   { x: this.x,             y: this.center.y      },
       };
-
-      this.screenPos   = {
-         x: 0,
-         y: 0,
-      }
-      
-      this.collider    = { // Diamond Collider
-
-         top: {
-            x: this.center.x,
-            y: this.y,
-         },
-
-         right: {
-            x: this.x +this.size,
-            y: this.center.y,
-         },
-
-         bottom: {
-            x: this.center.x,
-            y: this.y +this.size,
-         },
-
-         left: {
-            x: this.x,
-            y: this.center.y,
-         },
-      }
-
-      this.nebCoordList = {
-         top:         [ 0, -1,  false], // isDiagonal ==> false
-         topRight:    [ 1, -1,  true ], // isDiagonal ==> true
-         right:       [ 1,  0,  false],
-         bottomRight: [ 1,  1,  true ],
-         bottom:      [ 0,  1,  false],
-         bottomLeft:  [-1,  1,  true ],
-         left:        [-1,  0,  false],
-         topLeft:     [-1, -1,  true ],
-      };
-
-      this.agentID       = undefined;
-      this.neighborsList = {};
-      
-      this.isBlocked     = false;
-      this.isVacant      = true;
-      this.isTransp      = false;
 
       // ----------- Tempory -----------
       this.isDiffTile    = false;
@@ -196,7 +169,6 @@ export class CellClass {
       const isBlocked_BottomRight = bottom && right && bottom .isBlocked && right .isBlocked && neighbor.id === bottomRight.id;
       
       return isBlocked_TopLeft || isBlocked_TopRight || isBlocked_BottomLeft || isBlocked_BottomRight;
-   
    }
 
    setTransparency(cellsList: Map<string, CellClass>) {

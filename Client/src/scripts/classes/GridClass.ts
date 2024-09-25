@@ -8,19 +8,24 @@ import { CellClass } from "../classes/_Export";
 // =====================================================================
 export class GridClass {
 
+   // Grid Lists
    cellsList:     Map<string, CellClass> = new Map();
    blockedCells:  Set<CellClass>         = new Set();
    occupiedCells: Set<CellClass>         = new Set();
    
-   cellSize:      number;
-   gridSize:      number;
-   cellPerSide:   number;
+   // Grid Dimensions
+   cellSize:    number;
+   gridSize:    number;
+   cellPerSide: number;
 
-   constructor(params: any) {
+   constructor(params: {
+      cellSize: number;
+      gridSize: number,
+   }) {
 
       this.cellSize    = params.cellSize;
       this.gridSize    = params.gridSize;
-      this.cellPerSide = (this.gridSize -(this.gridSize %this.cellSize)) /this.cellSize;
+      this.cellPerSide = Math.floor(this.gridSize / this.cellSize);
 
       this.init();
    }
