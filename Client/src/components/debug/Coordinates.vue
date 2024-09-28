@@ -41,8 +41,8 @@
                name: "Screen Coord:",
                classX: "cartX",
                classY: "cartY",
-               x: `x : ${readGlo.SelectArea.currentPos.cartesian.x}`,
-               y: `y : ${readGlo.SelectArea.currentPos.cartesian.y}`,
+               x: `x : ${readGlo.SelectArea.currentPos.x}`,
+               y: `y : ${readGlo.SelectArea.currentPos.y}`,
             }
          },
 

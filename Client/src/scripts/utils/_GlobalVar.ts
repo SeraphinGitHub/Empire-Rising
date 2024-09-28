@@ -7,8 +7,8 @@ import {
 } from "./interfaces"
 
 import {
-   GridClass,
-   AgentClass,
+   Grid,
+   Agent,
 } from "../classes/_Export"
 
 import { reactive, readonly } from 'vue';
@@ -22,91 +22,57 @@ export const glo = reactive({
 
    Params: {} as any,
    
-   GridParams: {
+   GridParams: {                    // =========>  grid class
       cellSize:  40,
       gridSize:  1600,
       // cellSize:  80,
       // gridSize:  800,
    },
 
-   SelectArea: {
-      oldPos: {
-
-         cartesian: {
-            x: 0,
-            y: 0,
-         },
-
-         isometric: {
-            x: 0,
-            y: 0,
-         },
-      },
-
-      currentPos: {
-
-         cartesian: {
-            x: 0,
-            y: 0,
-         },
-
-         isometric: {
-            x: 0,
-            y: 0,
-         },
-      },
-
-      height: undefined as number | undefined,
-      width:  undefined as number | undefined,
-
-      borderColor:  "dodgerblue",
-      filledColor:  "rgba(30, 144, 255, 0.3)",
-      lineWidth:    2,
-      isSelecting : false,
-   },
 
    // --- Constants ---
-   Cos_45deg:  0.707,
-   Cos_30deg:  0.866,
+   Cos_45:  0.707,                  // =========>  viewport class
+   Cos_30:  0.866,
    
    // --- DOM ---
-   Canvas:         {} as ICanvas,
+   Canvas:         {} as ICanvas,   // =========>  viewport class
    Ctx:            {} as ICtx,
 
-   Viewport: {
+   Viewport: {                      // =========>  viewport class
       x: 0,
       y: 0,
       width:  1400, // Has to match CSS canvas Isometircs.vue & Cartesian.vue
       height: 800,  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
    },
 
-   GridAngle:         undefined as number    | undefined,
-   Grid:              undefined as GridClass | undefined,
+   Grid:              undefined as Grid | undefined, // =========>  grid class
+
+   GridAngle:         undefined as number    | undefined, // =========>  viewport class
    IsoSelectComputed: undefined as DOMMatrix | undefined,
    TerrainComputed:   undefined as DOMMatrix | undefined,
    
    // --- Positions ---
-   ViewportOffset: {
+   ViewportOffset: {                // =========>  viewport class
       x: 0,
       y: 0,
    },
 
-   TerrainOffset: {
+   TerrainOffset: {                 // =========>  viewport class
       x: 0,
       y: 0,
    },
 
-   Scroll: {
+   Scroll: {                        // rename Offset =========>  viewport class
       x: 0,
       y: 0,
    },
 
-   IsoGridPos: {
+   IsoGridPos: {                    // =========>  viewport class
       x: 0,
       y: 0,
    },
 
-   HoverCell: {
+   HoverCell: {                     // =========>  cursor class
       id: "",
 
       gridPos: {
@@ -116,17 +82,20 @@ export const glo = reactive({
    },
 
    // --- Lists ---
-   AvailableIDArray:  [] as number[],
-   AgentsList:        new Map() as Map<number, AgentClass>,
-   OldSelectList:     new Set() as Set<AgentClass>,
-   CurrentSelectList: new Set() as Set<AgentClass>,
+   AvailableIDArray:  [] as number[],                          // =========>  gameManager class
+   AgentsList:        new Map() as Map<number, Agent>,
+   OldSelectList:     new Set() as Set<Agent>,
+   CurrentSelectList: new Set() as Set<Agent>,
 
    // --- Ints ---
-   MouseSpeed: 7,
-   DetectSize: 60,
-   MaxPop:     2000,
+   MouseSpeed: 7,          // rename ScrollSpeed =========>  viewport class
+   
+   DetectSize: 60,         // =========>  viewport class
+   
+   MaxPop:     2000,       // =========>  gameManager class
    CurrentPop: 0,
-   max_X:      0.7,
+
+   max_X:      0.7,        // =========>  viewport class
    max_Y:      0.7 *0.5,
 
    flatG_Img: new Image(),

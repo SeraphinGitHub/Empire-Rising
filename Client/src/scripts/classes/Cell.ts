@@ -14,7 +14,7 @@ import { glo } from "../utils/_GlobalVar";
 // =====================================================================
 // Cell Class
 // =====================================================================
-export class CellClass {
+export class Cell {
    
    id: string;
 
@@ -100,7 +100,7 @@ export class CellClass {
    }
 
    getNeighbors(
-      cellsList: Map<string, CellClass>,
+      cellsList: Map<string, Cell>,
    ): any {
       
       const neighbors: any = {};
@@ -148,8 +148,8 @@ export class CellClass {
    }
 
    isBlockedDiag(
-      cellsList:  Map<string, CellClass>,
-      neighbor:   CellClass,
+      cellsList:  Map<string, Cell>,
+      neighbor:   Cell,
    ): boolean {
       
       const {
@@ -171,7 +171,7 @@ export class CellClass {
       return isBlocked_TopLeft || isBlocked_TopRight || isBlocked_BottomLeft || isBlocked_BottomRight;
    }
 
-   setTransparency(cellsList: Map<string, CellClass>) {
+   setTransparency(cellsList: Map<string, Cell>) {
    
       if(!this.isBlocked) return;
 
@@ -289,7 +289,7 @@ export class CellClass {
       ctx.fill();
    }
 
-   drawPath_WallLine(ctx: CanvasRenderingContext2D, hoverCell: CellClass) {
+   drawPath_WallLine(ctx: CanvasRenderingContext2D, hoverCell: Cell) {
 
       ctx.strokeStyle = "yellow";
       ctx.beginPath();

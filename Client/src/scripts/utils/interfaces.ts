@@ -1,6 +1,6 @@
 
 import {
-   CellClass,
+   Cell,
 } from "../classes/_Export";
 
 
@@ -79,5 +79,5 @@ export interface ICost {
    hCost:        number,
    gCost:        number,
    fCost:        number,
-   cameFromCell: CellClass | undefined,
+   cameFromCell: Cell | undefined,
 }

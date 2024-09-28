@@ -3,7 +3,7 @@
    <section class="flex">
 
       <div class="flex">
-         <canvas ref="isoSelect" class="flex canvas-isoSelect"></canvas>
+         <canvas ref="isometric" class="flex canvas-isometric"></canvas>
       </div>
 
    </section>
@@ -18,7 +18,7 @@
 
       mounted() {
 
-         const canvasName = "isoSelect";
+         const canvasName = "isometric";
          const canvasElem = this.$refs[canvasName] as HTMLCanvasElement;
 
          glo.Canvas[canvasName] = canvasElem;

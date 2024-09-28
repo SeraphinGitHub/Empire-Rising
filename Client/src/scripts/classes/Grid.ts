@@ -1,40 +1,33 @@
 
-"use strict"
+import {
+   Cell,
+   GameManager,
+} from "./_Export";
 
-import { CellClass } from "../classes/_Export";
 
 // =====================================================================
 // Grid Class
 // =====================================================================
-export class GridClass {
+export class Grid {
 
-   // Grid Lists
-   cellsList:     Map<string, CellClass> = new Map();
-   blockedCells:  Set<CellClass>         = new Set();
-   occupiedCells: Set<CellClass>         = new Set();
+   private GManager: GameManager;
+
+   cellsList:     Map<string, Cell> = new Map();
+   blockedCells:  Set<Cell>         = new Set();
+   occupiedCells: Set<Cell>         = new Set();
    
-   // Grid Dimensions
-   cellSize:    number;
-   gridSize:    number;
-   cellPerSide: number;
+   gridSize:      number;
+   cellSize:      number;
+   cellPerSide:   number;
 
-   constructor(params: {
-      cellSize: number;
-      gridSize: number,
-   }) {
+   constructor(GManager: GameManager) {
 
-      this.cellSize    = params.cellSize;
-      this.gridSize    = params.gridSize;
+      this.GManager    = GManager;
+      this.gridSize    = GManager.gridSize;
+      this.cellSize    = GManager.cellSize;
       this.cellPerSide = Math.floor(this.gridSize / this.cellSize);
 
       this.init();
-   }
-
-   rand(
-      maxValue: number,
-   ): number {
-
-      return Math.floor( Math.random() *maxValue );
    }
 
    init() {
@@ -44,7 +37,7 @@ export class GridClass {
       for(let i = 0; i < this.cellPerSide; i++) {  // Collums
          for(let j = 0; j < this.cellPerSide; j++) {  // Rows
             
-            const cell: CellClass = new CellClass(
+            const cell: Cell = new Cell(
                zIndex,
                this.cellPerSide,
                this.cellSize,
@@ -61,9 +54,9 @@ export class GridClass {
       this.cellsList.forEach((cell) => cell.setNeighborsList());
    }
 
-   addToOccupiedMap(cell: CellClass) {
+   addToOccupiedMap(cell: Cell) {
 
-      let tempArray: CellClass[] = [...this.occupiedCells];
+      let tempArray: Cell[] = [...this.occupiedCells];
       
       tempArray.push(cell);
       tempArray.sort((cell: any, nextCell: any) => cell.zIndex -nextCell.zIndex);

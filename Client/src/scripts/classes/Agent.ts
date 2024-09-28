@@ -6,7 +6,7 @@ import {
 } from "../utils/interfaces";
 
 import {
-   CellClass
+   Cell
 } from "./_Export";
 
 import { glo } from "../utils/_GlobalVar";
@@ -15,7 +15,7 @@ import { glo } from "../utils/_GlobalVar";
 // =====================================================================
 // Agent Class
 // =====================================================================
-export class AgentClass {
+export class Agent {
 
    // ----- Debug -----
    startDate_1:  number = 0;
@@ -33,14 +33,14 @@ export class AgentClass {
    position:    IPosition;
 
    // Pathfinding
-   startCell:   CellClass;
-   currentCell: CellClass;
-   nextCell:    CellClass | undefined = undefined;
-   goalCell:    CellClass | undefined = undefined;
-   openSet:     Set<CellClass>        = new Set();
-   closedSet:   Set<CellClass>        = new Set();
+   startCell:   Cell;
+   currentCell: Cell;
+   nextCell:    Cell | undefined = undefined;
+   goalCell:    Cell | undefined = undefined;
+   openSet:     Set<Cell>        = new Set();
+   closedSet:   Set<Cell>        = new Set();
    costMap:     Map<string, ICost>    = new Map();
-   path:        CellClass[]           = [];
+   path:        Cell[]           = [];
    emptyCost:   ICost = {
       hCost: 0,
       gCost: 0,
@@ -103,7 +103,7 @@ export class AgentClass {
       glo.Grid!.addToOccupiedMap(this.startCell);
    }
 
-   Debug_SearchTime(presentCell: CellClass) {
+   Debug_SearchTime(presentCell: Cell) {
 
       console.log(
          "hCost: ", Math.floor(this.costMap.get(this.path[1].id)!.hCost),
@@ -122,7 +122,7 @@ export class AgentClass {
    }
 
    hasArrived(
-      cell: CellClass,
+      cell: Cell,
    ): boolean {
       
       const { x: posX,  y: posY  } = this.position;
@@ -145,7 +145,7 @@ export class AgentClass {
    }
 
    calcHeuristic(
-      neighbor: CellClass,
+      neighbor: Cell,
    ): number {
 
       const { x: goalX, y: goalY } = this.goalCell!.center;
@@ -197,13 +197,13 @@ export class AgentClass {
       this.isMoving = false;
    }
 
-   lowestFCostCell(): CellClass | null {
+   lowestFCostCell(): Cell | null {
 
       // Bring up lowest fCost cell
       let lowestFCost: number           = Infinity;
-      let presentCell: CellClass | null = null;
+      let presentCell: Cell | null = null;
 
-      this.openSet.forEach((cell: CellClass) => {
+      this.openSet.forEach((cell: Cell) => {
          const cellData: ICost = this.costMap.get(cell.id)!;
          
          if(cellData.fCost  <  lowestFCost
@@ -218,7 +218,7 @@ export class AgentClass {
       return presentCell;
    }
 
-   scanNeighbors(presentCell: CellClass) {
+   scanNeighbors(presentCell: Cell) {
 
       const nebList       = presentCell.neighborsList;
       const cellsList     = glo.Grid!.cellsList;
@@ -229,7 +229,7 @@ export class AgentClass {
       for(const sideName in nebList) {
 
          const { id: nebID, isDiagonal } = nebList[sideName];
-         const neighbor: CellClass       = cellsList.get(nebID)!;
+         const neighbor: Cell       = cellsList.get(nebID)!;
 
          // If this neighbor hasn't been scanned yet
          if(!this.closedSet.has(neighbor)
@@ -264,7 +264,7 @@ export class AgentClass {
       this.closedSet.add(presentCell);
    }
 
-   foundPath(presentCell: CellClass) {
+   foundPath(presentCell: Cell) {
             
       this.path.push(presentCell);
       let cameFromCell = this.costMap.get(presentCell.id)!.cameFromCell;
@@ -383,7 +383,7 @@ export class AgentClass {
       glo.Grid!.addToOccupiedMap(this.currentCell);
    }
 
-   searchVacancy(currentCell: CellClass) { // <== Tempory (Need Recast)
+   searchVacancy(currentCell: Cell) { // <== Tempory (Need Recast)
 
       if(currentCell.isVacant || currentCell.agentIDset.has(this.id)) return;
 
@@ -392,12 +392,12 @@ export class AgentClass {
 
       for(const sideName in nebList) {
          const nebID:    string    = nebList[sideName].id;
-         const neighbor: CellClass = glo.Grid!.cellsList.get(nebID)!;
+         const neighbor: Cell = glo.Grid!.cellsList.get(nebID)!;
          
          vacantPath.push(neighbor);
       }
       
-      vacantPath.sort((neb: CellClass) => this.costMap.get(neb.id)!.fCost);
+      vacantPath.sort((neb: Cell) => this.costMap.get(neb.id)!.fCost);
 
       while(vacantPath.length > 0) {
       
@@ -440,8 +440,8 @@ export class AgentClass {
 
    drawPathLine(
       ctx:         CanvasRenderingContext2D,
-      currentCell: CellClass,
-      nextCell:    CellClass,
+      currentCell: Cell,
+      nextCell:    Cell,
    ) {
       
       ctx.strokeStyle = "lime";
