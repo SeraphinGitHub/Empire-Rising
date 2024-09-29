@@ -1,6 +1,4 @@
 
-"use strict"
-
 import {
    IPosition,
    IPositionList,
@@ -9,7 +7,6 @@ import {
    INebList,
 } from "../utils/interfaces";
 
-import { glo } from "../utils/_GlobalVar";
 
 // =====================================================================
 // Cell Class
@@ -23,12 +20,12 @@ export class Cell {
    x:  number;
    y:  number;
 
-   center:     IPosition;
-   screenPos:  IPosition = { x: 0, y: 0 }; // ==> Temp
-   
    zIndex:      number;
    size:        number;
    cellPerSide: number;
+
+   center:      IPosition;
+   screenPos:   IPosition = { x: 0, y: 0 }; // ==> Tempory 
 
    // Collider and neighbors
    collider:       IPositionList;
@@ -89,7 +86,9 @@ export class Cell {
       // ----------- Tempory -----------
    }
 
+   // =========================================================================================
    // Set Neighbors List
+   // =========================================================================================
    setNeighborsList() {
 
       for(const nebName in this.nebCoordList) {
@@ -192,7 +191,9 @@ export class Cell {
    }
 
 
+   // =========================================================================================
    // Draw Methods
+   // =========================================================================================
    drawInfos(ctx: CanvasRenderingContext2D) {
          
       this.drawFrame(ctx);
@@ -332,7 +333,7 @@ export class Cell {
 
 
    // ------------------ Tempory ------------------
-   drawSprite(
+   drawTile(
       ctx:     CanvasRenderingContext2D,
       gridPos: IPosition,
    ) {
@@ -371,36 +372,10 @@ export class Cell {
       scroll:   IPosition,
    ) {
 
-      if(!this.isBlocked) return;
-
       const srcSize  = 280;
       const destSize = 90;
       const offsetX  = 48;
       const offsetY  = 75;
-
-      if(this.isTransp) {
-         ctx.save();
-         ctx.globalAlpha = 0.5;
-   
-         ctx.drawImage(
-            glo.walls_Img,
-   
-            // Source
-            0,
-            0,
-            srcSize,
-            srcSize,
-            
-            // Destination
-            gridPos.x -offsetX +scroll.x,
-            gridPos.y -offsetY +scroll.y,
-            destSize +10,
-            destSize,
-         );
-         
-         ctx.restore();
-         return;
-      }
    
       ctx.drawImage(
          glo.walls_Img,

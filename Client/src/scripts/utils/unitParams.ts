@@ -1,8 +1,4 @@
 
-"use strict"
-
-import { glo } from "./_GlobalVar";
-
 // ================================================================================================
 // Units Parameters
 // ================================================================================================
@@ -13,7 +9,7 @@ export const unitParams = {
 
       collider: {
          offsetY: -15,
-         radius:  glo.GridParams.cellSize *0.4,
+         radius:  15,
       },
 
       unitType: {
@@ -37,7 +33,7 @@ export const unitParams = {
             attackSpeed: 12,
             animationDelay: 0.5,
             
-            imgSrc: `Units/Swordsman_${glo.Faction}.png`,
+            imgSrc: `Units/Swordsman_Orange.png`,
          },
          
          bowman: {
@@ -69,7 +65,7 @@ export const unitParams = {
 
       collider: {
          offsetY: 0,
-         radius:  glo.GridParams.cellSize *0.2,
+         radius:  20,
       },
 
       unitType: {
@@ -102,7 +98,7 @@ export const unitParams = {
 
       collider: {
          offsetY: 0,
-         radius:  glo.GridParams.cellSize *0.3,
+         radius:  30,
       },
 
       unitType: {

@@ -18,12 +18,12 @@ export class Cursor {
    
    Canvas:         ICanvas;
    cellSize:       number;
-   halfCellSize:   number;
+   halfCell:       number;
    oldPos:         IPositionList = {};
    curPos:         IPositionList = {};
 
-   selectArea:     {} = {};
-   areaOptions:    {} = {
+   selectArea:     any = {};
+   areaOptions:    any = {
       lineWidth:   2,
       borderColor: "dodgerblue",
       filledColor: "rgba(30, 144, 255, 0.3)",
@@ -36,15 +36,15 @@ export class Cursor {
    
    isMoving:       boolean = false;
    isSelecting:    boolean = false;
-   isScollActive:  boolean = false;
+   isScollClick:   boolean = false;
 
 
    constructor(GManager: GameManager) {
 
-      this.GManager     = GManager;
-      this.Canvas       = GManager.Canvas;
-      this.cellSize     = GManager.cellSize;
-      this.halfCellSize = this.cellSize *0.5;
+      this.GManager = GManager;
+      this.Canvas   = GManager.Canvas;
+      this.cellSize = GManager.cellSize;
+      this.halfCell = this.cellSize *0.5;
 
       this.init();
    }
@@ -52,18 +52,53 @@ export class Cursor {
    init() {
       window.addEventListener("mousemove", (event) => this.move  (event));
       window.addEventListener("mousedown", (event) => this.click (event, "Down"));
-      window.addEventListener("mouseup",   (event) => this.click (event, "Up"  ));
-
-      document.body.oncontextmenu = (event) => {
-         event.preventDefault();
-         event.stopPropagation();
-      }      
+      window.addEventListener("mouseup",   (event) => this.click (event, "Up"  )); 
    }
 
 
    // =========================================================================================
    // Mouse Behaviors
    // =========================================================================================
+   handle_LeftClick  (state: string) {
+      const GM = this.GManager;
+
+      if(state === "Down") { 
+         this.isSelecting = true;
+         this.setSelectArea();
+      }
+      
+      if(state === "Up") {
+         this.isSelecting = false;
+         GM.unitDiselection();
+      }
+   }
+
+   handle_ScrollClick(state: string) {
+      const GM = this.GManager;
+
+      if(state === "Down") {
+         this.isScollClick = true;
+         GM.Viewport.isScrollDetect = false;
+      }
+      
+      if(state === "Up"  ) {
+         this.isScollClick = false;
+         GM.Viewport.isScrollDetect = true;
+      }
+   }
+
+   handle_RightClick (state: string) {
+      const GM = this.GManager;
+
+      if(state === "Down") {
+         GM.setTargetCell(this.hoverCell.id);
+      }
+   
+      if(state === "Up") {
+         
+      }
+   }
+
    click(
       event: MouseEvent,
       state: string,
@@ -74,62 +109,36 @@ export class Cursor {
       switch(event.which) {
 
          // Left click
-         case 1: {
-
-            if(state === "Down") { 
-               this.isSelecting = true;
-               this.setSelectArea();
-            }
-            
-            if(state === "Up") {
-               this.isSelecting = false;
-               this.GManager.unitDiselection();
-            }
-            
-         } break;
-
+         case 1: this.handle_LeftClick(state);
+         break;
 
          // Scroll click
-         case 2: {
-
-            if(state === "Down") {
-               this.isScollActive = true;
-               isScrolling   = false;
-            }
-            
-            if(state === "Up"  ) {
-               this.isScollActive = false;
-               isScrolling   = true;
-            }
-            
-         } break;
-
+         case 2: this.handle_ScrollClick(state);
+         break;
 
          // Right click
-         case 3: {
-
-            if(state === "Down") {
-               this.GManager.setTarget(this.hoverCell.id);
-            }
-         
-            if(state === "Up") {
-               
-            }
-
-         } break;
+         case 3: this.handle_RightClick(state);
+         break;
       }
    }
 
    move(event: MouseEvent) {
       
+      const GM = this.GManager;
+
+      // Set mouse position
       this.setPosition(event, false);
-      this.GManager.screenPos_toGridPos(this.curPos.iso);
       
-      if(this.GManager.isGridScope()) this.setHoverCell(this.GManager.gridPos);
+      // Set mouse to grid position
+      GM.screenPos_toGridPos(this.curPos.iso);
+      
+      // Set hoverCell from mouse grid position
+      if(GM.isGridScope(this.curPos.iso)) this.setHoverCell();
+      
+      if(this.isScollClick) GM.Viewport.mouseScrollCam();
 
-      this.GManager.unitSelection();
-
-      // isScrolling = true;
+      GM.unitSelection();
+      GM.Viewport.isScrollDetect = true;
    }
 
 
@@ -162,9 +171,9 @@ export class Cursor {
       else          this.curPos = mousePos;
    }
    
-   setHoverCell(gridPos: IPosition) {
+   setHoverCell() {
       
-      const { x: gridX, y: gridY }: IPosition = gridPos;
+      const { x: gridX, y: gridY }: IPosition = this.GManager.gridPos;
    
       const cellPos: IPosition = {
          x: gridX - (gridX % this.cellSize),
@@ -187,88 +196,43 @@ export class Cursor {
          y:      oldY,
          width:  curX -oldX,
          height: curY -oldY,
-      } 
-   }
-
-   const setScrollBounds = () => {
-
-      const detSize = glo.DetectSize;
-   
-      const {
-         x:      vpX,
-         y:      vpY,
-         width:  vpWidth,
-         height: vpHeight,
-      }: ISquare = glo.Viewport;
-   
-      return {
-   
-         top: {
-            x:       vpX,
-            y:       vpY,
-            width:   vpWidth,
-            height:  detSize,
-         },
-   
-         right: {
-            x:       vpX +vpWidth -detSize,
-            y:       vpY,
-            width:   detSize,
-            height:  vpHeight,
-         },
-   
-         bottom: {
-            x:       vpX,
-            y:       vpY +vpHeight -detSize,
-            width:   vpWidth,
-            height:  detSize,
-         },
-   
-         left: {
-            x:       vpX,
-            y:       vpY,
-            width:   detSize,
-            height:  vpHeight,
-         },
-      }
+      };
    }
 
    
-
-
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   const drawSelectArea = () => {
-
-      let selected   = glo.SelectArea;
-   
-      const { x: oldX,     y: oldY     }: IPosition = selected.oldPos;
-      const { x: currentX, y: currentY }: IPosition = selected.currentPos;
-   
-      // Set rect size
-      selected.width  = currentX -oldX;
-      selected.height = currentY -oldY;
-   
-      // Set rect params
-      glo.Ctx.selection.lineWidth   = selected.lineWidth;
-      glo.Ctx.selection.strokeStyle = selected.borderColor;
-      glo.Ctx.selection.fillStyle   = selected.filledColor;
-   
-      // Draw borders
-      glo.Ctx.selection.strokeRect(
-         oldX,
-         oldY,
-         selected.width,
-         selected.height
-      );
+   drawSelectArea() {
       
-      // Draw filled rect
-      glo.Ctx.selection.fillRect(
-         oldX,
-         oldY,
-         selected.width,
-         selected.height
-      );
+      const ctx_Selection = this.GManager.Ctx.selection;
+
+      const { x,   y,    width,       height     } = this.selectArea;
+      const { lineWidth, borderColor, filledColor} = this.areaOptions;
+
+      // Set style
+      ctx_Selection.lineWidth   = lineWidth;
+      ctx_Selection.strokeStyle = borderColor;
+      ctx_Selection.fillStyle   = filledColor;
+   
+      // Draw area
+      ctx_Selection.fillRect  (x, y, width, height);
+      ctx_Selection.strokeRect(x, y, width, height);
    }
+
+   drawHoverCell() {
+
+      if(!this.GManager.isGridScope(this.curPos.iso)) return;
+      
+      const GM                      = this.GManager;
+      const ctx_isometric           = GM.Ctx.isometric;
+      const { x: cellX, y: cellY }  = this.hoverCell.pos;
+
+      // Draw hoverCell frame
+      ctx_isometric.strokeStyle = "yellow";
+      ctx_isometric.lineWidth   = 4;
+      ctx_isometric.strokeRect(cellX, cellY, GM.cellSize, GM.cellSize);
+   }
+   
+
 }

@@ -9,20 +9,17 @@
    </section>
 </template>
 
-<script lang="ts">
-
-   // Scripts
-   import { glo } from "../../scripts/utils/_GlobalVar"
+<script>
    
    export default {
 
       mounted() {
 
          const canvasName = "isometric";
-         const canvasElem = this.$refs[canvasName] as HTMLCanvasElement;
+         const canvasElem = this.$refs[canvasName];
 
-         glo.Canvas[canvasName] = canvasElem;
-         glo.Ctx   [canvasName] = canvasElem.getContext("2d") as CanvasRenderingContext2D;
+         this.$parent.Canvas[canvasName] = canvasElem;
+         this.$parent.Ctx   [canvasName] = canvasElem.getContext("2d");
       },
    }
 </script>

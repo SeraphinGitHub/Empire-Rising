@@ -14,10 +14,201 @@ import {
    Agent,
    Cursor,
    Viewport,
+   Collision,
 } from "../classes/_Export"
 
-import { Collision  } from "../modules/collision";
 import { unitParams } from "../utils/unitParams";
+
+
+//  ------------  Tempory  ------------
+let randPathIntervals: any = [];
+
+const walls: string[] = [
+   "9-21",
+   // Top
+   "21-6",
+   "22-6",
+   "23-6",
+   
+   "24-7",
+   "25-8",
+   "26-9",
+   "27-10",
+   "27-11",
+   "27-12",
+
+   // Middle
+   "12-12",
+   "13-12",
+   "14-12",
+   "15-12",
+   "16-12",
+   "17-12",
+   "18-12",
+   "19-12",
+   "20-12",
+
+   "20-13",
+   "20-14",
+   "20-15",
+   "20-16",
+   "20-17",
+   "20-18",
+
+   "21-18",
+   "22-18",
+   "23-18",
+   "24-18",
+   "25-18",
+
+   // Bottom
+   "13-23",
+   "12-23",
+   "11-23",
+   "10-23",
+   "9-23",
+
+   "14-13",
+   "14-14",
+   "14-18",
+   "14-19",
+   "14-20",
+   "14-21",
+   "14-22",
+   "14-23",
+   "14-24",
+   "14-25",
+   "14-26",
+
+   "15-27",
+   "16-26",
+   "17-25",
+   "18-24",
+   "19-23",
+   "20-22",
+];
+
+const tiles: string[] = [
+   "6-9",
+   "6-10",
+   "7-9",
+   "7-8",
+   "6-8",
+   "5-9",
+   "5-8",
+   "5-10",
+   "7-10",
+   "8-9",
+   "8-8",
+   "9-8",
+   "9-7",
+   "10-7",
+   "8-7",
+   "9-6",
+   "5-11",
+   "4-11",
+   "4-10",
+   "3-10",
+   "4-9",
+   "6-7",
+   "7-11",
+   "8-10",
+   "4-12",
+   "3-11",
+   "13-13",
+   "13-14",
+   "12-13",
+   "11-12",
+   "12-11",
+   "8-23",
+   "9-24",
+   "10-24",
+   "11-24",
+   "13-26",
+   "13-27",
+   "14-27",
+   "14-28",
+   "15-28",
+   "16-27",
+   "17-26",
+   "19-13",
+   "19-14",
+   "19-15",
+   "18-13",
+   "23-7",
+   "24-8",
+   "25-9",
+   "26-10",
+   "26-11",
+   "24-8",
+   "22-7",
+   "17-4",
+   "18-4",
+   "18-5",
+   "17-5",
+   "16-3",
+   "17-3",
+   "16-4",
+   "15-3",
+   "16-2",
+   "31-4",
+   "32-4",
+   "33-4",
+   "33-4",
+   "33-5",
+   "32-5",
+   "33-6",
+   "33-3",
+   "34-4",
+   "25-23",
+   "26-24",
+   "27-25",
+   "28-26",
+   "28-27",
+   "28-29",
+   "27-30",
+   "26-30",
+   "26-31",
+   "25-31",
+   "24-31",
+   "27-26",
+   "28-25",
+   "29-26",
+   "29-26",
+   "29-28",
+   "29-27",
+   "29-29",
+   "25-23",
+   "25-23",
+   "25-24",
+   "26-25",
+   "27-24",
+   "29-25",
+   "28-30",
+   "27-30",
+   "27-31",
+   "30-27",
+   "22-27",
+   "21-28",
+   "21-29",
+   "20-30",
+   "19-30",
+   "20-29",
+   "20-29",
+   "19-31",
+   "20-31",
+   "18-29",
+   "18-30",
+   "22-29",
+   "4-28",
+   "5-28",
+   "5-29",
+   "6-29",
+   "7-29",
+   "6-30",
+   "6-28",
+];
+//  ------------  Tempory  ------------
 
 
 // =====================================================================
@@ -31,6 +222,7 @@ export class GameManager {
    gridSize:         number = 1600;
    curPop:           number = 0;
    maxPop:           number = 2000;
+   halfGrid:         number;
 
    Canvas:           ICanvas;
    Ctx:              ICtx;
@@ -39,8 +231,6 @@ export class GameManager {
    vacantIDsList:    number[]      = [];
    oldSelectList:    Set<Agent>    = new Set();
    curSelectList:    Set<Agent>    = new Set();
-   isoComputed:      DOMMatrix     = new DOMMatrix();
-   terComputed:      DOMMatrix     = new DOMMatrix();
    
    gridPos:          IPosition     = { x: 0, y: 0 };
    offset:           IPositionList = {
@@ -50,16 +240,16 @@ export class GameManager {
    };
 
    // Constants ==> Do not modify
+   frame:            number = 0;
    ViewAngle:        number = 0;
    COS_45:           number = 0.707;
    COS_30:           number = 0.866;
-   max_X:            number = 0.7;
-   max_Y:            number = 0.7 *0.5;
 
    // Classes instances
    Grid:             Grid;
    Cursor:           Cursor;
    Viewport:         Viewport;
+   Collision:        Collision;
 
 
    // Images & Sources ==> Need to move in a dedicated class later 
@@ -71,22 +261,102 @@ export class GameManager {
    highG_Src: string = "Terrain/High_Grass.png";
    walls_Src: string = "Buildings/wall.png";
 
+   isGridHidden:  boolean;
+   isFrameHidden: boolean;
+
 
    constructor(params: any) {
 
-      this.Canvas   = params.Canvas;
-      this.Ctx      = params.Ctx;
+      this.Canvas    = params.Canvas;
+      this.Ctx       = params.Ctx;
+      this.halfGrid  = this.gridSize *0.5;
       
-      this.Grid     = new Grid     (this);
-      this.Cursor   = new Cursor   (this);
-      this.Viewport = new Viewport (this);
+      this.Grid      = new Grid      (this);
+      this.Cursor    = new Cursor    (this);
+      this.Viewport  = new Viewport  (this, params.docBody);
+      this.Collision = new Collision ();
 
+      this.isGridHidden  = params.props.isGridHidden;
+      this.isFrameHidden = params.props.isFrameHidden;
+
+      this.init();
+   }
+
+
+   init() {
+
+      this.setCanvasSize();
+      this.setViewAngle();
+      this.setTerrainOffset();
+      this.setViewportOffset();
+      this.setVacantIDsList();
+
+
+      // **********************************  Tempory  **********************************
+      this.flatG_Img.src = this.flatG_Src;
+      this.highG_Img.src = this.highG_Src;
+      this.walls_Img.src = this.walls_Src;
+
+      this.createNewAgent("infantry", "swordsman", "6-16",  "");
+      this.createNewAgent("infantry", "swordsman", "9-20",  "");
+      this.createNewAgent("infantry", "swordsman", "9-22",  "");
+      this.createNewAgent("infantry", "swordsman", "9-24",  "");
+      this.createNewAgent("infantry", "swordsman", "13-24", "");
+      this.createNewAgent("infantry", "swordsman", "24-14", "");
+      
+      // this.createNewAgent("infantry",  "worker",    "5-3", "");
+      // this.createNewAgent("cavalry",   "swordsman", "9-2", "");
+      // this.createNewAgent("cavalry",   "bowman",    "2-6", "");
+      // this.createNewAgent("machinery", "ballista",  "8-5", "");
+      // this.createNewAgent("machinery", "catapult",  "6-9", "");
+
+      // this.Test_GenerateUnits();
+      this.Test_SetWallsList();
+
+      tiles.forEach(ID => this.Grid.cellsList.get(ID)!.isDiffTile = true);
+      setTimeout   (() => this.drawTerrain(), 0);
+      // **********************************  Tempory  **********************************
+
+      this.runAnimation();
+   }
+
+   runAnimation() {
+
+      this.frame++;
+   
+      this.clearCanvas("isoSelect");
+      this.clearCanvas("assets");
+      
+      this.draw_UnitsAndBuild();
+
+      this.Viewport.detectScrolling();
+      this.Viewport.drawScrollBounds();
+      this.Viewport.drawHoverUnit();
+      this.Viewport.drawSelectUnit();
+
+      this.Grid.drawGrid();
+
+      this.Cursor.drawHoverCell();
+   
+      requestAnimationFrame(() => this.runAnimation());
    }
 
 
    // =========================================================================================
    // Terrain & Canvas
    // =========================================================================================
+   getWorldSize(): ISize{
+
+      const hypot:   number = this.gridSize;
+      const degrees: number = 26.565;  // ==> Fake isometric angle value
+      const radians: number = degrees * (Math.PI / 180);
+
+      return {
+         width:  Math.floor( hypot * Math.cos(radians) *2 ) +50, // +50 ==> some margin
+         height: Math.floor( hypot * Math.sin(radians) *2 ) +50, // +50 ==> some margin
+      }
+   }
+
    setCanvasSize() {
       
       const gridCanvas: any = {
@@ -111,18 +381,6 @@ export class GameManager {
             canvas.width  = this.Viewport.width;
             canvas.height = this.Viewport.height;
          }
-      }
-   }
-
-   getWorldSize(): ISize{
-
-      const hypot:   number = this.gridSize;
-      const degrees: number = 26.565;  // ==> Fake isometric angle value
-      const radians: number = degrees * (Math.PI / 180);
-
-      return {
-         width:  Math.floor( hypot * Math.cos(radians) *2 ) +50, // +50 ==> some margin
-         height: Math.floor( hypot * Math.sin(radians) *2 ) +50, // +50 ==> some margin
       }
    }
 
@@ -161,7 +419,7 @@ export class GameManager {
    clearCanvas(canvasName: string) {
 
       const { width, height } = (canvasName === "isometric")
-      ? { width: this.gridSize,       height: this.gridSize        }
+      ? { width: this.gridSize,       height: this.gridSize        } // Test if works well with Viewport.width, Viewport.height ==> clear only visible area
       : { width: this.Viewport.width, height: this.Viewport.height };
 
       this.Ctx[canvasName].clearRect(0, 0, width, height);
@@ -171,9 +429,9 @@ export class GameManager {
    // =========================================================================================
    // Boolean methods
    // =========================================================================================
-   isGridScope(): boolean {
+   isGridScope(isoPos: IPosition): boolean {
 
-      const { x: gridX, y: gridY }: IPosition = this.gridPos;
+      const { x: gridX, y: gridY }: IPosition = isoPos;
 
       if(gridX > 0 && gridX < this.gridSize
       && gridY > 0 && gridY < this.gridSize) {
@@ -184,7 +442,7 @@ export class GameManager {
       return false;
    }
 
-   isViewScope(): boolean {
+   isViewScope(cartPos: IPosition): boolean {
 
       const {
          x:        vpX,
@@ -193,14 +451,14 @@ export class GameManager {
          height:   vpHeight
       }: ISquare = this.Viewport;
 
-      const { x: gridX,    y: gridY   }: IPosition = this.gridPos;
+      const { x: viewX,    y: viewY   }: IPosition = cartPos;
       const { x: scrollX,  y: scrollY }: IPosition = this.offset.scroll;
 
       const originX: number = vpX -scrollX;
       const originY: number = vpY -scrollY;
 
-      if(gridX >= originX && gridX <= originX +vpWidth
-      && gridY >= originY && gridY <= originY +vpHeight) {
+      if(viewX >= originX && viewX <= originX +vpWidth
+      && viewY >= originY && viewY <= originY +vpHeight) {
 
          return true;
       }
@@ -217,12 +475,11 @@ export class GameManager {
       const { x: screenX, y: screenY }: IPosition = screenPos;
       
       const screenY_2x:     number = screenY *2;
-      const half_GridWidth: number = this.gridSize *0.5;
 
       // Isometric <== Cartesian
       this.gridPos = {
-         x:  Math.floor( (screenX -screenY_2x) /this.COS_45 *0.5 ) +half_GridWidth,
-         y:  Math.floor( (screenX +screenY_2x) /this.COS_45 *0.5 ) -half_GridWidth,
+         x:  Math.floor( (screenX -screenY_2x) /this.COS_45 *0.5 ) +this.halfGrid,
+         y:  Math.floor( (screenX +screenY_2x) /this.COS_45 *0.5 ) -this.halfGrid,
       };
    }
 
@@ -295,9 +552,7 @@ export class GameManager {
    unitSelection() {
 
       if(this.Cursor.isSelecting) {
-
          this.clearCanvas("selection");
-
          this.Cursor.drawSelectArea();
       }
 
@@ -316,9 +571,10 @@ export class GameManager {
          };
 
          if(this.Cursor.isSelecting) {
-              this.updateUnitsList(Collision.square_toCircle, this.Cursor.selectArea,  agentCollider, agent);
+            this.updateUnitsList(this.Collision.square_toCircle, this.Cursor.selectArea,  agentCollider, agent);
          }
-         else this.updateUnitsList(Collision.point_toCircle,  this.Cursor.curPos.cart, agentCollider, agent);
+         
+         this.updateUnitsList   (this.Collision.point_toCircle,  this.Cursor.curPos.cart, agentCollider, agent);
       }
    }
 
@@ -373,12 +629,12 @@ export class GameManager {
       }
    }
 
-   setTarget(hoverCell_ID: string) {
+   setTargetCell(hoverCell_ID: string) {
 
-      if(!this.isGridScope()) return;
+      if(!this.isGridScope(this.Cursor.curPos.iso)) return;
 
       for(const agent of this.oldSelectList) {
-         const goalCell = this.Grid!.cellsList.get(hoverCell_ID)!;
+         const goalCell = this.Grid.cellsList.get(hoverCell_ID)!;
 
          if(goalCell.isBlocked || !goalCell.isVacant) return;
          
@@ -387,7 +643,137 @@ export class GameManager {
       }
    }
 
+
+   // =========================================================================================
+   // Terrain - Units - Building
+   // =========================================================================================
+   drawTerrain() {
+
+      for(const [id, cell] of this.Grid.cellsList) {
+
+         const cellPos = this.gridPos_toScreenPos(cell.center);
+         cell.drawTile(this.Ctx.terrain, cellPos);
+      }
+   }
+
+   draw_UnitsAndBuild() {
+
+      const {
+         assets:    ctx_assets,
+         isometric: ctx_isometric,
+      } = this.Ctx;
+
+      for(const cell of this.Grid.occupiedCells) {
+         
+         // Draw all units
+         if(cell.agentIDset.size > 0) {
+            
+            for(const agentID of cell.agentIDset) {
+
+               const agent    = this.agentsList.get(agentID)!;
+               const agentPos = this.gridPos_toScreenPos(agent.position);
+         
+               agent.updateState(this.frame);
+               agent.walkPath();
+            
+               if(!this.isViewScope(agentPos)) continue;
+            
+               agent.drawSprite(ctx_assets, agentPos, this.offset.scroll);
+               // agent.drawCollider(ctx_assets, agentPos, this.offset.scroll);
+               agent.drawPath(ctx_isometric);
+            }
+         }
+
+         // Draw all buildings
+         if(cell.isBlocked) {
+            const cellPos = this.gridPos_toScreenPos(cell.center);
+
+            if(cell.isTransp) {
+               ctx_assets.save();
+               ctx_assets.globalAlpha = 0.5;
+               
+               cell.drawWall(ctx_assets, cellPos, this.offset.scroll);
+
+               ctx_assets.restore();
+               return;
+            }
+
+            cell.drawWall(ctx_assets, cellPos, this.offset.scroll);
+         }
+      }
+   }
+
+
+   // =========================================================================================
+   // Test Methods   ==>   To delete later
+   // =========================================================================================
+   Test_Rand(maxValue: number): number {
+
+      return Math.floor( Math.random() *maxValue );
+   }
+
+   Test_PathRandomize(agent: Agent) {
+
+      let i = this.Test_Rand(this.Grid.cellPerSide);
+      let j = this.Test_Rand(this.Grid.cellPerSide);
+      
+      const targetCell = this.Grid.cellsList.get(`${i}-${j}`)!;
+      
+      if(targetCell.isBlocked) return;
+      
+      agent.goalCell = targetCell;
+      agent.searchPath();
+   }
+
+   Test_GenerateUnits() {
+
+      let pop = 30;
+
+      const blue   = "Units/Swordsman_Blue.png";
+      const purple = "Units/Swordsman_Purple.png";
+      const red    = "Units/Swordsman_Red.png";
+      
+      while(pop > 0) {
+
+         let unitType = this.Test_Rand(2);
+         let index    = this.Test_Rand(4);
+         let i        = this.Test_Rand(this.Grid.cellPerSide);
+         let j        = this.Test_Rand(this.Grid.cellPerSide);
+
+         if( this.Grid.cellsList.get(`${i}-${j}`)!.isVacant
+         && !this.Grid.cellsList.get(`${i}-${j}`)!.isBlocked) {
+
+            let color = "";
+
+            if(index === 0) color = blue;
+            if(index === 1) color = purple;
+            if(index === 2) color = red;
+
+            if(unitType === 0) this.createNewAgent("infantry", "swordsman", `${i}-${j}`, color);
+            if(unitType === 1) this.createNewAgent("infantry", "worker",    `${i}-${j}`, ""   );
+            
+            this.Grid.cellsList.get(`${i}-${j}`)!.isVacant = false;
+            pop--;
+
+            this.curPop++;
+         }
+         
+         else continue;
+      }
+   }
+
+   Test_SetWallsList = () => {
+
+      walls.forEach((cellID) => {
+         const cell:     Cell      = this.Grid.cellsList.get(cellID)!;
+         const { x, y }: IPosition = this.gridPos_toScreenPos(cell.center);
+         
+         cell.isBlocked   = true;
+         cell.screenPos.x = x;
+         cell.screenPos.y = y;
    
-
-
+         this.Grid.addToOccupiedMap(cell);
+      });
+   }
+   
 }

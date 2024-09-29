@@ -23,6 +23,10 @@ export interface IPositionList {
    [key: string]: IPosition,
 }
 
+export interface ISquareList {
+   [key: string]: ISquare,
+}
+
 export interface ICoordArray {
    [key: string]: [number, number, boolean],
 }

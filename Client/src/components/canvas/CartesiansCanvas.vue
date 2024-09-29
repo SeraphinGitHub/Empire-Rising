@@ -12,10 +12,7 @@
    </section>
 </template>
 
-<script lang="ts">
-
-   // Scripts
-   import { glo } from "../../scripts/utils/_GlobalVar"
+<script>
 
    export default {
 
@@ -30,10 +27,10 @@
 
       mounted() {
 
-         this.allCanvas.forEach((canvasName: string) => {
-            const canvasElem       = this.$refs[canvasName] as HTMLCanvasElement;
-            glo.Canvas[canvasName] = canvasElem;
-            glo.Ctx   [canvasName] = canvasElem.getContext("2d") as CanvasRenderingContext2D;
+         this.allCanvas.forEach((canvasName) => {
+            const canvasElem       = this.$refs[canvasName];
+            this.$parent.Canvas[canvasName] = canvasElem;
+            this.$parent.Ctx   [canvasName] = canvasElem.getContext("2d");
          });
       },
    }

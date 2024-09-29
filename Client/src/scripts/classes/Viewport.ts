@@ -1,9 +1,12 @@
 
 import {
-
+   IBoolean,
+   ISquareList,
 } from "../utils/interfaces";
 
-import { GameManager } from "./_Export";
+import {
+   GameManager,
+} from "./_Export";
 
 
 // =====================================================================
@@ -13,77 +16,190 @@ export class Viewport {
 
    private GManager: GameManager;
 
-   x:           number = 0;
-   y:           number = 0;
-   width:       number = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-   height:      number = 800;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+   x:                number  = 0;
+   y:                number  = 0;
+   width:            number  = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+   height:           number  = 800;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
    
-   scrollSpeed: number = 7;
-   detectSize:  number = 60;
+   scrollSpeed:      number  = 7;
+   detectSize:       number  = 60;
 
-   isScrolling: boolean = false;
+   // Constants ==> Do not modify
+   limit_X:          number  = 0.7;
+   limit_Y:          number  = 0.7 *0.5;
+   
+   isScrollDetect:   boolean = false;
+   
+   isoComputed:      DOMMatrix   | undefined = undefined;
+   terComputed:      DOMMatrix   | undefined = undefined;
+   viewBounds:       ISquareList | undefined = undefined;
 
-   constructor(GManager: GameManager) {
+   constructor(
+      GManager:  GameManager,
+      docBody: any,
+   ) {
       this.GManager = GManager;
+      this.init(docBody);
    }
 
-   setSize(document: Document) {
-   
-      this.width  = document.body.clientWidth;
-      this.height = document.body.clientHeight;
+
+   init(docBody: any) {
+
+      this.setSize(docBody);
+      this.setDOMMatrix();
+      this.setViewportBounds();
    }
 
-   const setComputed = () => {
+   setSize(docBody: any) {
+      this.width  = docBody.clientWidth;
+      this.height = docBody.clientHeight;
+   }
 
-      // IsoSelect Canvas
-      glo.IsoSelectComputed!.e = glo.Scroll.x;
-      glo.IsoSelectComputed!.f = glo.Scroll.y *2 -glo.GridParams.gridSize *0.5;
-      glo.Canvas.isoSelect.style.transform = glo.IsoSelectComputed!.toString();
+   setDOMMatrix() {
+      // CSS Canvas scroll
+      this.isoComputed = new DOMMatrix(window.getComputedStyle(this.GManager.Canvas.isometric).transform);
+      this.terComputed = new DOMMatrix(window.getComputedStyle(this.GManager.Canvas.terrain  ).transform);
+   }
+
+   setViewportBounds() {
+      const { x, y, width, height, detectSize } = this;
       
-      // Terrain Canvas
-      glo.TerrainComputed!.e = glo.Scroll.x;
-      glo.TerrainComputed!.f = glo.Scroll.y;
-      glo.Canvas.terrain.style.transform   = glo.TerrainComputed!.toString();
+      const rightX  = x +width  -detectSize;
+      const bottomY = y +height -detectSize;
+
+      this.viewBounds = {
+         top:    { x: x,      y: y,       width: width,       height:  detectSize },
+         right:  { x: rightX, y: y,       width: detectSize,  height:  height     },
+         bottom: { x: x,      y: bottomY, width: width,       height:  detectSize },
+         left:   { x: x,      y: y,       width: detectSize,  height:  height     },
+      }
    }
 
-   const scrollCam = () => {
+   setComputed() {
 
-      if(!isScrolling || isScollActive) return;
-   
-      const scrollBounds = setScrollBounds();
-      const mousePos     = glo.SelectArea.currentPos;
+      const { x: scrollX, y: scrollY } = this.GManager.offset.scroll;
+      const { isometric,  terrain    } = this.GManager.Canvas;
+
+      // Update CSS canvas isometric & terrain
+      this.updateComputed(this.isoComputed, scrollX, scrollY *2 -this.GManager.halfGrid);
+      this.updateComputed(this.terComputed, scrollX, scrollY);
+
+      // Apply transformations
+      isometric.style.transform = this.isoComputed!.toString();
+      terrain  .style.transform = this.terComputed!.toString();
+   }
+
+   updateComputed(
+      computed: any,
+      x:        number,
+      y:        number
+   ) {
+      computed.e = x;
+      computed.f = y;
+   }
+
+
+   // =========================================================================================
+   // ScrollCam
+   // =========================================================================================
+   detectScrolling() {
+
+      if(!this.isScrollDetect || this.GManager.Cursor.isScollClick) return;
       
-      if(!mousePos) return
+      const GM       = this.GManager;
+      const mousePos = GM.Cursor.curPos.cart;
+
+      const { top, right, bottom, left } = this.viewBounds!;
+      
+      // if(!mousePos) return
+
+      const col = GM.Collision;
          
-      const top:    boolean = Collision.point_toSquare(mousePos, scrollBounds.top);
-      const right:  boolean = Collision.point_toSquare(mousePos, scrollBounds.right);
-      const bottom: boolean = Collision.point_toSquare(mousePos, scrollBounds.bottom);
-      const left:   boolean = Collision.point_toSquare(mousePos, scrollBounds.left);
+      const isTop:    boolean = col.point_toSquare( mousePos, top    );
+      const isRight:  boolean = col.point_toSquare( mousePos, right  );
+      const isBottom: boolean = col.point_toSquare( mousePos, bottom );
+      const isLeft:   boolean = col.point_toSquare( mousePos, left   );
    
-      if(!top && !right && !bottom && !left) return isScrolling = false;
+      if(!top && !right && !bottom && !left) return this.isScrollDetect = false;
+
+      this.scrollCam({ isTop, isRight, isBottom, isLeft });
+   }
+
+   scrollCam(collide: IBoolean) {
+      
+      let scroll = this.GManager.offset.scroll;
+      const { isTop, isRight, isBottom, isLeft } = collide;
+      const { scrollSpeed, limit_X, limit_Y    } = this;
+
+      if(isTop    && scroll.y <  limit_Y) scroll.y += scrollSpeed;
+      if(isRight  && scroll.x > -limit_X) scroll.x -= scrollSpeed;
+      if(isBottom && scroll.y > -limit_Y) scroll.y -= scrollSpeed;
+      if(isLeft   && scroll.x <  limit_X) scroll.x += scrollSpeed;
    
-      if(top    && glo.Scroll.y <  glo.max_Y) glo.Scroll.y += glo.MouseSpeed;
-      if(right  && glo.Scroll.x > -glo.max_X) glo.Scroll.x -= glo.MouseSpeed;
-      if(bottom && glo.Scroll.y > -glo.max_Y) glo.Scroll.y -= glo.MouseSpeed;
-      if(left   && glo.Scroll.x <  glo.max_X) glo.Scroll.x += glo.MouseSpeed;
-   
-      setComputed();
-      isScrolling = true;
+      this.setComputed();
    }
    
-   const mouseScroll = () => {
+   mouseScrollCam() {
       
-      if(!isScollActive) return;
-      
-      const { x: oldX,    y: oldY    } = glo.SelectArea.oldPos;
-      const { x: mouseX,  y: mouseY  } = glo.SelectArea.currentPos;
+      if(!this.GManager.Cursor.isScollClick) return;
+
+      const { limit_X,      limit_Y } = this;
+      const { oldPos,       curPos  } = this.GManager.Cursor;
+      const { x: oldX,   y: oldY    } = oldPos.cart;
+      const { x: mouseX, y: mouseY  } = curPos.cart;
    
-      const isRange_X: boolean = (glo.Scroll.x < glo.max_X) && (glo.Scroll.x > -glo.max_X);
-      const isRange_Y: boolean = (glo.Scroll.y < glo.max_Y) && (glo.Scroll.y > -glo.max_Y);
+      const isRange_X: boolean = (scrollX < limit_X) && (scrollX > -limit_X);
+      const isRange_Y: boolean = (scrollY < limit_Y) && (scrollY > -limit_Y);
    
-      if(isRange_X) glo.Scroll.x = mouseX -oldX;
-      if(isRange_Y) glo.Scroll.y = mouseY -oldY;
+      if(isRange_X) scrollX = mouseX -oldX;
+      if(isRange_Y) scrollY = mouseY -oldY;
       
-      setComputed();
+      this.setComputed();
+   }
+
+
+   // =========================================================================================
+   // Draw Methods
+   // =========================================================================================
+   const drawScrollBounds = () => {
+
+      if(glo.Params.isFrameHidden) return;
+      
+      const scrollBounds: any = setScrollBounds();
+   
+      for(let i in scrollBounds) {
+   
+         const { x, y, width, height }: ISquare = scrollBounds[i];
+   
+         glo.Ctx.assets.fillStyle = "rgba(255, 0, 255, 0.5)";
+         glo.Ctx.assets.fillRect(
+            x,
+            y,
+            width,
+            height
+         );
+      }
+   }
+
+   const drawSelectUnit = () => {
+
+      glo.OldSelectList.forEach((agent: Agent) => {
+         let agentPos = gridPos_toScreenPos(agent.position);
+   
+         if(!isWithinViewport(agentPos)) return;
+   
+         agent.drawSelect(glo.Ctx.isoSelect, "yellow");
+      });
+   }
+   
+   const drawHoverUnit = () => {
+   
+      glo.CurrentSelectList.forEach((agent: Agent) => {
+         let agentPos = gridPos_toScreenPos(agent.position);
+   
+         if(!isWithinViewport(agentPos)) return;
+   
+         agent.drawSelect(glo.Ctx.isoSelect, "blue");
+      });
    }
 }

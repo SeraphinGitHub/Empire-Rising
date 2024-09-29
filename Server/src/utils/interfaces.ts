@@ -1,6 +1,6 @@
 
 import {
-   AgentClass,
+   Agent,
    PlayerClass,
 } from "../classes/_Export";
 
@@ -32,8 +32,8 @@ export interface IPlayerClass {
    [key: number]: PlayerClass,
 }
 
-export interface IAgentClass {
-   [key: number]: AgentClass,
+export interface IAgent {
+   [key: number]: Agent,
 }
 
 

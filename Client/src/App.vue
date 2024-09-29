@@ -24,7 +24,7 @@
 
    // Scripts
    import { io          } from "socket.io-client";
-   import { GameHandler } from "./scripts/_GameHandler"
+   import { GameManager } from "./scripts/classes/_Export";
 
    export default {
       name: "App",
@@ -40,8 +40,11 @@
          title: "Empire Rising",
          URL:   "http://localhost:3000",
          socket: null,
+
+         Canvas: {},
+         Ctx:    {},
          
-         params: {
+         props: {
             isGridHidden:  false,
             isFrameHidden: true,
          }
@@ -51,9 +54,18 @@
 
          document.title = this.title;
          // this.connectWith_Express();
+
+         document.body.oncontextmenu = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+         }
          
-         // GameHandler.init(document, socket);
-         GameHandler.init(document, this.params);
+         new GameManager({
+            docBody: document.body,
+            Canvas:  this.Canvas,
+            Ctx:     this.Ctx,
+            props:   this.props,
+         });
       },
 
       methods: {
