@@ -10,16 +10,20 @@ import {
 // =====================================================================
 export class Grid {
 
-   cellsList:     Map<string, Cell> = new Map();
-   blockedCells:  Set<Cell>         = new Set();
-   occupiedCells: Set<Cell>         = new Set();
+   private GManager: GameManager;
+
+   cellsList:        Map<string, Cell> = new Map();
+   viewCellsList:    Map<string, Cell> = new Map();
+   blockedCells:     Set<Cell>         = new Set();
+   occupiedCells:    Set<Cell>         = new Set();
    
-   gridSize:      number;
-   cellSize:      number;
-   cellPerSide:   number;
+   gridSize:         number;
+   cellSize:         number;
+   cellPerSide:      number;
 
    constructor(GManager: GameManager) {
 
+      this.GManager    = GManager;
       this.gridSize    = GManager.gridSize;
       this.cellSize    = GManager.cellSize;
       this.cellPerSide = Math.floor(this.gridSize / this.cellSize);
@@ -28,17 +32,25 @@ export class Grid {
    }
 
    init() {
+      
+      this.setCellsList();
+      this.setNeighbors();
+      this.setViewCellsList();
+   }
+
+   setCellsList() {
       let zIndex = 0;
 
-      // Init grid
-      for(let i = 0; i < this.cellPerSide; i++) {  // Collums
-         for(let j = 0; j < this.cellPerSide; j++) {  // Rows
+      const { cellSize, cellPerSide } = this;
+      
+      for(let i = 0; i < cellPerSide; i++) {     // Collums
+         for(let j = 0; j < cellPerSide; j++) {  // Cells
             
             const cell: Cell = new Cell(
                zIndex,
-               this.cellPerSide,
-               this.cellSize,
-               this.cellPerSide -i -1,
+               cellPerSide,
+               cellSize,
+               cellPerSide -i -1,
                j
             );
             
@@ -46,10 +58,29 @@ export class Grid {
             zIndex++;
          }
       }
+   }
 
-      // Set cells neighborsList
+   setNeighbors() {
+
       for(const [id, cell] of this.cellsList) {
          cell.setNeighborsList();
+      }
+   }
+
+   setViewCellsList() {
+      const GM = this.GManager;
+      
+      this.viewCellsList.clear();
+
+      for(const [id, cell] of this.cellsList) {
+         const cellPos = GM.gridPos_toScreenPos(cell.center);
+         
+         if(!GM.isViewScope(cellPos)) continue;
+
+         cell.screenPos.x = cellPos.x;
+         cell.screenPos.y = cellPos.y;
+         
+         this.viewCellsList.set(id, cell);
       }
    }
 
@@ -68,19 +99,12 @@ export class Grid {
    // Draw Methods
    // =========================================================================================
    drawGrid() {
-      if(glo.Params.isGridHidden) return;
-   
-      const { isoSelect } = glo.Ctx;
-      
-      this.cellsList.forEach((cell: Cell) => {
-         const cellPos = gridPos_toScreenPos(cell.center);
-         
-         if(!isWithinViewport(cellPos)) return;
-            
-         cell.screenPos.x = cellPos.x;
-         cell.screenPos.y = cellPos.y;
-         cell.drawInfos(isoSelect);
-      });
+
+      if(this.GManager.isGridHidden) return;
+
+      for(const [id, cell] of this.viewCellsList) {         
+         cell.drawInfos(this.GManager.Ctx.isometric);
+      }
    }
    
 }

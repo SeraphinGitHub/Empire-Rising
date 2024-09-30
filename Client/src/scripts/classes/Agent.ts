@@ -9,8 +9,6 @@ import {
    Cell
 } from "./_Export";
 
-import { glo } from "../utils/_GlobalVar";
-
 
 // =====================================================================
 // Agent Class
@@ -22,8 +20,6 @@ export class Agent {
    startDate_2:  number = 0;
    // ----- Debug -----
 
-
-   // Basic Information
    id:          number;
    popCost:     number;
    moveSpeed:   number;
@@ -35,12 +31,12 @@ export class Agent {
    // Pathfinding
    startCell:   Cell;
    currentCell: Cell;
-   nextCell:    Cell | undefined = undefined;
-   goalCell:    Cell | undefined = undefined;
-   openSet:     Set<Cell>        = new Set();
-   closedSet:   Set<Cell>        = new Set();
-   costMap:     Map<string, ICost>    = new Map();
-   path:        Cell[]           = [];
+   nextCell:    Cell | undefined   = undefined;
+   goalCell:    Cell | undefined   = undefined;
+   openSet:     Set<Cell>          = new Set();
+   closedSet:   Set<Cell>          = new Set();
+   costMap:     Map<string, ICost> = new Map();
+   path:        Cell[]             = [];
    emptyCost:   ICost = {
       hCost: 0,
       gCost: 0,
@@ -48,27 +44,24 @@ export class Agent {
       cameFromCell: undefined,
    };
 
-   // Image and Animation
    img:         HTMLImageElement | undefined = undefined;
+   
    frameX:      number = 0;
    frameY:      number = 11;
    lastFrameY:  number = 11;
    animState:   number = 0;
 
-   // States
    isMoving:    boolean = false;
    isSelected:  boolean = false;
    isAttacking: boolean = false;
-
-   // Animation Specifications
+   
    animSpecs = {
       idle:    { index: 6, spritesNumber: 1  },
       walk:    { index: 6, spritesNumber: 9  },
       attack:  { index: 6, spritesNumber: 5  },
       died:    { index: 1, spritesNumber: 10 },
    };
-
-   // Sprite Sizes
+   
    sprites:        INumber = { height: 64, width: 64, offsetY: 25 };
    specialSprites: INumber = { height: 64, width: 192 };
 
@@ -525,55 +518,37 @@ export class Agent {
       ctx.closePath();
    }
 
+
+   // =========================================================================================
+   // Animation States
+   // =========================================================================================
    updateState(frame: number) {
+      const { walk, attack, died, idle } = this.animSpecs;
 
       switch(this.animState) {
 
-         // Walking
-         case 1: {
-            this.animation(
-               frame,
-               this.animSpecs.walk.index,
-               this.animSpecs.walk.spritesNumber
-            );
-         } break;
+         case 1:  this.animation(frame, walk.index,   walk.spritesNumber  );
+         break;
 
-         // Attacking
-         case 2: {
-            this.animation(
-               frame,
-               this.animSpecs.attack.index,
-               this.animSpecs.attack.spritesNumber
-            );
-         } break;
+         case 2:  this.animation(frame, attack.index, attack.spritesNumber);
+         break;
       
-         // Died
-         case 3: {
-            this.animation(
-               frame,
-               this.animSpecs.died.index,
-               this.animSpecs.died.spritesNumber
-            );
-         } break;
+         case 3:  this.animation(frame, died.index,   died.spritesNumber  );
+         break;
 
-         // Idle
-         default: {
-            this.animation(frame,
-               this.animSpecs.idle.index,
-               this.animSpecs.idle.spritesNumber
-            );
-         } break;
+         default: this.animation(frame, idle.index,   idle.spritesNumber  );
+         break;
       }
    }
 
    animation(
-      frame:         number,
-      index:         number,
-      spritesNumber: number,
+      frame:      number,
+      index:      number,
+      spritesNum: number,
    ) {
       
       if(frame % index === 0) {         
-         if(this.frameX < spritesNumber -2) this.frameX++;
+         if(this.frameX < spritesNum -2) this.frameX++;
    
          else {
             this.frameX = 0;

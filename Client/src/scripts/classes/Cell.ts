@@ -13,25 +13,23 @@ import {
 // =====================================================================
 export class Cell {
    
-   id: string;
+   id:             string;
 
-   i:  number;
-   j:  number;
-   x:  number;
-   y:  number;
+   i:              number;
+   j:              number;
+   x:              number;
+   y:              number;
+   zIndex:         number;
+   size:           number;
+   cellPerSide:    number;
 
-   zIndex:      number;
-   size:        number;
-   cellPerSide: number;
-
-   center:      IPosition;
-   screenPos:   IPosition = { x: 0, y: 0 }; // ==> Tempory 
-
-   // Collider and neighbors
-   collider:       IPositionList;
-   agentIDset:     Set<number> = new Set();
-   neighborsList:  INebList    = {};
-   nebCoordList:   ICoordArray = {
+   center:         IPosition     = { x: 0, y: 0 };
+   screenPos:      IPosition     = { x: 0, y: 0 };
+   
+   agentIDset:     Set<number>   = new Set();
+   collider:       IPositionList = {};
+   neighborsList:  INebList      = {};
+   nebCoordList:   ICoordArray   = {
       top:         [ 0, -1,  false], // isDiagonal ==> false
       topRight:    [ 1, -1,  true ], // isDiagonal ==> true
       right:       [ 1,  0,  false],
@@ -41,14 +39,13 @@ export class Cell {
       left:        [-1,  0,  false],
       topLeft:     [-1, -1,  true ],
    };
-
-   // States
-   isBlocked: boolean = false;
-   isVacant:  boolean = true;
-   isTransp:  boolean = false;
+   
+   isBlocked:      boolean = false;
+   isVacant:       boolean = true;
+   isTransp:       boolean = false;
 
    // ----------- Tempory -----------
-   isDiffTile:     boolean;
+   isDiffTile:  boolean;
    // ----------- Tempory -----------
 
    constructor(
@@ -59,32 +56,49 @@ export class Cell {
       j:           number,
    ) {
       
-      this.id = `${i}-${j}`;
-      this.i  = i;
-      this.j  = j;
-      this.x  = i *size;
-      this.y  = j *size;
-
-      this.center = {
-         x: this.x + size *0.5,
-         y: this.y + size *0.5,
-      };
-
+      this.id          = `${i}-${j}`;
+      this.i           = i;
+      this.j           = j;
+      this.x           = i *size;
+      this.y           = j *size;
       this.zIndex      = zIndex;
       this.size        = size;
       this.cellPerSide = cellPerSide;
       
-      this.collider = {
-         top:    { x: this.center.x,      y: this.y             },
-         right:  { x: this.x + this.size, y: this.center.y      },
-         bottom: { x: this.center.x,      y: this.y + this.size },
-         left:   { x: this.x,             y: this.center.y      },
-      };
+      this.init();
+
 
       // ----------- Tempory -----------
       this.isDiffTile    = false;
       // ----------- Tempory -----------
    }
+
+   init() {
+      this.setCenter();
+      this.setCollider();
+   }
+   
+   setCenter() {
+      const { x, y , size } = this;
+
+      const halfCell = size *0.5;
+      this.center.x  = x +halfCell;
+      this.center.y  = y +halfCell;
+   }
+   
+   setCollider() {
+      const { x,     y,    size  } = this;
+      const { x: centX, y: centY } = this.center;
+
+      // Set diamond corners coord
+      this.collider = {
+         top:    { x: centX,   y: y       },
+         right:  { x: x +size, y: centY   },
+         bottom: { x: centX,   y: y +size },
+         left:   { x: x,       y: centY   },
+      };
+   }
+
 
    // =========================================================================================
    // Set Neighbors List
@@ -147,8 +161,8 @@ export class Cell {
    }
 
    isBlockedDiag(
-      cellsList:  Map<string, Cell>,
-      neighbor:   Cell,
+      cellsList: Map<string, Cell>,
+      neighbor:  Cell,
    ): boolean {
       
       const {
@@ -194,88 +208,65 @@ export class Cell {
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawInfos(ctx: CanvasRenderingContext2D) {
+   drawInfos   (ctx: CanvasRenderingContext2D) {
          
       this.drawFrame(ctx);
       this.drawBlocked(ctx);
       this.drawVacancy(ctx);
       // this.drawID(ctx);
       // this.drawCenter(ctx);
-      // this.drawWallCollider(ctx);
+      // this.drawCollider(ctx);
    }
 
-   drawCenter(ctx: CanvasRenderingContext2D) {
+   drawCenter  (ctx: CanvasRenderingContext2D) {
+      const { x: cellX, y: cellY } = this.center;
 
       ctx.fillStyle = "red";
       ctx.beginPath();
-      ctx.arc(
-         this.center.x,
-         this.center.y,
-         4, 0, Math.PI * 2
-      );
+      ctx.arc(cellX, cellY, 4, 0, Math.PI *2);
       ctx.fill();
       ctx.closePath();
    }
 
-   drawFrame(ctx: CanvasRenderingContext2D) {
+   drawFrame   (ctx: CanvasRenderingContext2D) {
+      const { x, y, size } = this;
 
       ctx.strokeStyle = "black";
-      // ctx.strokeStyle = "white";
-      ctx.lineWidth = 1;
-   
-      ctx.strokeRect(
-         this.x,
-         this.y,
-         this.size,
-         this.size
-      );
+      ctx.lineWidth   = 1;
+      ctx.strokeRect(x, y, size, size);
    }
 
-   drawID(ctx: CanvasRenderingContext2D) {
+   drawID      (ctx: CanvasRenderingContext2D) {
+      const { id, center } = this;
 
       ctx.fillStyle = "black";
       ctx.font      = "16px Verdana";
       ctx.textAlign = "center";
 
       ctx.fillText(
-         this.id,
-         this.center.x,
-         this.center.y
+         id,
+         center.x,
+         center.y
       );
    }
 
-   drawData(ctx: CanvasRenderingContext2D, costData: ICost) {
-
+   drawData    (ctx: CanvasRenderingContext2D, costData: ICost) {
+      
       ctx.fillStyle = "white";
       ctx.font      = "18px Verdana";
       ctx.textAlign = "left";
-
+      
+      const { x: cellX,  y: cellY } = this.center;
       const { hCost, gCost, fCost } = costData;
-      const offsetX = 27;
+      
+      const xPos = cellX -27;
 
-      // hCost
-      ctx.fillText(
-         `h: ${hCost}`,
-         this.center.x -offsetX,
-         this.center.y -12
-      );
-
-      // gCost
-      ctx.fillText(
-         `g: ${gCost}`,
-         this.center.x -offsetX,
-         this.center.y +5
-      );
-
-      // fCost
-      ctx.fillText(
-         `f: ${fCost}`,
-         this.center.x -offsetX,
-         this.center.y +27
-      );      
+      ctx.fillText(`h: ${hCost}`, xPos, cellY -12);
+      ctx.fillText(`g: ${gCost}`, xPos, cellY +5 );
+      ctx.fillText(`f: ${fCost}`, xPos, cellY +27);      
    }
 
-   drawWallCollider(ctx: CanvasRenderingContext2D) {
+   drawCollider(ctx: CanvasRenderingContext2D) {
 
       const { top, right, bottom, left } = this.collider;     
 
@@ -290,52 +281,47 @@ export class Cell {
       ctx.fill();
    }
 
-   drawPath_WallLine(ctx: CanvasRenderingContext2D, hoverCell: Cell) {
+   drawWallLine(ctx: CanvasRenderingContext2D, hoverCell: Cell) {
+      const { x: cellX,  y: cellY  } = this.center;
+      const { x: hoverX, y: hoverY } = hoverCell.center;
 
       ctx.strokeStyle = "yellow";
       ctx.beginPath();
-      ctx.moveTo(
-         this.center.x,
-         this.center.y
-      );
-      ctx.lineTo(
-         hoverCell.center.x,
-         hoverCell.center.y
-      );
+
+      ctx.moveTo(cellX,  cellY );
+      ctx.lineTo(hoverX, hoverY);
+
       ctx.lineWidth = 4;
       ctx.stroke();
    }
 
-   drawBlocked(ctx: CanvasRenderingContext2D) {
+   drawBlocked (ctx: CanvasRenderingContext2D) {
 
       if(!this.isBlocked) return;
       
       this.drawColor(ctx, "rgba(255, 0, 0, 0.7)")
    }
 
-   drawVacancy(ctx: CanvasRenderingContext2D) {
+   drawVacancy (ctx: CanvasRenderingContext2D) {
 
       if(this.isVacant) return;
       
       this.drawColor(ctx, "rgba(0, 255, 255, 0.7)")
    }
 
-   drawColor(ctx: CanvasRenderingContext2D, color: string) {
+   drawColor   (ctx: CanvasRenderingContext2D, color: string) {
+      const { x, y, size } = this;
 
       ctx.fillStyle = color;
-      ctx.fillRect(
-         this.x,
-         this.y,
-         this.size,
-         this.size
-      );
+      ctx.fillRect(x, y, size, size);
    }
 
 
    // ------------------ Tempory ------------------
    drawTile(
-      ctx:     CanvasRenderingContext2D,
-      gridPos: IPosition,
+      ctx:   CanvasRenderingContext2D,
+      img_1: HTMLImageElement,
+      img_2: HTMLImageElement,
    ) {
 
       const frameX    = 0;
@@ -345,9 +331,9 @@ export class Cell {
       const offsetX   = 26;
       const offsetY   = 12;
 
-      let tileImg = glo.flatG_Img;
+      let tileImg = img_1;
 
-      if(this.isDiffTile) tileImg = glo.highG_Img;
+      if(this.isDiffTile) tileImg = img_2;
 
       ctx.drawImage(
          tileImg,
@@ -359,17 +345,17 @@ export class Cell {
          srcHeight,
          
          // Destination
-         gridPos.x -offsetX +glo.TerrainOffset.x,
-         gridPos.y -offsetY +glo.TerrainOffset.y,
+         this.screenPos.x -offsetX,
+         this.screenPos.y -offsetY,
          destSize,
          destSize,
       );
    }
 
    drawWall(
-      ctx:      CanvasRenderingContext2D,
-      gridPos:  IPosition,
-      scroll:   IPosition,
+      ctx:    CanvasRenderingContext2D,
+      scroll: IPosition,
+      img:    HTMLImageElement,
    ) {
 
       const srcSize  = 280;
@@ -378,7 +364,7 @@ export class Cell {
       const offsetY  = 75;
    
       ctx.drawImage(
-         glo.walls_Img,
+         img,
 
          // Source
          0,
@@ -387,8 +373,8 @@ export class Cell {
          srcSize,
          
          // Destination
-         gridPos.x -offsetX +scroll.x,
-         gridPos.y -offsetY +scroll.y,
+         this.screenPos.x -offsetX +scroll.x,
+         this.screenPos.y -offsetY +scroll.y,
          destSize +10,
          destSize,
       );

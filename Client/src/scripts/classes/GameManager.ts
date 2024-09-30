@@ -324,18 +324,17 @@ export class GameManager {
 
       this.frame++;
    
-      this.clearCanvas("isoSelect");
+      this.clearCanvas("isometric");
       this.clearCanvas("assets");
       
-      this.draw_UnitsAndBuild();
-
       this.Viewport.detectScrolling();
       this.Viewport.drawScrollBounds();
-      this.Viewport.drawHoverUnit();
-      this.Viewport.drawSelectUnit();
+      
+      this.draw_UnitsAndBuild();
+      this.drawHoverUnit();
+      this.drawSelectUnit();
 
       this.Grid.drawGrid();
-
       this.Cursor.drawHoverCell();
    
       requestAnimationFrame(() => this.runAnimation());
@@ -416,10 +415,10 @@ export class GameManager {
       }
    }
 
-   clearCanvas(canvasName: string) {
+   clearCanvas(canvasName: string) {  // Test if works well with Viewport.width, Viewport.height ==> clear only visible area
 
       const { width, height } = (canvasName === "isometric")
-      ? { width: this.gridSize,       height: this.gridSize        } // Test if works well with Viewport.width, Viewport.height ==> clear only visible area
+      ? { width: this.gridSize,       height: this.gridSize        }
       : { width: this.Viewport.width, height: this.Viewport.height };
 
       this.Ctx[canvasName].clearRect(0, 0, width, height);
@@ -645,14 +644,38 @@ export class GameManager {
 
 
    // =========================================================================================
-   // Terrain - Units - Building
+   // Draw Methods
    // =========================================================================================
-   drawTerrain() {
+   drawSelectUnit() { // ==> Recast later with good selected halo
+      
+      if(this.oldSelectList.size === 0 ) return;
+
+      for(const agent of this.oldSelectList) {
+         const agentPos = this.gridPos_toScreenPos(agent.position);
+   
+         if(!this.isViewScope(agentPos)) return;
+   
+         agent.drawSelect(this.Ctx.isometric, "yellow");
+      }
+   }
+   
+   drawHoverUnit() {  // ==> Recast later with some agent infos
+
+      if(this.curSelectList.size === 0 ) return;
+
+      for(const agent of this.curSelectList) {
+         const agentPos = this.gridPos_toScreenPos(agent.position);
+   
+         if(!this.isViewScope(agentPos)) return;
+   
+         agent.drawSelect(this.Ctx.isometric, "blue");
+      }
+   }
+   
+   drawTerrain() {   // ==> Tempory until WFC terrain generation
 
       for(const [id, cell] of this.Grid.cellsList) {
-
-         const cellPos = this.gridPos_toScreenPos(cell.center);
-         cell.drawTile(this.Ctx.terrain, cellPos);
+         cell.drawTile(this.Ctx.terrain, this.flatG_Img, this.highG_Img);
       }
    }
 
@@ -662,6 +685,8 @@ export class GameManager {
          assets:    ctx_assets,
          isometric: ctx_isometric,
       } = this.Ctx;
+
+      const { scroll } = this.offset;
 
       for(const cell of this.Grid.occupiedCells) {
          
@@ -678,27 +703,26 @@ export class GameManager {
             
                if(!this.isViewScope(agentPos)) continue;
             
-               agent.drawSprite(ctx_assets, agentPos, this.offset.scroll);
-               // agent.drawCollider(ctx_assets, agentPos, this.offset.scroll);
+               agent.drawSprite(ctx_assets, agentPos, scroll);
+               // agent.drawCollider(ctx_assets, agentPos, scroll);
                agent.drawPath(ctx_isometric);
             }
          }
 
          // Draw all buildings
          if(cell.isBlocked) {
-            const cellPos = this.gridPos_toScreenPos(cell.center);
 
             if(cell.isTransp) {
                ctx_assets.save();
                ctx_assets.globalAlpha = 0.5;
                
-               cell.drawWall(ctx_assets, cellPos, this.offset.scroll);
+               cell.drawWall(ctx_assets, scroll, this.walls_Img);
 
                ctx_assets.restore();
                return;
             }
 
-            cell.drawWall(ctx_assets, cellPos, this.offset.scroll);
+            cell.drawWall(ctx_assets, scroll, this.walls_Img);
          }
       }
    }

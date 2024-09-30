@@ -1,6 +1,7 @@
 
 import {
    IBoolean,
+   ISquare,
    ISquareList,
 } from "../utils/interfaces";
 
@@ -47,7 +48,7 @@ export class Viewport {
 
       this.setSize(docBody);
       this.setDOMMatrix();
-      this.setViewportBounds();
+      this.setViewBounds();
    }
 
    setSize(docBody: any) {
@@ -61,7 +62,7 @@ export class Viewport {
       this.terComputed = new DOMMatrix(window.getComputedStyle(this.GManager.Canvas.terrain  ).transform);
    }
 
-   setViewportBounds() {
+   setViewBounds() {
       const { x, y, width, height, detectSize } = this;
       
       const rightX  = x +width  -detectSize;
@@ -126,8 +127,9 @@ export class Viewport {
    }
 
    scrollCam(collide: IBoolean) {
-      
-      let scroll = this.GManager.offset.scroll;
+      const GM = this.GManager;
+
+      let scroll = GM.offset.scroll;
       const { isTop, isRight, isBottom, isLeft } = collide;
       const { scrollSpeed, limit_X, limit_Y    } = this;
 
@@ -137,6 +139,7 @@ export class Viewport {
       if(isLeft   && scroll.x <  limit_X) scroll.x += scrollSpeed;
    
       this.setComputed();
+      GM.Grid.setViewCellsList();
    }
    
    mouseScrollCam() {
@@ -161,45 +164,17 @@ export class Viewport {
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   const drawScrollBounds = () => {
+   drawScrollBounds() {
+      const GM = this.GManager;
 
-      if(glo.Params.isFrameHidden) return;
-      
-      const scrollBounds: any = setScrollBounds();
+      if(GM.isFrameHidden) return;
    
-      for(let i in scrollBounds) {
+      for(const i in this.viewBounds) {
+         const { x, y, width, height }: ISquare = this.viewBounds[i];
    
-         const { x, y, width, height }: ISquare = scrollBounds[i];
-   
-         glo.Ctx.assets.fillStyle = "rgba(255, 0, 255, 0.5)";
-         glo.Ctx.assets.fillRect(
-            x,
-            y,
-            width,
-            height
-         );
+         GM.Ctx.assets.fillStyle = "rgba(255, 0, 255, 0.5)";
+         GM.Ctx.assets.fillRect(x, y, width, height);
       }
    }
 
-   const drawSelectUnit = () => {
-
-      glo.OldSelectList.forEach((agent: Agent) => {
-         let agentPos = gridPos_toScreenPos(agent.position);
-   
-         if(!isWithinViewport(agentPos)) return;
-   
-         agent.drawSelect(glo.Ctx.isoSelect, "yellow");
-      });
-   }
-   
-   const drawHoverUnit = () => {
-   
-      glo.CurrentSelectList.forEach((agent: Agent) => {
-         let agentPos = gridPos_toScreenPos(agent.position);
-   
-         if(!isWithinViewport(agentPos)) return;
-   
-         agent.drawSelect(glo.Ctx.isoSelect, "blue");
-      });
-   }
 }

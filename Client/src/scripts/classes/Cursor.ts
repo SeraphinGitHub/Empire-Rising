@@ -3,7 +3,6 @@ import {
    ICanvas,
    IPosition,
    IPositionList,
-   ISquare,
 } from "../utils/interfaces";
 
 import { GameManager } from "./_Export";
@@ -34,7 +33,6 @@ export class Cursor {
       pos: {},
    };
    
-   isMoving:       boolean = false;
    isSelecting:    boolean = false;
    isScollClick:   boolean = false;
 
