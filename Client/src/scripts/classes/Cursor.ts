@@ -16,10 +16,11 @@ export class Cursor {
    private GManager: GameManager;
    
    Canvas:         ICanvas;
-   cellSize:       number;
-   halfCell:       number;
    oldPos:         IPositionList = {};
-   curPos:         IPositionList = {};
+   curPos:         IPositionList = {
+      cart: { x: 0, y: 0 },
+      iso:  { x: 0, y: 0 },
+   };
 
    selectArea:     any = {};
    areaOptions:    any = {
@@ -38,11 +39,8 @@ export class Cursor {
 
 
    constructor(GManager: GameManager) {
-
       this.GManager = GManager;
       this.Canvas   = GManager.Canvas;
-      this.cellSize = GManager.cellSize;
-      this.halfCell = this.cellSize *0.5;
 
       this.init();
    }
@@ -135,6 +133,7 @@ export class Cursor {
       
       if(this.isScollClick) GM.Viewport.mouseScrollCam();
 
+      this.updateSelectArea();
       GM.unitSelection();
       GM.Viewport.isScrollDetect = true;
    }
@@ -171,15 +170,15 @@ export class Cursor {
    
    setHoverCell() {
       
-      const { x: gridX, y: gridY }: IPosition = this.GManager.gridPos;
-   
+      const { gridPos: { x: gridX, y: gridY }, cellSize } = this.GManager;
+
       const cellPos: IPosition = {
-         x: gridX - (gridX % this.cellSize),
-         y: gridY - (gridY % this.cellSize),
+         x: gridX - (gridX % cellSize),
+         y: gridY - (gridY % cellSize),
       };
    
       this.hoverCell = {
-         id: `${cellPos.x /this.cellSize}-${cellPos.y /this.cellSize}`,
+         id: `${cellPos.x /cellSize}-${cellPos.y /cellSize}`,
          pos: cellPos,
       }
    }
@@ -197,6 +196,15 @@ export class Cursor {
       };
    }
 
+   updateSelectArea() {
+
+      if(!this.isSelecting) return;
+
+      this.GManager.clearCanvas("selection");
+      this.setSelectArea();
+      this.drawSelectArea();
+   }
+
    
    // =========================================================================================
    // Draw Methods
@@ -204,7 +212,6 @@ export class Cursor {
    drawSelectArea() {
       
       const ctx_Selection = this.GManager.Ctx.selection;
-
       const { x,   y,    width,       height     } = this.selectArea;
       const { lineWidth, borderColor, filledColor} = this.areaOptions;
 

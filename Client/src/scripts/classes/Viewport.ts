@@ -1,6 +1,7 @@
 
 import {
    IBoolean,
+   IPosition,
    ISquare,
    ISquareList,
 } from "../utils/interfaces";
@@ -36,8 +37,8 @@ export class Viewport {
    viewBounds:       ISquareList | undefined = undefined;
 
    constructor(
-      GManager:  GameManager,
-      docBody: any,
+      GManager: GameManager,
+      docBody:  any,
    ) {
       this.GManager = GManager;
       this.init(docBody);
@@ -46,7 +47,7 @@ export class Viewport {
 
    init(docBody: any) {
 
-      this.setSize(docBody);
+      // this.setSize(docBody);
       this.setDOMMatrix();
       this.setViewBounds();
    }
@@ -76,15 +77,15 @@ export class Viewport {
       }
    }
 
-   setComputed() {
+   setComputed(scroll: IPosition) {
 
-      const { x: scrollX, y: scrollY } = this.GManager.offset.scroll;
+      const { x: scrollX, y: scrollY } = scroll;
       const { isometric,  terrain    } = this.GManager.Canvas;
-
+      
       // Update CSS canvas isometric & terrain
       this.updateComputed(this.isoComputed, scrollX, scrollY *2 -this.GManager.halfGrid);
       this.updateComputed(this.terComputed, scrollX, scrollY);
-
+      
       // Apply transformations
       isometric.style.transform = this.isoComputed!.toString();
       terrain  .style.transform = this.terComputed!.toString();
@@ -111,24 +112,20 @@ export class Viewport {
       const mousePos = GM.Cursor.curPos.cart;
 
       const { top, right, bottom, left } = this.viewBounds!;
-      
-      // if(!mousePos) return
-
-      const col = GM.Collision;
          
-      const isTop:    boolean = col.point_toSquare( mousePos, top    );
-      const isRight:  boolean = col.point_toSquare( mousePos, right  );
-      const isBottom: boolean = col.point_toSquare( mousePos, bottom );
-      const isLeft:   boolean = col.point_toSquare( mousePos, left   );
+      const isTop:    boolean = GM.Collision.point_toSquare( mousePos, top    );
+      const isRight:  boolean = GM.Collision.point_toSquare( mousePos, right  );
+      const isBottom: boolean = GM.Collision.point_toSquare( mousePos, bottom );
+      const isLeft:   boolean = GM.Collision.point_toSquare( mousePos, left   );
    
-      if(!top && !right && !bottom && !left) return this.isScrollDetect = false;
+      if(!isTop && !isRight && !isBottom && !isLeft) return this.isScrollDetect = false;
 
       this.scrollCam({ isTop, isRight, isBottom, isLeft });
    }
 
    scrollCam(collide: IBoolean) {
       const GM = this.GManager;
-
+      
       let scroll = GM.offset.scroll;
       const { isTop, isRight, isBottom, isLeft } = collide;
       const { scrollSpeed, limit_X, limit_Y    } = this;
@@ -138,26 +135,27 @@ export class Viewport {
       if(isBottom && scroll.y > -limit_Y) scroll.y -= scrollSpeed;
       if(isLeft   && scroll.x <  limit_X) scroll.x += scrollSpeed;
    
-      this.setComputed();
-      GM.Grid.setViewCellsList();
+      this.setComputed(scroll);
+      // GM.Grid.setViewCellsList();
    }
    
    mouseScrollCam() {
       
       if(!this.GManager.Cursor.isScollClick) return;
-
+      
       const { limit_X,      limit_Y } = this;
       const { oldPos,       curPos  } = this.GManager.Cursor;
       const { x: oldX,   y: oldY    } = oldPos.cart;
       const { x: mouseX, y: mouseY  } = curPos.cart;
-   
-      const isRange_X: boolean = (scrollX < limit_X) && (scrollX > -limit_X);
-      const isRange_Y: boolean = (scrollY < limit_Y) && (scrollY > -limit_Y);
-   
-      if(isRange_X) scrollX = mouseX -oldX;
-      if(isRange_Y) scrollY = mouseY -oldY;
       
-      this.setComputed();
+      let scroll = this.GManager.offset.scroll;
+      const isRange_X: boolean = (scroll.x < limit_X) && (scroll.x > -limit_X);
+      const isRange_Y: boolean = (scroll.y < limit_Y) && (scroll.y > -limit_Y);
+   
+      if(isRange_X) scroll.x = mouseX -oldX;
+      if(isRange_Y) scroll.y = mouseY -oldY;
+      
+      this.setComputed(scroll);
    }
 
 

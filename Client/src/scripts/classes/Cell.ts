@@ -7,6 +7,10 @@ import {
    INebList,
 } from "../utils/interfaces";
 
+import {
+   Grid,
+} from "./_Export";
+
 
 // =====================================================================
 // Cell Class
@@ -79,11 +83,10 @@ export class Cell {
    }
    
    setCenter() {
-      const { x, y , size } = this;
+      const { x, y, size } = this;
 
-      const halfCell = size *0.5;
-      this.center.x  = x +halfCell;
-      this.center.y  = y +halfCell;
+      this.center.x  = x +size *0.5;
+      this.center.y  = y +size *0.5;
    }
    
    setCollider() {
@@ -101,7 +104,7 @@ export class Cell {
 
 
    // =========================================================================================
-   // Set Neighbors List
+   // Methods
    // =========================================================================================
    setNeighborsList() {
 
@@ -182,6 +185,28 @@ export class Cell {
       const isBlocked_BottomRight = bottom && right && bottom .isBlocked && right .isBlocked && neighbor.id === bottomRight.id;
       
       return isBlocked_TopLeft || isBlocked_TopRight || isBlocked_BottomLeft || isBlocked_BottomRight;
+   }
+
+   setVacant(
+      agentID: number,
+      Grid:    Grid,
+   ) {
+      this.agentIDset.delete(agentID);
+      
+      if(this.agentIDset.size === 0) {
+         Grid.occupiedCells.delete(this);
+         this.isVacant = true;
+      }
+   }
+
+   setOccupied(
+      agentID: number,
+      Grid:    Grid,
+   ) {
+      this.agentIDset.add(agentID);
+      this.isVacant = false;
+      
+      Grid.addToOccupiedMap(this);
    }
 
    setTransparency(cellsList: Map<string, Cell>) {
@@ -320,6 +345,7 @@ export class Cell {
    // ------------------ Tempory ------------------
    drawTile(
       ctx:   CanvasRenderingContext2D,
+      pos:   IPosition,
       img_1: HTMLImageElement,
       img_2: HTMLImageElement,
    ) {
@@ -345,8 +371,8 @@ export class Cell {
          srcHeight,
          
          // Destination
-         this.screenPos.x -offsetX,
-         this.screenPos.y -offsetY,
+         pos.x -offsetX,
+         pos.y -offsetY,
          destSize,
          destSize,
       );

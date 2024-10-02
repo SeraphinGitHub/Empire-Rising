@@ -13,13 +13,16 @@
 
 
 <script>
-   import CoordSpan   from "./CoordSpan.vue"
-
-   import { readGlo } from '../../scripts/utils/_GlobalVar';
+   import CoordSpan       from "./CoordSpan.vue"
+   import { GameManager } from "../../scripts/classes/_Export"
 
    export default {
       components: {
          CoordSpan,
+      },
+
+      props: {
+         GManager: GameManager,
       },
 
       data() {
@@ -27,12 +30,13 @@
          title: `Empire Rising`,
       }},
 
-      computed: {
+      // computed: {
+      methods: {
          population() {
             return {
                name: "Population:",
                classID: "ID-cell",
-               id: `${readGlo.CurrentPop} / ${readGlo.MaxPop}`,
+               id: `${this.GManager.curPop} / ${this.GManager.maxPop}`,
             }
          },
          
@@ -41,8 +45,8 @@
                name: "Screen Coord:",
                classX: "cartX",
                classY: "cartY",
-               x: `x : ${readGlo.SelectArea.currentPos.x}`,
-               y: `y : ${readGlo.SelectArea.currentPos.y}`,
+               x: `x : ${this.GManager.Cursor.curPos.cart.x}`,
+               y: `y : ${this.GManager.Cursor.curPos.cart.y}`,
             }
          },
 
@@ -51,8 +55,8 @@
                name: "Grid Coord:",
                classX: "isoX",
                classY: "isoY",
-               x: `x : ${readGlo.IsoGridPos.x}`,
-               y: `y : ${readGlo.IsoGridPos.y}`,
+               x: `x : ${this.GManager.gridPos.x}`,
+               y: `y : ${this.GManager.gridPos.y}`,
             }
          },
 
@@ -61,8 +65,8 @@
                name: "Cell Coord:",
                classX: "cellX",
                classY: "cellY",
-               x: `x : ${readGlo.HoverCell.gridPos.x}`,
-               y: `y : ${readGlo.HoverCell.gridPos.y}`,
+               x: `x : ${this.GManager.Cursor.hoverCell.pos.x}`,
+               y: `y : ${this.GManager.Cursor.hoverCell.pos.y}`,
             }
          },
 
@@ -70,7 +74,7 @@
             return {
                name: "Cell ID:",
                classID: "ID-cell",
-               id: `id : ${readGlo.HoverCell.id}`,
+               id: `id : ${this.GManager.hoverCell.id}`,
             }
          },
       },

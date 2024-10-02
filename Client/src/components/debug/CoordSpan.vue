@@ -14,7 +14,7 @@
 <script>
    export default {
       props: {
-         coordType: Object,
+         coordType: Function,
       },
    }
 </script>

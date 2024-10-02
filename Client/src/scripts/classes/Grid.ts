@@ -16,18 +16,10 @@ export class Grid {
    viewCellsList:    Map<string, Cell> = new Map();
    blockedCells:     Set<Cell>         = new Set();
    occupiedCells:    Set<Cell>         = new Set();
-   
-   gridSize:         number;
-   cellSize:         number;
-   cellPerSide:      number;
 
    constructor(GManager: GameManager) {
 
-      this.GManager    = GManager;
-      this.gridSize    = GManager.gridSize;
-      this.cellSize    = GManager.cellSize;
-      this.cellPerSide = Math.floor(this.gridSize / this.cellSize);
-
+      this.GManager = GManager;
       this.init();
    }
 
@@ -41,7 +33,8 @@ export class Grid {
    setCellsList() {
       let zIndex = 0;
 
-      const { cellSize, cellPerSide } = this;
+      const { gridSize, cellSize } = this.GManager;
+      const cellPerSide = Math.floor(gridSize / cellSize);
       
       for(let i = 0; i < cellPerSide; i++) {     // Collums
          for(let j = 0; j < cellPerSide; j++) {  // Cells
@@ -62,7 +55,7 @@ export class Grid {
 
    setNeighbors() {
 
-      for(const [id, cell] of this.cellsList) {
+      for(const [, cell] of this.cellsList) {
          cell.setNeighborsList();
       }
    }
@@ -102,7 +95,7 @@ export class Grid {
 
       if(this.GManager.isGridHidden) return;
 
-      for(const [id, cell] of this.viewCellsList) {         
+      for(const [, cell] of this.viewCellsList) {
          cell.drawInfos(this.GManager.Ctx.isometric);
       }
    }

@@ -2,7 +2,7 @@
 <template>
    <section class="flex" id="root">
 
-      <Coordinates/>
+      <Coordinates :GManager ="GManager"/>
       <CartCanvas/>
       <IsoCanvas/>
 
@@ -46,8 +46,10 @@
          
          props: {
             isGridHidden:  false,
-            isFrameHidden: true,
-         }
+            isFrameHidden: false,
+         },
+
+         GManager: null,
       }},
 
       async mounted() {
@@ -60,7 +62,7 @@
             event.stopPropagation();
          }
          
-         new GameManager({
+         this.GManager = new GameManager({
             docBody: document.body,
             Canvas:  this.Canvas,
             Ctx:     this.Ctx,
@@ -94,11 +96,11 @@
          },
 
          toggleFrame() {
-            this.params.isFrameHidden = !this.params.isFrameHidden;
+            this.GManager.isFrameHidden = !this.GManager.isFrameHidden;
          },
 
          toggleGrid() {
-            this.params.isGridHidden = !this.params.isGridHidden;
+            this.GManager.isGridHidden = !this.GManager.isGridHidden;
          },
       },
    }

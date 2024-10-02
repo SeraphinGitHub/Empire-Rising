@@ -13,18 +13,17 @@ import {
 // =====================================================================
 export class Collision {
 
-   reverseSide = (
+   reverseSide(
       first:  number,
       second: number,
-   ) => {
-      
+   ) {
       if(first > second) return [second, first];
       return [first, second];
    }
    
-   extractSides = (
+   extractSides(
      square: ISquare
-   ) => {         
+   ) {         
       return {
    
          top: {
@@ -57,10 +56,10 @@ export class Collision {
       };
    }
    
-   calcDist = (
+   calcDist(
       first:  IPosition | ISquare,
       second: IPosition | ISquare,
-   ): number => {
+   ): number {
    
       const distX = second.x -first.x;
       const distY = second.y -first.y;

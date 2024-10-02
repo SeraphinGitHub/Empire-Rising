@@ -218,10 +218,10 @@ export class GameManager {
 
    faction:          string = "Orange";
 
-   cellSize:         number = 40;
    gridSize:         number = 1600;
-   curPop:           number = 0;
+   cellSize:         number = 40;
    maxPop:           number = 2000;
+   curPop:           number = 0;
    halfGrid:         number;
 
    Canvas:           ICanvas;
@@ -240,7 +240,7 @@ export class GameManager {
    };
 
    // Constants ==> Do not modify
-   frame:            number = 0;
+   Frame:            number = 0;
    ViewAngle:        number = 0;
    COS_45:           number = 0.707;
    COS_30:           number = 0.866;
@@ -251,6 +251,9 @@ export class GameManager {
    Viewport:         Viewport;
    Collision:        Collision;
 
+   isGridHidden:     boolean;
+   isFrameHidden:    boolean;
+   
 
    // Images & Sources ==> Need to move in a dedicated class later 
    flatG_Img: HTMLImageElement = new Image();
@@ -261,27 +264,28 @@ export class GameManager {
    highG_Src: string = "Terrain/High_Grass.png";
    walls_Src: string = "Buildings/wall.png";
 
-   isGridHidden:  boolean;
-   isFrameHidden: boolean;
-
 
    constructor(params: any) {
 
-      this.Canvas    = params.Canvas;
-      this.Ctx       = params.Ctx;
-      this.halfGrid  = this.gridSize *0.5;
-      
-      this.Grid      = new Grid      (this);
-      this.Cursor    = new Cursor    (this);
-      this.Viewport  = new Viewport  (this, params.docBody);
-      this.Collision = new Collision ();
+      // ***************  Temp  ***************
+      this.flatG_Img.src = this.flatG_Src;
+      this.highG_Img.src = this.highG_Src;
+      this.walls_Img.src = this.walls_Src;
+      // ***************  Temp  ***************
 
+      this.Canvas        = params.Canvas;
+      this.Ctx           = params.Ctx;
       this.isGridHidden  = params.props.isGridHidden;
       this.isFrameHidden = params.props.isFrameHidden;
+      this.halfGrid      = this.gridSize *0.5;
+
+      this.Viewport      = new Viewport  (this, params.docBody);
+      this.Grid          = new Grid      (this);
+      this.Cursor        = new Cursor    (this);
+      this.Collision     = new Collision ();
 
       this.init();
    }
-
 
    init() {
 
@@ -293,10 +297,6 @@ export class GameManager {
 
 
       // **********************************  Tempory  **********************************
-      this.flatG_Img.src = this.flatG_Src;
-      this.highG_Img.src = this.highG_Src;
-      this.walls_Img.src = this.walls_Src;
-
       this.createNewAgent("infantry", "swordsman", "6-16",  "");
       this.createNewAgent("infantry", "swordsman", "9-20",  "");
       this.createNewAgent("infantry", "swordsman", "9-22",  "");
@@ -322,7 +322,7 @@ export class GameManager {
 
    runAnimation() {
 
-      this.frame++;
+      this.Frame++;
    
       this.clearCanvas("isometric");
       this.clearCanvas("assets");
@@ -429,7 +429,7 @@ export class GameManager {
    // Boolean methods
    // =========================================================================================
    isGridScope(isoPos: IPosition): boolean {
-
+      
       const { x: gridX, y: gridY }: IPosition = isoPos;
 
       if(gridX > 0 && gridX < this.gridSize
@@ -503,7 +503,7 @@ export class GameManager {
    // =========================================================================================
    createNewAgent( // =======>  Super tempory ==> Need huge recast
       divisionName: string,
-      typeName :    string,
+      typeName:     string,
       cellID:       string,
       diffImgSrc:   string,
    ) {
@@ -514,14 +514,18 @@ export class GameManager {
       const division:  any    = unitParameters[divisionName];
       const unitType:  any    = division.unitType[typeName];
       const startCell: Cell   = this.Grid.cellsList.get(cellID)!;
-      
-      let imgSrc = unitType.imgSrc;
-      if(diffImgSrc !== "") imgSrc = diffImgSrc;
 
+      startCell.isVacant = false;
+      startCell.agentIDset.add(vacantID);
+
+      this.Grid.addToOccupiedMap(startCell);
       this.curPop += division.popCost;
       this.vacantIDsList.splice(0, division.popCost);
 
-      const agentParams = {
+      let imgSrc = unitType.imgSrc;
+      if(diffImgSrc !== "") imgSrc = diffImgSrc;
+
+      const newAgent = new Agent({
          id:          vacantID,
          unitType,
          imgSrc,
@@ -529,9 +533,9 @@ export class GameManager {
          popCost:     division.popCost,
          collider:    division.collider,
          startCell,   // <== Tempory until create BuildingsClass with spawn position
-      };
+      });
       
-      this.agentsList.set(vacantID, new Agent(agentParams));
+      this.agentsList.set(vacantID, newAgent);
    }
 
    updateUnitsList (
@@ -550,13 +554,8 @@ export class GameManager {
 
    unitSelection() {
 
-      if(this.Cursor.isSelecting) {
-         this.clearCanvas("selection");
-         this.Cursor.drawSelectArea();
-      }
-
       // If collide with mouse or select area ==> Add agent to CurrentList
-      for(const [ id, agent ] of this.agentsList) {
+      for(const [, agent] of this.agentsList) {
          
          const { x: agentX,  y: agentY  }: IPosition = this.gridPos_toScreenPos(agent.position);
          const { x: scrollX, y: scrollY }: IPosition = this.offset.scroll;
@@ -569,11 +568,13 @@ export class GameManager {
             radius,
          };
 
+         const col = this.Collision;
+
          if(this.Cursor.isSelecting) {
-            this.updateUnitsList(this.Collision.square_toCircle, this.Cursor.selectArea,  agentCollider, agent);
+            this.updateUnitsList(col.square_toCircle.bind(col), this.Cursor.selectArea,  agentCollider, agent);
          }
          
-         this.updateUnitsList   (this.Collision.point_toCircle,  this.Cursor.curPos.cart, agentCollider, agent);
+         this.updateUnitsList   (col.point_toCircle.bind(col),  this.Cursor.curPos.cart, agentCollider, agent);
       }
    }
 
@@ -637,8 +638,8 @@ export class GameManager {
 
          if(goalCell.isBlocked || !goalCell.isVacant) return;
          
-         agent.goalCell = goalCell;
-         agent.searchPath();
+         agent.Pathfinder.goalCell = goalCell;
+         agent.Pathfinder.searchPath(this.Grid.cellsList);
       }
    }
 
@@ -665,17 +666,18 @@ export class GameManager {
 
       for(const agent of this.curSelectList) {
          const agentPos = this.gridPos_toScreenPos(agent.position);
-   
+         
          if(!this.isViewScope(agentPos)) return;
-   
+         
          agent.drawSelect(this.Ctx.isometric, "blue");
       }
    }
    
    drawTerrain() {   // ==> Tempory until WFC terrain generation
 
-      for(const [id, cell] of this.Grid.cellsList) {
-         cell.drawTile(this.Ctx.terrain, this.flatG_Img, this.highG_Img);
+      for(const [, cell] of this.Grid.cellsList) {
+         const cellPos = this.gridPos_toScreenPos(cell.center);
+         cell.drawTile(this.Ctx.terrain, cellPos, this.flatG_Img, this.highG_Img);
       }
    }
 
@@ -698,14 +700,14 @@ export class GameManager {
                const agent    = this.agentsList.get(agentID)!;
                const agentPos = this.gridPos_toScreenPos(agent.position);
          
-               agent.updateState(this.frame);
-               agent.walkPath();
+               agent.walkPath(this.Grid);
+               agent.updateAnimState(this.Frame);
             
                if(!this.isViewScope(agentPos)) continue;
             
                agent.drawSprite(ctx_assets, agentPos, scroll);
                // agent.drawCollider(ctx_assets, agentPos, scroll);
-               agent.drawPath(ctx_isometric);
+               if(!this.isGridHidden) agent.drawPath(ctx_isometric);
             }
          }
 
@@ -737,21 +739,27 @@ export class GameManager {
    }
 
    Test_PathRandomize(agent: Agent) {
-
-      let i = this.Test_Rand(this.Grid.cellPerSide);
-      let j = this.Test_Rand(this.Grid.cellPerSide);
+      
+      const { gridSize, cellSize } = this;
+      const cellPerSide = Math.floor(gridSize / cellSize);
+      
+      let i = this.Test_Rand(cellPerSide);
+      let j = this.Test_Rand(cellPerSide);
       
       const targetCell = this.Grid.cellsList.get(`${i}-${j}`)!;
       
       if(targetCell.isBlocked) return;
       
-      agent.goalCell = targetCell;
-      agent.searchPath();
+      agent.Pathfinder.goalCell = targetCell;
+      agent.Pathfinder.searchPath(this.Grid.cellsList);
    }
 
    Test_GenerateUnits() {
 
       let pop = 30;
+
+      const { gridSize, cellSize } = this;
+      const cellPerSide = Math.floor(gridSize / cellSize);
 
       const blue   = "Units/Swordsman_Blue.png";
       const purple = "Units/Swordsman_Purple.png";
@@ -761,8 +769,8 @@ export class GameManager {
 
          let unitType = this.Test_Rand(2);
          let index    = this.Test_Rand(4);
-         let i        = this.Test_Rand(this.Grid.cellPerSide);
-         let j        = this.Test_Rand(this.Grid.cellPerSide);
+         let i        = this.Test_Rand(cellPerSide);
+         let j        = this.Test_Rand(cellPerSide);
 
          if( this.Grid.cellsList.get(`${i}-${j}`)!.isVacant
          && !this.Grid.cellsList.get(`${i}-${j}`)!.isBlocked) {
