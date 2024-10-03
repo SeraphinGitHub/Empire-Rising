@@ -124,12 +124,12 @@ export class Cursor {
 
       // Set mouse position
       this.setPosition(event, false);
-      
+
       // Set mouse to grid position
-      GM.screenPos_toGridPos(this.curPos.iso);
+      GM.gridPos = GM.screenPos_toGridPos(this.curPos.iso);
       
       // Set hoverCell from mouse grid position
-      if(GM.isGridScope(this.curPos.iso)) this.setHoverCell();
+      if(GM.isMouseGridScope()) this.setHoverCell();
       
       if(this.isScollClick) GM.Viewport.mouseScrollCam();
 
@@ -227,7 +227,7 @@ export class Cursor {
 
    drawHoverCell() {
 
-      if(!this.GManager.isGridScope(this.curPos.iso)) return;
+      if(!this.GManager.isMouseGridScope()) return;
       
       const GM                      = this.GManager;
       const ctx_isometric           = GM.Ctx.isometric;

@@ -345,7 +345,7 @@ export class Cell {
    // ------------------ Tempory ------------------
    drawTile(
       ctx:   CanvasRenderingContext2D,
-      pos:   IPosition,
+      VPpos: IPosition,
       img_1: HTMLImageElement,
       img_2: HTMLImageElement,
    ) {
@@ -371,17 +371,18 @@ export class Cell {
          srcHeight,
          
          // Destination
-         pos.x -offsetX,
-         pos.y -offsetY,
+         VPpos.x -offsetX,
+         VPpos.y -offsetY,
          destSize,
          destSize,
       );
    }
 
    drawWall(
-      ctx:    CanvasRenderingContext2D,
-      scroll: IPosition,
-      img:    HTMLImageElement,
+      ctx:   CanvasRenderingContext2D,
+      pos:   IPosition,
+      VPpos: IPosition,
+      img:   HTMLImageElement,
    ) {
 
       const srcSize  = 280;
@@ -399,8 +400,8 @@ export class Cell {
          srcSize,
          
          // Destination
-         this.screenPos.x -offsetX +scroll.x,
-         this.screenPos.y -offsetY +scroll.y,
+         pos.x -offsetX -VPpos.x,
+         pos.y -offsetY -VPpos.y,
          destSize +10,
          destSize,
       );

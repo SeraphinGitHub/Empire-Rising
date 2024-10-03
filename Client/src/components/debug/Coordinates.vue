@@ -1,20 +1,20 @@
 
 <template>
-   <section class="coordinates flex">
+   <section v-if="isLoaded" class="coordinates flex">
 
-      <CoordSpan :coordType ="population"/>
-      <CoordSpan :coordType ="screenCoord"/>
-      <CoordSpan :coordType ="gridCoord"/>
-      <CoordSpan :coordType ="cellCoord"/>
-      <CoordSpan :coordType ="cellID"/>
+      <CoordSpan :coordType ="population"   />
+      <CoordSpan :coordType ="viewportCoord"/>
+      <CoordSpan :coordType ="screenCoord"  />
+      <CoordSpan :coordType ="gridCoord"    />
+      <CoordSpan :coordType ="cellCoord"    />
+      <CoordSpan :coordType ="cellID"       />
 
    </section>
 </template>
 
 
 <script>
-   import CoordSpan       from "./CoordSpan.vue"
-   import { GameManager } from "../../scripts/classes/_Export"
+   import CoordSpan from "./CoordSpan.vue"
 
    export default {
       components: {
@@ -22,59 +22,109 @@
       },
 
       props: {
-         GManager: GameManager,
+         htmlData: Object,
       },
 
       data() {
       return {
-         title: `Empire Rising`,
+         isLoaded:      false,
+
+         population:    undefined,
+         viewportCoord: undefined,
+         screenCoord:   undefined,
+         gridCoord:     undefined,
+         cellCoord:     undefined,
+         cellID:        undefined,
       }},
 
-      // computed: {
+      watch: {
+         htmlData() { this.initDOM() }
+      },
+
+      mounted() {            
+         this.initDOM();
+
+         this.$nextTick(() => setTimeout(() => {
+            this.isLoaded = true;
+         }, 0));
+      },
+      
       methods: {
-         population() {
-            return {
+
+         initDOM() {
+            this.setPopulation    ();
+            this.setViewportCoord ();
+            this.setScreenCoord   ();
+            this.setGridCoord     ();
+            this.setCellCoord     ();
+            this.setCellID        ();
+         },
+
+         setPopulation() {
+            const { curPop, maxPop } = this.htmlData;
+
+            this.population = {
                name: "Population:",
                classID: "ID-cell",
-               id: `${this.GManager.curPop} / ${this.GManager.maxPop}`,
+               id: `${curPop} / ${maxPop}`,
+            }
+         },
+
+         setViewportCoord() {
+            const { viewPort } = this.htmlData;
+
+            this.viewportCoord = {
+               name: "Viewport Coord:",
+               classX: "cartX",
+               classY: "cartY",
+               x: `x : ${viewPort.x}`,
+               y: `y : ${viewPort.y}`,
             }
          },
          
-         screenCoord() {
-            return {
+         setScreenCoord() {
+            const { cartPos } = this.htmlData;
+
+            this.screenCoord = {
                name: "Screen Coord:",
                classX: "cartX",
                classY: "cartY",
-               x: `x : ${this.GManager.Cursor.curPos.cart.x}`,
-               y: `y : ${this.GManager.Cursor.curPos.cart.y}`,
+               x: `x : ${cartPos.x}`,
+               y: `y : ${cartPos.y}`,
             }
          },
 
-         gridCoord() {
-            return {
+         setGridCoord() {
+            const { gridPos } = this.htmlData;
+
+            this.gridCoord = {
                name: "Grid Coord:",
                classX: "isoX",
                classY: "isoY",
-               x: `x : ${this.GManager.gridPos.x}`,
-               y: `y : ${this.GManager.gridPos.y}`,
+               x: `x : ${gridPos.x}`,
+               y: `y : ${gridPos.y}`,
             }
          },
 
-         cellCoord() {
-            return {
+         setCellCoord() {
+            const { hoverCell } = this.htmlData;
+
+            this.cellCoord = {
                name: "Cell Coord:",
                classX: "cellX",
                classY: "cellY",
-               x: `x : ${this.GManager.Cursor.hoverCell.pos.x}`,
-               y: `y : ${this.GManager.Cursor.hoverCell.pos.y}`,
+               x: `x : ${hoverCell.pos.x}`,
+               y: `y : ${hoverCell.pos.y}`,
             }
          },
 
-         cellID() {
-            return {
+         setCellID() {
+            const { hoverCell } = this.htmlData;
+
+            this.cellID = {
                name: "Cell ID:",
                classID: "ID-cell",
-               id: `id : ${this.GManager.hoverCell.id}`,
+               id: `id : ${hoverCell.id}`,
             }
          },
       },
@@ -87,12 +137,6 @@
       width: 100%;
       font-size: 20px;
       font-weight: 600;
-   }
-
-   .title {
-      margin: 10px;
-      color: darkviolet;
-      text-decoration: underline;
    }
 
    .coordinates {

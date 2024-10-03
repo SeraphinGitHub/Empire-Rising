@@ -13,7 +13,6 @@ export class Grid {
    private GManager: GameManager;
 
    cellsList:        Map<string, Cell> = new Map();
-   viewCellsList:    Map<string, Cell> = new Map();
    blockedCells:     Set<Cell>         = new Set();
    occupiedCells:    Set<Cell>         = new Set();
 
@@ -27,7 +26,6 @@ export class Grid {
       
       this.setCellsList();
       this.setNeighbors();
-      this.setViewCellsList();
    }
 
    setCellsList() {
@@ -60,23 +58,6 @@ export class Grid {
       }
    }
 
-   setViewCellsList() {
-      const GM = this.GManager;
-      
-      this.viewCellsList.clear();
-
-      for(const [id, cell] of this.cellsList) {
-         const cellPos = GM.gridPos_toScreenPos(cell.center);
-         
-         if(!GM.isViewScope(cellPos)) continue;
-
-         cell.screenPos.x = cellPos.x;
-         cell.screenPos.y = cellPos.y;
-         
-         this.viewCellsList.set(id, cell);
-      }
-   }
-
    addToOccupiedMap(cell: Cell) {
 
       let tempArray: Cell[] = [...this.occupiedCells];
@@ -94,8 +75,8 @@ export class Grid {
    drawGrid() {
 
       if(this.GManager.isGridHidden) return;
-
-      for(const [, cell] of this.viewCellsList) {
+      
+      for(const [, cell] of this.cellsList) {
          cell.drawInfos(this.GManager.Ctx.isometric);
       }
    }

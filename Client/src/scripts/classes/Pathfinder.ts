@@ -121,7 +121,7 @@ export class Pathfinder {
          const { fCost, hCost }: ICost = costMap.get(cell.id)!;
          
          if(fCost <= lowestFCost
-         && hCost <  costMap.get(this.presentCell!.id)!.hCost) {
+         || hCost <  costMap.get(this.presentCell!.id)!.hCost) {
    
             lowestFCost      = fCost;
             this.presentCell = cell;

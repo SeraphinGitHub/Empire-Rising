@@ -13,7 +13,7 @@ import {
 // =====================================================================
 export class Collision {
 
-   reverseSide(
+   flipSide(
       first:  number,
       second: number,
    ) {
@@ -80,14 +80,14 @@ export class Collision {
       const { x: firstX,  y: firstY,  width: firstW,  height: firstH  } = first;
       const { x: secondX, y: secondY, width: secondW, height: secondH } = second;
 
-      const [ axisX_1, axisX_2 ] = this.reverseSide(firstX, secondX);
-      const [ axisY_1, axisY_2 ] = this.reverseSide(firstY, secondY);
+      const [ LoR_1, LoR_2 ] = this.flipSide(firstX, secondX);
+      const [ ToB_1, ToB_2 ] = this.flipSide(firstY, secondY);
 
       const isOverLaping: boolean =
-         !(axisX_1 > axisX_2 + secondW
-         ||axisY_1 > axisY_2 + secondH
-         ||axisX_1 + firstW  < axisX_2
-         ||axisY_1 + firstH  < axisY_2)
+         !(LoR_1 > LoR_2 + secondW
+         ||ToB_1 > ToB_2 + secondH
+         ||LoR_1 + firstW  < LoR_2
+         ||ToB_1 + firstH  < ToB_2)
       ;
 
       return isOverLaping;
@@ -99,30 +99,30 @@ export class Collision {
    ): boolean {
 
       const { x: sqrX,  y: sqrY,  width:  sqrW,   height: sqrH } = square;
-      const { x: circX, y: circY, radius: circRad              } = circle;      
+      const { x: circX, y: circY, radius: circRad              } = circle;
 
       const sqrCol: INumber = {
          top:    sqrY,
+         right:  sqrX +sqrW,
          bottom: sqrY +sqrH,
          left:   sqrX,
-         right:  sqrX +sqrW,
       }
 
       const circCol: INumber = {
          top:    circY -circRad,
+         right:  circX +circRad,
          bottom: circY +circRad,
          left:   circX -circRad,
-         right:  circX +circRad,
       }
 
-      const [ axisX_1, axisX_2 ] = this.reverseSide(sqrCol.left, sqrCol.right  );
-      const [ axisY_1, axisY_2 ] = this.reverseSide(circCol.top, circCol.bottom);
+      const [ LoR_1, LoR_2 ] = this.flipSide(sqrCol.left, sqrCol.right);
+      const [ ToB_1, ToB_2 ] = this.flipSide(sqrCol.top, sqrCol.bottom);
 
       const isOverLaping: boolean =
-            circCol.right  > axisX_1
-         && circCol.left   < axisX_2
-         && circCol.bottom > axisY_1
-         && circCol.top    < axisY_2
+            circCol.top    < ToB_2
+         && circCol.right  > LoR_1
+         && circCol.bottom > ToB_1
+         && circCol.left   < LoR_2
       ;
 
       return isOverLaping;
@@ -171,11 +171,11 @@ export class Collision {
       const { x: pointX, y: pointY } = point;
       const { x: circX,  y: circY, radius: circRad } = circle;
 
-      const [ axisX_1, axisX_2 ] = this.reverseSide(pointX, circX);
-      const [ axisY_1, axisY_2 ] = this.reverseSide(pointY, circY);
+      const [ LoR_1, LoR_2 ] = this.flipSide(pointX, circX);
+      const [ ToB_1, ToB_2 ] = this.flipSide(pointY, circY);
 
-      const distX     = axisX_1 -axisX_2;
-      const distY     = axisY_1 -axisY_2;
+      const distX     = LoR_1 -LoR_2;
+      const distY     = ToB_1 -ToB_2;
       const distance  = distX * distX + distY * distY;
       const radiusSqr = circRad *circRad;
 

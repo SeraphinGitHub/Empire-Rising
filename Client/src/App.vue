@@ -2,7 +2,7 @@
 <template>
    <section class="flex" id="root">
 
-      <Coordinates :GManager ="GManager"/>
+      <Coordinates v-if="isLoaded" :htmlData ="htmlData"/>
       <CartCanvas/>
       <IsoCanvas/>
 
@@ -24,8 +24,9 @@
 
    // Scripts
    import { io          } from "socket.io-client";
+   import { unitParams  } from "./scripts/utils/unitParams";
    import { GameManager } from "./scripts/classes/_Export";
-
+   
    export default {
       name: "App",
 
@@ -37,19 +38,19 @@
 
       data() {
       return {
-         title: "Empire Rising",
-         URL:   "http://localhost:3000",
-         socket: null,
+         title:   "Empire Rising",
+         URL:     "http://localhost:3000",
+         isLoaded: false,
+         socket:   null,
+         GManager: null,
+         htmlData: null,
+         Canvas:   {},
+         Ctx:      {},
 
-         Canvas: {},
-         Ctx:    {},
-         
          props: {
             isGridHidden:  false,
             isFrameHidden: false,
          },
-
-         GManager: null,
       }},
 
       async mounted() {
@@ -63,11 +64,23 @@
          }
          
          this.GManager = new GameManager({
+            unitParams,
             docBody: document.body,
             Canvas:  this.Canvas,
             Ctx:     this.Ctx,
             props:   this.props,
          });
+         
+         this.htmlData = this.GManager.setHtmlData();
+         
+         setInterval(() => {
+            this.htmlData = this.GManager.setHtmlData();
+         }, 50);
+
+
+         this.$nextTick(() => setTimeout(() => {
+            this.isLoaded = true;
+         }, 0));
       },
 
       methods: {

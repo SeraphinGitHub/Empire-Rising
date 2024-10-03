@@ -1,7 +1,6 @@
 
 import {
    IBoolean,
-   IPosition,
    ISquare,
    ISquareList,
 } from "../utils/interfaces";
@@ -22,13 +21,9 @@ export class Viewport {
    y:                number  = 0;
    width:            number  = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
    height:           number  = 800;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-   
-   scrollSpeed:      number  = 7;
-   detectSize:       number  = 60;
 
-   // Constants ==> Do not modify
-   limit_X:          number  = 0.7;
-   limit_Y:          number  = 0.7 *0.5;
+   scrollSpeed:      number  = 8;
+   detectSize:       number  = 60;
    
    isScrollDetect:   boolean = false;
    
@@ -77,14 +72,14 @@ export class Viewport {
       }
    }
 
-   setComputed(scroll: IPosition) {
+   setComputed() {
 
-      const { x: scrollX, y: scrollY } = scroll;
-      const { isometric,  terrain    } = this.GManager.Canvas;
+      const { x: vpX,     y: vpY  } = this;
+      const { isometric,  terrain } = this.GManager.Canvas;
       
       // Update CSS canvas isometric & terrain
-      this.updateComputed(this.isoComputed, scrollX, scrollY *2 -this.GManager.halfGrid);
-      this.updateComputed(this.terComputed, scrollX, scrollY);
+      this.updateComputed(this.isoComputed, vpX, vpY *2 +this.GManager.halfGrid);
+      this.updateComputed(this.terComputed, vpX, vpY);
       
       // Apply transformations
       isometric.style.transform = this.isoComputed!.toString();
@@ -96,8 +91,8 @@ export class Viewport {
       x:        number,
       y:        number
    ) {
-      computed.e = x;
-      computed.f = y;
+      computed.e = -x;
+      computed.f = -y;
    }
 
 
@@ -124,38 +119,51 @@ export class Viewport {
    }
 
    scrollCam(collide: IBoolean) {
-      const GM = this.GManager;
-      
-      let scroll = GM.offset.scroll;
-      const { isTop, isRight, isBottom, isLeft } = collide;
-      const { scrollSpeed, limit_X, limit_Y    } = this;
 
-      if(isTop    && scroll.y <  limit_Y) scroll.y += scrollSpeed;
-      if(isRight  && scroll.x > -limit_X) scroll.x -= scrollSpeed;
-      if(isBottom && scroll.y > -limit_Y) scroll.y -= scrollSpeed;
-      if(isLeft   && scroll.x <  limit_X) scroll.x += scrollSpeed;
-   
-      this.setComputed(scroll);
-      // GM.Grid.setViewCellsList();
+      const { isTop, isRight, isBottom, isLeft } = collide;
+      const { x: vpX, y: vpY, scrollSpeed      } = this;
+      const { gridSize                         } = this.GManager;
+
+      const { x: VPgridX, y: VPgridY } = this.GManager.screenPos_toGridPos({ x: vpX, y: vpY });
+      
+      if(isTop    && VPgridY > -gridSize     ) this.y -= scrollSpeed;
+      if(isRight  && VPgridX <  gridSize     ) this.x += scrollSpeed;
+      if(isLeft   && VPgridX >=  scrollSpeed ) this.x -= scrollSpeed;
+      // if(isBottom && VPgridY < 0        ) this.y += scrollSpeed;
+      
+      // if(isBottom && VPgridX === 0 ) { this.y -= scrollSpeed *0.5; this.x += scrollSpeed; }
+      // if(isBottom && VPgridY === 0 ) { this.y -= scrollSpeed *0.5; this.x -= scrollSpeed; }
+      
+      const isRange_X = (VPgridX < scrollSpeed && VPgridX > -scrollSpeed);
+      const isRange_Y = (VPgridY < scrollSpeed && VPgridY > -scrollSpeed);
+
+      if(isBottom) {
+         if(VPgridY < 0 ) this.y += scrollSpeed;
+         else if(isRange_X) { this.y -= scrollSpeed *0.5; this.x += scrollSpeed; }
+         else if(isRange_Y) { this.y -= scrollSpeed *0.5; this.x -= scrollSpeed; }
+
+         console.log(VPgridX); // ******************************************************
+      }
+
+      this.setComputed();
    }
    
    mouseScrollCam() {
       
-      if(!this.GManager.Cursor.isScollClick) return;
+      // if(!this.GManager.Cursor.isScollClick) return;
       
-      const { limit_X,      limit_Y } = this;
-      const { oldPos,       curPos  } = this.GManager.Cursor;
-      const { x: oldX,   y: oldY    } = oldPos.cart;
-      const { x: mouseX, y: mouseY  } = curPos.cart;
+      // const { x, y } = this;
+      // const { oldPos,        curPos  } = this.GManager.Cursor;
+      // const { x: oldX,    y: oldY    } = oldPos.cart;
+      // const { x: mouseX,  y: mouseY  } = curPos.cart;
       
-      let scroll = this.GManager.offset.scroll;
-      const isRange_X: boolean = (scroll.x < limit_X) && (scroll.x > -limit_X);
-      const isRange_Y: boolean = (scroll.y < limit_Y) && (scroll.y > -limit_Y);
+      // const isRange_X: boolean = (x < limit_X) && (x > -limit_X);
+      // const isRange_Y: boolean = (y < limit_Y) && (y > -limit_Y);
    
-      if(isRange_X) scroll.x = mouseX -oldX;
-      if(isRange_Y) scroll.y = mouseY -oldY;
+      // if(isRange_X) this.x = oldX -mouseX;
+      // if(isRange_Y) this.y = oldY -mouseY;
       
-      this.setComputed(scroll);
+      // this.setComputed();
    }
 
 

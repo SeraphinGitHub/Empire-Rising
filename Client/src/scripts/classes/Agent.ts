@@ -25,9 +25,9 @@ export class Agent {
    animState:   number = 0;
 
    unitType:    string;
-   collider:    INumber;
-   position:    IPosition;
 
+   position:    IPosition;
+   collider:    INumber;
    oldCell:     Cell | null = null;
    curCell:     Cell;
    
@@ -51,18 +51,14 @@ export class Agent {
    
    constructor(params: any) {
 
-      this.id        = params.id;
-      this.popCost   = params.popCost;
-      this.moveSpeed = params.moveSpeed;
-      this.unitType  = params.unitType;
-      this.img.src   = params.imgSrc;
-      this.collider  = params.collider;
-      this.curCell   = params.startCell;
-
-      this.position  = {
-         x: this.curCell.center.x, // Temporary
-         y: this.curCell.center.y, // Temporary
-      };
+      this.id         = params.id;
+      this.position   = params.position;
+      this.collider   = params.collider;
+      this.curCell    = params.startCell;
+      this.unitType   = params.unitType;
+      this.img.src    = params.imgSrc;
+      this.popCost    = params.popCost;
+      this.moveSpeed  = params.moveSpeed;
 
       this.Pathfinder = new Pathfinder(this);
    }
@@ -98,21 +94,21 @@ export class Agent {
       
       if(!this.hasArrived(nextCell!)) return this.moveTo(nextCell!);
 
-      // if(path.length) {
+      if(path.length) {
+         
          this.oldCell = this.curCell;
          this.curCell = this.Pathfinder.nextCell = path[0];
          this.Pathfinder.path.shift();
          
          this.oldCell.setVacant  (this.id, Grid);
          this.curCell.setOccupied(this.id, Grid);
-      // }
+      }
       
       if(this.hasArrived(goalCell!)) {
-   
+
          this.isMoving  = false;
          this.animState = 0;
          this.frameY    = this.lastFrameY;
-
          // ***************************
          // this.Debug_MoveTime();
          // ***************************
@@ -224,26 +220,28 @@ export class Agent {
    }
 
    drawCollider(
-      ctx:     CanvasRenderingContext2D,
-      gridPos: IPosition,
-      scroll:  IPosition,
+      ctx:   CanvasRenderingContext2D,
+      pos:   IPosition,
+      VPpos: IPosition,
    ) {
+      
+      const { radius, offsetY } = this.collider;
 
       ctx.fillStyle = "lime";
       ctx.beginPath();
       ctx.arc(
-         gridPos.x + scroll.x,
-         gridPos.y + this.collider.offsetY +scroll.y,
-         this.collider.radius, 0, Math.PI * 2
+         pos.x -VPpos.x,
+         pos.y -VPpos.y +offsetY,
+         radius, 0, Math.PI *2
       );
       ctx.fill();
       ctx.closePath();
    }
 
    drawSprite(
-      ctx:      CanvasRenderingContext2D,
-      position: IPosition,
-      scroll:   IPosition,
+      ctx:   CanvasRenderingContext2D,
+      pos:   IPosition,
+      VPpos: IPosition,
    ) {
       const { width: originalWidth, height, offsetY } = this.sprites;
 
@@ -261,8 +259,8 @@ export class Agent {
          height,      
          
          // Destination
-         position.x +scroll.x - width  *0.5,
-         position.y +scroll.y - height *0.5 -offsetY,
+         pos.x -VPpos.x - width  *0.5,
+         pos.y -VPpos.y - height *0.5 -offsetY,
          width,
          height,
       );
