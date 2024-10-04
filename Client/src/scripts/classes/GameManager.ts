@@ -216,7 +216,7 @@ export class GameManager {
    unitParams:       any;
    faction:          string = "Orange";
 
-   gridSize:         number = 4000;
+   gridSize:         number = 3000;
    cellSize:         number = 40;
    maxPop:           number = 2000;
    curPop:           number = 0;
@@ -230,9 +230,9 @@ export class GameManager {
    oldSelectList:    Set<Agent> = new Set();
    curSelectList:    Set<Agent> = new Set();
    
-   gridPos:          IPosition  = { x: 0, y: 0 };
-   terrainPos:       IPosition  = { x: 0, y: 0 };
-   viewfieldPos:     IPosition  = { x: 0, y: 0 };
+   gridPos:          IPosition  = {x:0, y:0};
+   terrainPos:       IPosition  = {x:0, y:0};
+   viewfieldPos:     IPosition  = {x:0, y:0};
 
    // Constants ==> Do not modify
    Frame:            number = 0;
@@ -322,7 +322,7 @@ export class GameManager {
       this.clearCanvas("assets");
       
       this.Viewport.detectScrolling();
-      this.Viewport.drawScrollBounds();
+      this.Viewport.drawInfos(this);
       
       this.draw_UnitsAndBuild();
       this.drawHoverUnit();
@@ -696,7 +696,7 @@ export class GameManager {
       } = this.Ctx;
 
       for(const cell of this.Grid.occupiedCells) {
-         
+
          // Draw all units
          if(cell.agentIDset.size > 0) {
             

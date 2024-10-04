@@ -1,6 +1,7 @@
 
 import {
    IBoolean,
+   IPosition,
    ISquare,
    ISquareList,
 } from "../utils/interfaces";
@@ -17,15 +18,17 @@ export class Viewport {
 
    private GManager: GameManager;
 
-   x:                number  = 0;
-   y:                number  = 0;
-   width:            number  = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-   height:           number  = 800;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+   x:                number    = 0;
+   y:                number    = 0;
+   width:            number    = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+   height:           number    = 800;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
 
-   scrollSpeed:      number  = 8;
-   detectSize:       number  = 60;
+   scrollSpeed:      number    = 8;
+   detectSize:       number    = 60;
+
+   oldPos:           IPosition = {x:0, y:0};
    
-   isScrollDetect:   boolean = false;
+   isScrollDetect:   boolean   = false;
    
    isoComputed:      DOMMatrix   | undefined = undefined;
    terComputed:      DOMMatrix   | undefined = undefined;
@@ -95,6 +98,24 @@ export class Viewport {
       computed.f = -y;
    }
 
+   getGridPos(): IPosition {
+
+      const GM = this.GManager;
+      const { x, y } = this;
+      const { x: VPgridX, y: VPgridY } = GM.screenPos_toGridPos({ x, y });
+
+      return {
+         x: VPgridX,
+         y: VPgridY +GM.gridSize,
+      }
+   }
+
+   setOldPos() {
+      const { x, y, oldPos } = this;
+      oldPos.x = x;
+      oldPos.y = y;
+   }
+
 
    // =========================================================================================
    // ScrollCam
@@ -121,65 +142,115 @@ export class Viewport {
    scrollCam(collide: IBoolean) {
 
       const { isTop, isRight, isBottom, isLeft } = collide;
-      const { x: vpX, y: vpY, scrollSpeed      } = this;
+      const { x: VPgridX,     y: VPgridY       } = this.getGridPos();
+      const { scrollSpeed                      } = this;
       const { gridSize                         } = this.GManager;
-
-      const { x: VPgridX, y: VPgridY } = this.GManager.screenPos_toGridPos({ x: vpX, y: vpY });
       
-      if(isTop    && VPgridY > -gridSize     ) this.y -= scrollSpeed;
-      if(isRight  && VPgridX <  gridSize     ) this.x += scrollSpeed;
-      if(isLeft   && VPgridX >=  scrollSpeed ) this.x -= scrollSpeed;
-      // if(isBottom && VPgridY < 0        ) this.y += scrollSpeed;
-      
-      // if(isBottom && VPgridX === 0 ) { this.y -= scrollSpeed *0.5; this.x += scrollSpeed; }
-      // if(isBottom && VPgridY === 0 ) { this.y -= scrollSpeed *0.5; this.x -= scrollSpeed; }
-      
-      const isRange_X = (VPgridX < scrollSpeed && VPgridX > -scrollSpeed);
-      const isRange_Y = (VPgridY < scrollSpeed && VPgridY > -scrollSpeed);
+      const gridEdge     = gridSize +scrollSpeed;
+      const halfScrSpeed = scrollSpeed *0.5;
 
-      if(isBottom) {
-         if(VPgridY < 0 ) this.y += scrollSpeed;
-         else if(isRange_X) { this.y -= scrollSpeed *0.5; this.x += scrollSpeed; }
-         else if(isRange_Y) { this.y -= scrollSpeed *0.5; this.x -= scrollSpeed; }
+      const inner = {
+         top:    VPgridY > 0,
+         right:  VPgridX < gridEdge,
+         bottom: VPgridY < gridEdge,
+         left:   VPgridX > 0,
+      };
 
-         console.log(VPgridX); // ******************************************************
+      const allow = {
+         top:    isTop    && inner.top    && inner.right,
+         right:  isRight  && inner.bottom && inner.right,
+         bottom: isBottom && inner.left   && inner.bottom,
+         left:   isLeft   && inner.left   && inner.top,
+      };
+
+      const singleCollision = 
+         ( isTop    ? 1 : 0 )
+        +( isBottom ? 1 : 0 )
+        +( isLeft   ? 1 : 0 )
+        +( isRight  ? 1 : 0 )
+      ;
+      
+      if(singleCollision === 1) {
+
+         if(allow.top   ) this.y -= scrollSpeed;
+         if(allow.right ) this.x += scrollSpeed;
+         if(allow.bottom) this.y += scrollSpeed;
+         if(allow.left  ) this.x -= scrollSpeed;
       }
 
+      else {
+         if(allow.top    && isLeft  ) { this.x -= scrollSpeed; this.y -= halfScrSpeed }
+         if(allow.right  && isTop   ) { this.x += scrollSpeed; this.y -= halfScrSpeed }
+         if(allow.bottom && isRight ) { this.x += scrollSpeed; this.y += halfScrSpeed }
+         if(allow.left   && isBottom) { this.x -= scrollSpeed; this.y += halfScrSpeed }
+      }
+
+      this.setOldPos();
       this.setComputed();
+      this.GManager.Cursor.extendSelectArea();
    }
    
    mouseScrollCam() {
+      const GM = this.GManager;
       
-      // if(!this.GManager.Cursor.isScollClick) return;
+      if(!GM.Cursor.isScollClick || !GM.isMouseGridScope()) return;
+
+      const { gridSize                   } = GM;
+      const { oldPos,          curPos    } = GM.Cursor;
+      const { x: oldMouseX, y: oldMouseY } = oldPos.cart;
+      const { x: curMouseX, y: curMouseY } = curPos.cart;
+      const { x: VPgridX,   y: VPgridY   } = this.getGridPos();
+      const { x: oldX,      y: oldY      } = this.oldPos;
+
+      const inner = {
+         top:    VPgridY > 0,
+         right:  VPgridX < gridSize,
+         bottom: VPgridY < gridSize,
+         left:   VPgridX > 0,
+      };
+
+      if(inner.right && inner.left
+      && inner.top   && inner.bottom) {
+
+         this.x = oldMouseX -curMouseX +oldX;
+         this.y = oldMouseY -curMouseY +oldY;
+      }
       
-      // const { x, y } = this;
-      // const { oldPos,        curPos  } = this.GManager.Cursor;
-      // const { x: oldX,    y: oldY    } = oldPos.cart;
-      // const { x: mouseX,  y: mouseY  } = curPos.cart;
-      
-      // const isRange_X: boolean = (x < limit_X) && (x > -limit_X);
-      // const isRange_Y: boolean = (y < limit_Y) && (y > -limit_Y);
-   
-      // if(isRange_X) this.x = oldX -mouseX;
-      // if(isRange_Y) this.y = oldY -mouseY;
-      
-      // this.setComputed();
+      this.setComputed();
    }
 
 
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawScrollBounds() {
-      const GM = this.GManager;
+   drawInfos(GM: GameManager) {
 
       if(GM.isFrameHidden) return;
+
+      const { assets, isometric } = GM.Ctx;
+
+      this.drawCenter(isometric);
+      this.drawBounds(assets);
+   }
+
+   drawCenter(ctx: CanvasRenderingContext2D) {
+
+      const { x, y } = this.getGridPos();
+
+      ctx.fillStyle = "blue";
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI *2);
+      ctx.fill();
+      ctx.closePath();
+   }
+
+   drawBounds(ctx: CanvasRenderingContext2D) {
    
       for(const i in this.viewBounds) {
          const { x, y, width, height }: ISquare = this.viewBounds[i];
    
-         GM.Ctx.assets.fillStyle = "rgba(255, 0, 255, 0.5)";
-         GM.Ctx.assets.fillRect(x, y, width, height);
+         ctx.fillStyle = "rgba(255, 0, 255, 0.5)";
+         ctx.fillRect(x, y, width, height);
       }
    }
 

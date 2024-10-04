@@ -17,11 +17,9 @@ export class Cursor {
    
    Canvas:         ICanvas;
    oldPos:         IPositionList = {};
-   curPos:         IPositionList = {
-      cart: { x: 0, y: 0 },
-      iso:  { x: 0, y: 0 },
-   };
+   curPos:         IPositionList = { cart: {x:0, y:0}, iso: {x:0, y:0} };
 
+   hoverCell:      any = { id: "", pos: {} };
    selectArea:     any = {};
    areaOptions:    any = {
       lineWidth:   2,
@@ -29,11 +27,6 @@ export class Cursor {
       filledColor: "rgba(30, 144, 255, 0.3)",
    };
 
-   hoverCell:      any = {
-      id:  "",
-      pos: {},
-   };
-   
    isSelecting:    boolean = false;
    isScollClick:   boolean = false;
 
@@ -80,6 +73,7 @@ export class Cursor {
       if(state === "Up"  ) {
          this.isScollClick = false;
          GM.Viewport.isScrollDetect = true;
+         GM.Viewport.setOldPos();
       }
    }
 
@@ -203,6 +197,24 @@ export class Cursor {
       this.GManager.clearCanvas("selection");
       this.setSelectArea();
       this.drawSelectArea();
+   }
+
+   extendSelectArea() {
+
+      // if(!this.isSelecting) return;
+      
+      // const GM = this.GManager;
+
+      // const { x: oldVPx, y: oldVPy } = GM.Viewport.oldPos;
+      // const { selectArea           } = this;
+
+      // selectArea.x      -= oldVPx;
+      // selectArea.y      -= oldVPy;
+      // selectArea.width  += oldVPx;
+      // selectArea.height += oldVPy;
+
+      // GM.clearCanvas("selection");
+      // this.drawSelectArea();
    }
 
    
