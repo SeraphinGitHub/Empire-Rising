@@ -23,6 +23,10 @@ export interface IPositionList {
    [key: string]: IPosition,
 }
 
+export interface IPositionList_List {
+   [key: string]: IPositionList,
+}
+
 export interface ISquareList {
    [key: string]: ISquare,
 }

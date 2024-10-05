@@ -3,6 +3,7 @@ import {
    ICanvas,
    IPosition,
    IPositionList,
+   IPositionList_List,
    ISquare,
 } from "../utils/interfaces";
 
@@ -17,18 +18,26 @@ export class Cursor {
    private GManager: GameManager;
    
    Canvas:         ICanvas;
-   oldPos:         IPositionList = {};
-   curPos:         IPositionList = { cart: {x:0, y:0}, iso: {x:0, y:0} };
-   selectArea:     ISquare       = { x:0, y:0, width:0, height:0 };
-   hoverCell:      any           = { id: "", pos: {x:0, y:0} };
-
-   areaOptions:    any = {
+   
+   areaOptions:    any           = {
       lineWidth:   2,
       borderColor: "dodgerblue",
-      filledColor: "rgba(30, 144, 255, 0.3)",
+      selectColor: "rgba( 30, 144, 255, 0.3)",
+      targetColor: "blue",
    };
-
+   selectArea:     ISquare       = { x:0,   y:0,   width:0,   height:0 };
+   targetArea:     ISquare       = { x:0,   y:0,   width:0,   height:0 };
+   
+   oldPos:         IPositionList_List = {
+      select: { cart: {x:0, y:0}, iso: {x:0, y:0} },
+      scroll: { cart: {x:0, y:0}, iso: {x:0, y:0} },
+      target: { cart: {x:0, y:0}, iso: {x:0, y:0} },
+   };
+   curPos:         IPositionList = { cart: {x:0, y:0}, iso: {x:0, y:0} };
+   hoverCell:      any           = { id: "",           pos: {x:0, y:0} };
+   
    isSelecting:    boolean = false;
+   isTargeting:    boolean = false;
    isScollClick:   boolean = false;
 
 
@@ -52,7 +61,7 @@ export class Cursor {
    handle_LeftClick  (state: string) {
       const GM = this.GManager;
 
-      if(state === "Down") { 
+      if(state === "Down") {
          this.isSelecting = true;
          GM.Viewport.resetScroll();
       }
@@ -66,15 +75,15 @@ export class Cursor {
       const GM = this.GManager;
 
       if(state === "Down") {
-         this.isScollClick = true;
-         this.resetSelectArea();
          GM.Viewport.isScrollDetect = false;
+         this.resetSelectArea();
+         this.isScollClick = true;
       }
       
       if(state === "Up"  ) {
-         this.isScollClick = false;
-         GM.Viewport.isScrollDetect = true;
          GM.Viewport.setOldPos();
+         GM.Viewport.isScrollDetect = true;
+         this.isScollClick = false;
       }
    }
 
@@ -82,12 +91,14 @@ export class Cursor {
       const GM = this.GManager;
 
       if(state === "Down") {
+         // GM.setTargetCell(this.hoverCell.id);
+
          this.resetSelectArea();
-         GM.setTargetCell(this.hoverCell.id);
+         this.setTargetArea();
       }
-   
+      
       if(state === "Up") {
-         
+         this.isTargeting = false;
       }
    }
 
@@ -130,7 +141,8 @@ export class Cursor {
       
       if(this.isScollClick) GM.Viewport.mouseScrollCam();
 
-      this.updateSelectArea();
+      this.update_SelectArea();
+      // this.update_TargetArea();
 
       GM.unitSelection();
       GM.Viewport.isScrollDetect = true;
@@ -140,15 +152,23 @@ export class Cursor {
    // =========================================================================================
    // Methods
    // =========================================================================================
+   cellCoord(
+      value:    number,
+      cellSize: number,
+   ) {
+      return value -(value % cellSize);
+   }
+
    setPosition(
       event:     MouseEvent,
-      isClicked: boolean,
+      isPressed: boolean,
    ) {
 
-      const { isometric, selection }: ICanvas    = this.Canvas;
-      const { clientX,   clientY   }: MouseEvent = event;
+      const { isometric,            selection  } = this.Canvas;
       const { top: selectTop, left: selectLeft } = selection.getBoundingClientRect();
       const { top: isoTop,    left: isoLeft    } = isometric.getBoundingClientRect();
+      const { clientX, clientY, which          } = event;
+      const { oldPos                           } = this;
             
       const mousePos: IPositionList = {
          cart: {
@@ -161,9 +181,14 @@ export class Cursor {
             y: Math.floor(clientY -isoTop ),
          },
       }
-
-      if(isClicked) this.oldPos = mousePos;
-      else          this.curPos = mousePos;
+      
+      if(isPressed) {
+         if(which === 1) oldPos.select = mousePos;
+         if(which === 2) oldPos.scroll = mousePos;
+         if(which === 3) oldPos.target = mousePos;
+      }
+      
+      this.curPos = mousePos;
    }
    
    setHoverCell() {
@@ -171,8 +196,8 @@ export class Cursor {
       const { gridPos: { x: gridX, y: gridY }, cellSize } = this.GManager;
 
       const cellPos: IPosition = {
-         x: gridX - (gridX % cellSize),
-         y: gridY - (gridY % cellSize),
+         x: this.cellCoord(gridX, cellSize),
+         y: this.cellCoord(gridY, cellSize),
       };
    
       this.hoverCell = {
@@ -183,10 +208,11 @@ export class Cursor {
 
    setSelectArea() {
 
-      const { x: oldX,    y: oldY    } = this.oldPos.cart;
-      const { x: curX,    y: curY    } = this.curPos.cart;
-      const { x: scrollX, y: scrollY } = this.GManager.Viewport.scroll.curDelta;
-      const { selectArea             } = this;
+      const { GManager, selectArea, oldPos, curPos } = this;
+
+      const { x: oldX,    y: oldY    } = oldPos.select.cart;
+      const { x: curX,    y: curY    } = curPos.cart;
+      const { x: scrollX, y: scrollY } = GManager.Viewport.scroll.curDelta;
 
       selectArea.x      =       oldX -scrollX;
       selectArea.y      =       oldY -scrollY;
@@ -209,7 +235,7 @@ export class Cursor {
       selectArea.height = 0;
    }
    
-   updateSelectArea() {
+   update_SelectArea() {
 
       if(!this.isSelecting || this.isScollClick) return;
 
@@ -218,20 +244,130 @@ export class Cursor {
       this.drawSelectArea();
    }
 
+   setTargetArea() {
+
+      this.isTargeting = true;
+
+      const { GManager, targetArea } = this;
+      const { Grid,     cellSize   } = GManager;
+      const { x: oldX,  y: oldY    } = GManager.screenPos_toGridPos(this.oldPos.target.iso);
+
+      const width   = 160;
+      const height  = 120;
+      const gridX   = oldX -width  *0.5;
+      const gridY   = oldY -height +cellSize;
+      const targetX = this.cellCoord(gridX, cellSize);
+      const targetY = this.cellCoord(gridY, cellSize);
+
+      targetArea.x      = targetX,
+      targetArea.y      = targetY,
+      targetArea.width  = width;
+      targetArea.height = height;
+
+
+      // Search cells IDs from area
+      const colNum = width  /cellSize;
+      const rowNum = height /cellSize;
+
+      let cellIDset: Set<string> = new Set();
+
+
+      // *******************************************
+      // Get all cells IDs
+      // *******************************************
+      for(let c = 0; c < colNum; c++) {
+         for(let r = 0; r < rowNum; r++) {
+            
+            cellIDset.add(`${(targetX + cellSize *c) /cellSize}-${(targetY + cellSize *r) /cellSize}`);
+         }
+      }
+
+
+      // *******************************************
+      // Reset all Agents goalCells
+      // *******************************************
+      for(const agent of GManager.oldSelectList) {
+         agent.Pathfinder.goalCell = null;
+      }
+
+
+      // *******************************************
+      // Set all Agents goalCells
+      // *******************************************
+      for(const cellID of cellIDset) {
+         const cell = Grid.cellsList.get(cellID)!;
+         
+         if(cell.isTargeted) continue;
+         
+         for(const agent of GManager.oldSelectList) {
+            const { goalCell } = agent.Pathfinder;
+            
+            if(cell.isTargeted || goalCell !== null) continue;
+
+            cell.isTargeted           = true;
+            agent.Pathfinder.goalCell = cell;
+         }
+      }
+
+
+      // *******************************************
+      // Start all Agents search path
+      // *******************************************
+      for(const agent of GManager.oldSelectList) {
+         agent.Pathfinder.searchPath(Grid.cellsList);
+      }
+   }
+
+   update_TargetArea() {
+
+      if(!this.isTargeting || this.isScollClick) return;
+
+      const { GManager, targetArea } = this;
+      const { x: oldX,  y: oldY    } = targetArea;
+      const { x: curX,  y: curY    } = GManager.screenPos_toGridPos(this.curPos.iso);
+      
+      const cellSize    = GManager.cellSize;
+      const cellSize_2x = cellSize *2;
+      const dist        = curY -oldY;
+      const step        = 20;
+
+      // console.log( dist); // ******************************************************
+
+      if(dist % step === 0
+      && dist < 0
+      && targetArea.width > cellSize) {
+         
+         if(dist > -500) {
+            targetArea.width  -= cellSize_2x;
+            targetArea.height += cellSize_2x;
+
+            // console.log(1); // ******************************************************
+         }
+         
+         else {
+            targetArea.width  += cellSize_2x;
+            targetArea.height -= cellSize_2x;
+
+            // console.log(2); // ******************************************************
+         }
+      }
+   }
+
    
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
    drawSelectArea() {
       
-      const ctx_Selection = this.GManager.Ctx.selection;
-      const { x,   y,    width,       height     } = this.selectArea;
-      const { lineWidth, borderColor, filledColor} = this.areaOptions;
+      const { GManager, selectArea, areaOptions   } = this;
+      const { x,   y,    width,       height      } = selectArea;
+      const { lineWidth, borderColor, selectColor } = areaOptions;
+      const ctx_Selection = GManager.Ctx.selection;
 
       // Set style
       ctx_Selection.lineWidth   = lineWidth;
       ctx_Selection.strokeStyle = borderColor;
-      ctx_Selection.fillStyle   = filledColor;
+      ctx_Selection.fillStyle   = selectColor;
    
       // Draw area
       ctx_Selection.fillRect  (x, y, width, height);
@@ -254,12 +390,15 @@ export class Cursor {
    
    drawTargetArea() {
 
-      const ctx_Isometric = this.GManager.Ctx.isometric;
-      const { x: curX, y: curY } = this.curPos.iso;
-      const { x, y } = this.GManager.screenPos_toGridPos({ x: curX, y: curY });
+      if(!this.isTargeting) return;
 
-      ctx_Isometric.fillStyle = "blue";
-      ctx_Isometric.fillRect(x, y, 300, 150);
+      const { GManager, targetArea, areaOptions } = this;
+      const { x, y, width, height               } = targetArea;
+      const { targetColor                       } = areaOptions;
+      const ctx_isometric                         = GManager.Ctx.isometric;
+
+      ctx_isometric.fillStyle = targetColor;
+      ctx_isometric.fillRect(x, y, width, height);
    }
 
 }

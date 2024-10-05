@@ -62,7 +62,7 @@ export class Pathfinder {
    }
 
    searchPath(cellsList: Map<string, Cell>) {
-
+      
       // ***************************
       // this.startDate_1 = Date.now();
       // ***************************
@@ -86,7 +86,8 @@ export class Pathfinder {
             
             this.foundPath();
             // this.searchVacancy(cellsList);
-            this.Agent.isMoving = true;
+            this.Agent.isMoving          = true;
+            this.presentCell!.isTargeted = false;
 
             // ***************************
             // this.startDate_2 = Date.now();
@@ -135,7 +136,7 @@ export class Pathfinder {
       const { id, neighborsList, size } = presentCell;
       const straightValue               = size *0.5;
       const diagValue                   = 1.4 *straightValue;
-      
+
       // Cycle all neighbors if exists
       for(const sideName in neighborsList) {
 

@@ -204,7 +204,7 @@ export class Viewport {
 
       this.setOldPos();
       this.setComputed();
-      this.GManager.Cursor.updateSelectArea();
+      this.GManager.Cursor.update_SelectArea();
    }
    
    mouseScrollCam() {
@@ -214,7 +214,7 @@ export class Viewport {
 
       const {    gridSize                } = GM;
       const {    oldPos,       curPos    } = GM.Cursor;
-      const { x: oldMouseX, y: oldMouseY } = oldPos.cart;
+      const { x: oldMouseX, y: oldMouseY } = oldPos.scroll.cart;
       const { x: curMouseX, y: curMouseY } = curPos.cart;
       const { x: VPgridX,   y: VPgridY   } = this.getGridPos();
       const { x: oldX,      y: oldY      } = this.oldPos;

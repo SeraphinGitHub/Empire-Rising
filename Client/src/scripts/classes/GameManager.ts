@@ -630,11 +630,11 @@ export class GameManager {
       }
    }
 
-   setTargetCell(hoverCell_ID: string) {
+   setTargetCell(cellID: string) {
 
       if(!this.isMouseGridScope()) return;
 
-      const goalCell = this.Grid.cellsList.get(hoverCell_ID)!;
+      const goalCell = this.Grid.cellsList.get(cellID)!;
       
       if(goalCell.isBlocked || !goalCell.isVacant) return;
       
