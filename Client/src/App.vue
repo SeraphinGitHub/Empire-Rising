@@ -8,8 +8,8 @@
 
       <div class="flex btn-bar">
          <!-- <button class="flex" @click="sendData()"   >Send data</button> -->
-         <button class="flex" @click="toggleFrame()">Toggle mouse frame</button>
-         <button class="flex" @click="toggleGrid()" >Toggle grid</button>
+         <button class="flex" @click="toggleFrame()">Toggle Viewport</button>
+         <button class="flex" @click="toggleGrid()" >Toggle Grid</button>
       </div>
       
    </section>
@@ -48,8 +48,8 @@
          Ctx:      {},
 
          props: {
-            isGridHidden:  false,
-            isFrameHidden: false,
+            HideGrid:     false,
+            HideViewport: true,
          },
       }},
 
@@ -109,11 +109,11 @@
          },
 
          toggleFrame() {
-            this.GManager.isFrameHidden = !this.GManager.isFrameHidden;
+            this.GManager.HideViewport = !this.GManager.HideViewport;
          },
 
          toggleGrid() {
-            this.GManager.isGridHidden = !this.GManager.isGridHidden;
+            this.GManager.HideGrid = !this.GManager.HideGrid;
          },
       },
    }

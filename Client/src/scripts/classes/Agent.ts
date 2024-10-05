@@ -276,7 +276,7 @@ export class Agent {
       ctx.arc(
          this.position.x,
          this.position.y,
-         this.popCost *30, 0, Math.PI * 2
+         this.collider.radius *2, 0, Math.PI * 2
       );
       ctx.fill();
       ctx.closePath();

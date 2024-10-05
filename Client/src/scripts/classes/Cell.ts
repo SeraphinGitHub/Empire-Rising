@@ -44,8 +44,9 @@ export class Cell {
       topLeft:     [-1, -1,  true ],
    };
    
-   isBlocked:      boolean = false;
    isVacant:       boolean = true;
+   isBlocked:      boolean = false;
+   isTargeted:     boolean = false;
    isTransp:       boolean = false;
 
    // ----------- Tempory -----------

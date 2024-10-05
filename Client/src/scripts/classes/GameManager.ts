@@ -216,7 +216,7 @@ export class GameManager {
    unitParams:       any;
    faction:          string = "Orange";
 
-   gridSize:         number = 3000;
+   gridSize:         number = 1600;
    cellSize:         number = 40;
    maxPop:           number = 2000;
    curPop:           number = 0;
@@ -246,8 +246,8 @@ export class GameManager {
    Viewport:         Viewport;
    Collision:        Collision;
 
-   isGridHidden:     boolean;
-   isFrameHidden:    boolean;
+   HideGrid:         boolean;
+   HideViewport:     boolean;
    
 
    // Images & Sources ==> Need to move in a dedicated class later 
@@ -271,8 +271,8 @@ export class GameManager {
       this.unitParams    = params.unitParams;
       this.Canvas        = params.Canvas;
       this.Ctx           = params.Ctx;
-      this.isGridHidden  = params.props.isGridHidden;
-      this.isFrameHidden = params.props.isFrameHidden;
+      this.HideGrid      = params.props.HideGrid;
+      this.HideViewport  = params.props.HideViewport;
       this.halfGrid      = this.gridSize *0.5;
 
       this.Viewport      = new Viewport  (this, params.docBody);
@@ -329,7 +329,9 @@ export class GameManager {
       this.drawSelectUnit();
 
       this.Grid.drawGrid();
+   
       this.Cursor.drawHoverCell();
+      this.Cursor.drawTargetArea();
    
       requestAnimationFrame(() => this.runAnimation());
    }
@@ -632,10 +634,11 @@ export class GameManager {
 
       if(!this.isMouseGridScope()) return;
 
+      const goalCell = this.Grid.cellsList.get(hoverCell_ID)!;
+      
+      if(goalCell.isBlocked || !goalCell.isVacant) return;
+      
       for(const agent of this.oldSelectList) {
-         const goalCell = this.Grid.cellsList.get(hoverCell_ID)!;
-
-         if(goalCell.isBlocked || !goalCell.isVacant) return;
          
          agent.Pathfinder.goalCell = goalCell;
          agent.Pathfinder.searchPath(this.Grid.cellsList);
@@ -712,7 +715,7 @@ export class GameManager {
             
                agent.drawSprite(ctx_assets, agentPos, this.Viewport);
                // agent.drawCollider(ctx_assets, agentPos, this.Viewport);
-               if(!this.isGridHidden) agent.drawPath(ctx_isometric);
+               if(!this.HideGrid) agent.drawPath(ctx_isometric);
             }
          }
 

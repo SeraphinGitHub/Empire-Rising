@@ -2,6 +2,7 @@
 import {
    IBoolean,
    IPosition,
+   IScroll,
    ISquare,
    ISquareList,
 } from "../utils/interfaces";
@@ -22,11 +23,14 @@ export class Viewport {
    y:                number    = 0;
    width:            number    = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
    height:           number    = 800;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-
-   scrollSpeed:      number    = 8;
    detectSize:       number    = 60;
 
    oldPos:           IPosition = {x:0, y:0};
+   scroll:           IScroll = {
+      speed:         8,
+      oldDelta:      {x:0, y:0},
+      curDelta:      {x:0, y:0},
+   }
    
    isScrollDetect:   boolean   = false;
    
@@ -116,6 +120,16 @@ export class Viewport {
       oldPos.y = y;
    }
 
+   resetScroll() {
+      const { oldDelta, curDelta } = this.scroll;
+
+      oldDelta.x += curDelta.x;
+      oldDelta.y += curDelta.y;
+
+      curDelta.x = 0;
+      curDelta.y = 0;
+   }
+
 
    // =========================================================================================
    // ScrollCam
@@ -141,13 +155,13 @@ export class Viewport {
 
    scrollCam(collide: IBoolean) {
 
-      const { isTop, isRight, isBottom, isLeft } = collide;
-      const { x: VPgridX,     y: VPgridY       } = this.getGridPos();
-      const { scrollSpeed                      } = this;
-      const { gridSize                         } = this.GManager;
+      const { isTop, isRight,  isBottom, isLeft } = collide;
+      const { speed, oldDelta, curDelta         } = this.scroll;
+      const { x: VPgridX,      y: VPgridY       } = this.getGridPos();
+      const { gridSize                          } = this.GManager;
       
-      const gridEdge     = gridSize +scrollSpeed;
-      const halfScrSpeed = scrollSpeed *0.5;
+      const gridEdge  = gridSize +speed;
+      const halfSpeed = speed *0.5;
 
       const inner = {
          top:    VPgridY > 0,
@@ -172,22 +186,25 @@ export class Viewport {
       
       if(singleCollision === 1) {
 
-         if(allow.top   ) this.y -= scrollSpeed;
-         if(allow.right ) this.x += scrollSpeed;
-         if(allow.bottom) this.y += scrollSpeed;
-         if(allow.left  ) this.x -= scrollSpeed;
+         if(allow.top   ) curDelta.y -= speed;
+         if(allow.right ) curDelta.x += speed;
+         if(allow.bottom) curDelta.y += speed;
+         if(allow.left  ) curDelta.x -= speed;
       }
 
       else {
-         if(allow.top    && isLeft  ) { this.x -= scrollSpeed; this.y -= halfScrSpeed }
-         if(allow.right  && isTop   ) { this.x += scrollSpeed; this.y -= halfScrSpeed }
-         if(allow.bottom && isRight ) { this.x += scrollSpeed; this.y += halfScrSpeed }
-         if(allow.left   && isBottom) { this.x -= scrollSpeed; this.y += halfScrSpeed }
+         if(allow.top    && isLeft  ) { curDelta.x -= speed; curDelta.y -= halfSpeed }
+         if(allow.right  && isTop   ) { curDelta.x += speed; curDelta.y -= halfSpeed }
+         if(allow.bottom && isRight ) { curDelta.x += speed; curDelta.y += halfSpeed }
+         if(allow.left   && isBottom) { curDelta.x -= speed; curDelta.y += halfSpeed }
       }
+
+      this.x = curDelta.x +oldDelta.x;
+      this.y = curDelta.y +oldDelta.y;
 
       this.setOldPos();
       this.setComputed();
-      this.GManager.Cursor.extendSelectArea();
+      this.GManager.Cursor.updateSelectArea();
    }
    
    mouseScrollCam() {
@@ -195,12 +212,13 @@ export class Viewport {
       
       if(!GM.Cursor.isScollClick || !GM.isMouseGridScope()) return;
 
-      const { gridSize                   } = GM;
-      const { oldPos,          curPos    } = GM.Cursor;
+      const {    gridSize                } = GM;
+      const {    oldPos,       curPos    } = GM.Cursor;
       const { x: oldMouseX, y: oldMouseY } = oldPos.cart;
       const { x: curMouseX, y: curMouseY } = curPos.cart;
       const { x: VPgridX,   y: VPgridY   } = this.getGridPos();
       const { x: oldX,      y: oldY      } = this.oldPos;
+      const {    oldDelta,     curDelta  } = this.scroll;
 
       const inner = {
          top:    VPgridY > 0,
@@ -212,8 +230,12 @@ export class Viewport {
       if(inner.right && inner.left
       && inner.top   && inner.bottom) {
 
-         this.x = oldMouseX -curMouseX +oldX;
-         this.y = oldMouseY -curMouseY +oldY;
+         oldDelta.x = 0;
+         oldDelta.y = 0;
+         curDelta.x = oldMouseX -curMouseX +oldX;
+         curDelta.y = oldMouseY -curMouseY +oldY;
+         this.x     = curDelta.x;
+         this.y     = curDelta.y;
       }
       
       this.setComputed();
@@ -225,7 +247,7 @@ export class Viewport {
    // =========================================================================================
    drawInfos(GM: GameManager) {
 
-      if(GM.isFrameHidden) return;
+      if(GM.HideViewport) return;
 
       const { assets, isometric } = GM.Ctx;
 

@@ -3,6 +3,7 @@ import {
    ICanvas,
    IPosition,
    IPositionList,
+   ISquare,
 } from "../utils/interfaces";
 
 import { GameManager } from "./_Export";
@@ -18,9 +19,9 @@ export class Cursor {
    Canvas:         ICanvas;
    oldPos:         IPositionList = {};
    curPos:         IPositionList = { cart: {x:0, y:0}, iso: {x:0, y:0} };
+   selectArea:     ISquare       = { x:0, y:0, width:0, height:0 };
+   hoverCell:      any           = { id: "", pos: {x:0, y:0} };
 
-   hoverCell:      any = { id: "", pos: {} };
-   selectArea:     any = {};
    areaOptions:    any = {
       lineWidth:   2,
       borderColor: "dodgerblue",
@@ -53,11 +54,10 @@ export class Cursor {
 
       if(state === "Down") { 
          this.isSelecting = true;
-         this.setSelectArea();
+         GM.Viewport.resetScroll();
       }
       
       if(state === "Up") {
-         this.isSelecting = false;
          GM.unitDiselection();
       }
    }
@@ -67,6 +67,7 @@ export class Cursor {
 
       if(state === "Down") {
          this.isScollClick = true;
+         this.resetSelectArea();
          GM.Viewport.isScrollDetect = false;
       }
       
@@ -81,6 +82,7 @@ export class Cursor {
       const GM = this.GManager;
 
       if(state === "Down") {
+         this.resetSelectArea();
          GM.setTargetCell(this.hoverCell.id);
       }
    
@@ -95,6 +97,7 @@ export class Cursor {
    ) {
 
       if(state === "Down") this.setPosition(event, true);
+      if(state === "Up"  ) this.isSelecting = false;
 
       switch(event.which) {
 
@@ -128,6 +131,7 @@ export class Cursor {
       if(this.isScollClick) GM.Viewport.mouseScrollCam();
 
       this.updateSelectArea();
+
       GM.unitSelection();
       GM.Viewport.isScrollDetect = true;
    }
@@ -179,42 +183,39 @@ export class Cursor {
 
    setSelectArea() {
 
-      const { x: oldX, y: oldY }: IPosition = this.oldPos.cart;
-      const { x: curX, y: curY }: IPosition = this.curPos.cart;
+      const { x: oldX,    y: oldY    } = this.oldPos.cart;
+      const { x: curX,    y: curY    } = this.curPos.cart;
+      const { x: scrollX, y: scrollY } = this.GManager.Viewport.scroll.curDelta;
+      const { selectArea             } = this;
 
-      this.selectArea = {
-         x:      oldX,
-         y:      oldY,
-         width:  curX -oldX,
-         height: curY -oldY,
-      };
+      selectArea.x      =       oldX -scrollX;
+      selectArea.y      =       oldY -scrollY;
+      selectArea.width  = curX -oldX +scrollX;
+      selectArea.height = curY -oldY +scrollY;
    }
 
-   updateSelectArea() {
+   resetSelectArea() {
 
       if(!this.isSelecting) return;
+      
+      this.GManager.clearCanvas("selection");
+      this.isSelecting = false;
+
+      const { selectArea } = this;
+
+      selectArea.x      = 0;
+      selectArea.y      = 0;
+      selectArea.width  = 0;
+      selectArea.height = 0;
+   }
+   
+   updateSelectArea() {
+
+      if(!this.isSelecting || this.isScollClick) return;
 
       this.GManager.clearCanvas("selection");
       this.setSelectArea();
       this.drawSelectArea();
-   }
-
-   extendSelectArea() {
-
-      // if(!this.isSelecting) return;
-      
-      // const GM = this.GManager;
-
-      // const { x: oldVPx, y: oldVPy } = GM.Viewport.oldPos;
-      // const { selectArea           } = this;
-
-      // selectArea.x      -= oldVPx;
-      // selectArea.y      -= oldVPy;
-      // selectArea.width  += oldVPx;
-      // selectArea.height += oldVPy;
-
-      // GM.clearCanvas("selection");
-      // this.drawSelectArea();
    }
 
    
@@ -251,5 +252,14 @@ export class Cursor {
       ctx_isometric.strokeRect(cellX, cellY, GM.cellSize, GM.cellSize);
    }
    
+   drawTargetArea() {
+
+      const ctx_Isometric = this.GManager.Ctx.isometric;
+      const { x: curX, y: curY } = this.curPos.iso;
+      const { x, y } = this.GManager.screenPos_toGridPos({ x: curX, y: curY });
+
+      ctx_Isometric.fillStyle = "blue";
+      ctx_Isometric.fillRect(x, y, 300, 150);
+   }
 
 }

@@ -74,7 +74,7 @@ export class Grid {
    // =========================================================================================
    drawGrid() {
 
-      if(this.GManager.isGridHidden) return;
+      if(this.GManager.HideGrid) return;
       
       for(const [, cell] of this.cellsList) {
          cell.drawInfos(this.GManager.Ctx.isometric);

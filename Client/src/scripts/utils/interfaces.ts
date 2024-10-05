@@ -68,10 +68,6 @@ export interface ICircle extends IPosition {
    radius: number,
 }
 
-export interface ICircle extends IPosition {
-   radius: number,
-}
-
 export interface ILine {
    startX: number;
    startY: number;
@@ -84,4 +80,10 @@ export interface ICost {
    gCost:        number,
    fCost:        number,
    cameFromCell: Cell | undefined,
+}
+
+export interface IScroll {
+   speed:    number,
+   oldDelta: IPosition,
+   curDelta: IPosition,
 }
