@@ -140,6 +140,8 @@
    }
 
    .coordinates {
+      user-select: none;
+      
       justify-content: space-around;
       align-content: flex-start;
       position: fixed;

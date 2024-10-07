@@ -292,12 +292,33 @@ export class GameManager {
       this.setVacantIDsList();
 
       // **********************************  Tempory  **********************************
-      this.createNewAgent("infantry", "swordsman", "6-16",  "");
       this.createNewAgent("infantry", "swordsman", "9-20",  "");
       this.createNewAgent("infantry", "swordsman", "9-22",  "");
       this.createNewAgent("infantry", "swordsman", "9-24",  "");
-      this.createNewAgent("infantry", "swordsman", "13-24", "");
-      this.createNewAgent("infantry", "swordsman", "24-14", "");
+
+      this.createNewAgent("infantry", "swordsman", "3-13",  "");
+      this.createNewAgent("infantry", "swordsman", "5-13",  "");
+      this.createNewAgent("infantry", "swordsman", "7-13",  "");
+      this.createNewAgent("infantry", "swordsman", "6-15",  "");
+      this.createNewAgent("infantry", "swordsman", "4-15",  "");
+
+      this.createNewAgent("infantry", "swordsman", "3-19",  "");
+      this.createNewAgent("infantry", "swordsman", "5-19",  "");
+      this.createNewAgent("infantry", "swordsman", "7-19",  "");
+      this.createNewAgent("infantry", "swordsman", "6-21",  "");
+      this.createNewAgent("infantry", "swordsman", "4-21",  "");
+
+      this.createNewAgent("infantry", "swordsman", "26-21",  "");
+      this.createNewAgent("infantry", "swordsman", "28-21",  "");
+      this.createNewAgent("infantry", "swordsman", "30-21",  "");
+      this.createNewAgent("infantry", "swordsman", "29-23",  "");
+      this.createNewAgent("infantry", "swordsman", "27-23",  "");
+
+      this.createNewAgent("infantry", "swordsman", "26-27",  "");
+      this.createNewAgent("infantry", "swordsman", "28-27",  "");
+      this.createNewAgent("infantry", "swordsman", "30-27",  "");
+      this.createNewAgent("infantry", "swordsman", "29-29",  "");
+      this.createNewAgent("infantry", "swordsman", "27-29",  "");
       
       // this.createNewAgent("infantry",  "worker",    "5-3", "");
       // this.createNewAgent("cavalry",   "swordsman", "9-2", "");
@@ -630,21 +651,6 @@ export class GameManager {
       }
    }
 
-   setTargetCell(cellID: string) {
-
-      if(!this.isMouseGridScope()) return;
-
-      const goalCell = this.Grid.cellsList.get(cellID)!;
-      
-      if(goalCell.isBlocked || !goalCell.isVacant) return;
-      
-      for(const agent of this.oldSelectList) {
-         
-         agent.Pathfinder.goalCell = goalCell;
-         agent.Pathfinder.searchPath(this.Grid.cellsList);
-      }
-   }
-
 
    // =========================================================================================
    // Draw Methods
@@ -666,12 +672,18 @@ export class GameManager {
 
       if(this.curSelectList.size === 0 ) return;
 
+      const {
+         assets:    ctx_assets,
+         isometric: ctx_isometric,
+      } = this.Ctx;
+
       for(const agent of this.curSelectList) {
          const agentPos = this.gridPos_toScreenPos(agent.position);
          
          if(!this.isViewScope(agentPos)) return;
          
-         agent.drawSelect(this.Ctx.isometric, "blue");
+         agent.drawSelect(ctx_isometric, "blue");
+         agent.drawInfos (ctx_assets, agentPos, this.Viewport);
       }
    }
    
@@ -698,6 +710,8 @@ export class GameManager {
          isometric: ctx_isometric,
       } = this.Ctx;
 
+      const { Grid, Viewport, Frame, walls_Img } = this;
+
       for(const cell of this.Grid.occupiedCells) {
 
          // Draw all units
@@ -708,13 +722,13 @@ export class GameManager {
                const agent    = this.agentsList.get(agentID)!;
                const agentPos = this.gridPos_toScreenPos(agent.position);
          
-               agent.walkPath(this.Grid);
-               agent.updateAnimState(this.Frame);
+               agent.walkPath(Grid);
+               agent.updateAnimState(Frame);
             
                if(!this.isViewScope(agentPos)) continue;
             
-               agent.drawSprite(ctx_assets, agentPos, this.Viewport);
-               // agent.drawCollider(ctx_assets, agentPos, this.Viewport);
+               agent.drawSprite(ctx_assets, agentPos, Viewport);
+               // agent.drawCollider(ctx_assets, agentPos, Viewport);
                if(!this.HideGrid) agent.drawPath(ctx_isometric);
             }
          }
@@ -729,13 +743,13 @@ export class GameManager {
                ctx_assets.save();
                ctx_assets.globalAlpha = 0.5;
                
-               cell.drawWall(ctx_assets, cellPos, this.Viewport, this.walls_Img);
+               cell.drawWall(ctx_assets, cellPos, Viewport, walls_Img);
 
                ctx_assets.restore();
                return;
             }
 
-            cell.drawWall(ctx_assets, cellPos, this.Viewport, this.walls_Img);
+            cell.drawWall(ctx_assets, cellPos, Viewport, walls_Img);
          }
       }
    }

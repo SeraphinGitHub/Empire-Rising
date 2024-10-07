@@ -24,11 +24,12 @@ export class Pathfinder {
    nextCell:    Cell | null        = null;
    goalCell:    Cell | null        = null;
 
+   costMap:     Map<string, ICost> = new Map();
    openSet:     Set<Cell>          = new Set();
    closedSet:   Set<Cell>          = new Set();
-   costMap:     Map<string, ICost> = new Map();
-
    path:        Cell[]             = [];
+
+   hasTarget:   boolean            = false;
 
    emptyCost:   ICost = {
       hCost: 0,
@@ -61,12 +62,7 @@ export class Pathfinder {
       console.log(`Unit spend: ${ (Date.now() -this.startDate_2) /1000 } s to reach goal`);
    }
 
-   searchPath(cellsList: Map<string, Cell>) {
-      
-      // ***************************
-      // this.startDate_1 = Date.now();
-      // ***************************
-
+   resetPath() {
       const { curCell } = this.Agent;
 
       this.costMap.clear();
@@ -74,7 +70,17 @@ export class Pathfinder {
 
       this.openSet   = new Set([curCell]);
       this.closedSet = new Set();
+      this.hasTarget = false;
       this.path      = [];
+   }
+
+   searchPath(cellsList: Map<string, Cell>) {
+      
+      // ***************************
+      // this.startDate_1 = Date.now();
+      // ***************************
+      
+      this.resetPath();
 
       while(this.openSet.size > 0) {
 
@@ -86,9 +92,7 @@ export class Pathfinder {
             
             this.foundPath();
             // this.searchVacancy(cellsList);
-            this.Agent.isMoving          = true;
-            this.presentCell!.isTargeted = false;
-
+            
             // ***************************
             // this.startDate_2 = Date.now();
             // this.Debug_SearchTime();
@@ -101,13 +105,16 @@ export class Pathfinder {
       this.Agent.isMoving = false;
    }
 
-   calcHeuristic(neighbor: Cell): number {
+   calcHeuristic(
+      startCell: Cell,
+      goalCell:  Cell,
+   ): number {
 
-      const { x: goalX, y: goalY } = this.goalCell!.center;
-      const { x: nebX,  y: nebY  } = neighbor.center;
+      const { x: startX, y: startY } = startCell.center;
+      const { x: goalX,  y: goalY  } = goalCell.center;
       
-      const deltaX = Math.abs(goalX -nebX);
-      const deltaY = Math.abs(goalY -nebY);
+      const deltaX = Math.abs(goalX -startX);
+      const deltaY = Math.abs(goalY -startY);
       const dist   = Math.hypot(deltaX, deltaY);
 
       return dist;
@@ -145,8 +152,7 @@ export class Pathfinder {
 
          // If this neighbor hasn't been scanned yet
          if(!this.closedSet.has(neighbor)
-         && !neighbor.isBlocked
-         &&  neighbor.isVacant) {
+         && !neighbor.isBlocked) {
             
             const gCost:       number = this.costMap.get(id)!.gCost;
             const gValue:      number = isDiagonal ? diagValue : straightValue;
@@ -161,7 +167,7 @@ export class Pathfinder {
             }
 
             this.openSet.add(neighbor);
-            const hCost = this.calcHeuristic(neighbor);
+            const hCost = this.calcHeuristic(neighbor, this.goalCell!);
             
             this.costMap.set(nebID, {
                hCost,
@@ -177,9 +183,11 @@ export class Pathfinder {
    }
 
    foundPath() {
-            
-      this.path.push(this.presentCell!);
-      let cameFromCell = this.costMap.get(this.presentCell!.id)!.cameFromCell;
+
+      const goalCell   = this.presentCell!;
+      
+      this.path.push(goalCell);
+      let cameFromCell = this.costMap.get(goalCell.id)!.cameFromCell;
       
       // Set found path
       while(cameFromCell) {
@@ -188,9 +196,14 @@ export class Pathfinder {
          cameFromCell = this.costMap.get(cameFromCell.id)!.cameFromCell;
       }
 
+      const { Agent } = this;
+      
+      this.presentCell!.isTargeted = false;
       this.path.reverse();
-      this.nextCell        = this.path[0];
-      this.Agent.animState = 1;
+      this.nextCell   = this.path[0];
+
+      Agent.isMoving  = true;
+      Agent.animState = 1;
    }
 
    searchVacancy(cellsList: Map<string, Cell>) { // <== Tempory (Need Recast)

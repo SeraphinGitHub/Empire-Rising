@@ -7,7 +7,7 @@ import {
    ISquare,
 } from "../utils/interfaces";
 
-import { GameManager } from "./_Export";
+import { Agent, GameManager } from "./_Export";
 
 
 // =====================================================================
@@ -91,10 +91,10 @@ export class Cursor {
       const GM = this.GManager;
 
       if(state === "Down") {
-         // GM.setTargetCell(this.hoverCell.id);
-
          this.resetSelectArea();
-         this.setTargetArea();
+
+         if(GM.oldSelectList.size  >  1) this.setTargetArea();
+         if(GM.oldSelectList.size === 1) this.setTargetCell();
       }
       
       if(state === "Up") {
@@ -153,10 +153,21 @@ export class Cursor {
    // Methods
    // =========================================================================================
    cellCoord(
-      value:    number,
+      coord:    number,
       cellSize: number,
-   ) {
-      return value -(value % cellSize);
+   ): number {
+
+      return coord -(coord % cellSize);
+   }
+      
+   indexID(
+      coord:    number,
+      value:    number,
+      index:    number,
+      cellSize: number,
+   ): number {
+
+      return ( coord +value - (cellSize * (index +1)) ) /cellSize;
    }
 
    setPosition(
@@ -243,6 +254,25 @@ export class Cursor {
       this.setSelectArea();
       this.drawSelectArea();
    }
+   
+   setTargetCell() {
+      const GM = this.GManager;
+      
+      if(!GM.isMouseGridScope()) return;
+      
+      const { cellsList } = GM.Grid;
+      const targetCell    = cellsList.get(this.hoverCell.id)!;
+      
+      if(targetCell.isBlocked || !targetCell.isVacant) return;
+      
+      const [ agent      ] = GM.oldSelectList;
+      const { Pathfinder } = agent;
+      
+      targetCell.isTargeted = true;
+      Pathfinder.hasTarget  = true;
+      Pathfinder.goalCell   = targetCell;
+      Pathfinder.searchPath(cellsList);
+   }
 
    setTargetArea() {
 
@@ -252,9 +282,18 @@ export class Cursor {
       const { Grid,     cellSize   } = GManager;
       const { x: oldX,  y: oldY    } = GManager.screenPos_toGridPos(this.oldPos.target.iso);
 
-      const width   = 160;
-      const height  = 120;
-      const gridX   = oldX -width  *0.5;
+
+      const unitCount = this.GManager.oldSelectList.size;
+      let   step      = 6;
+      let   range     = 0;
+      let   remainer  = unitCount % step;
+            
+      if(remainer !== 0) range = remainer;
+      else range = unitCount /step;
+      
+      const width   = step  *cellSize;
+      const height  = range *cellSize;
+      const gridX   = oldX -(width -cellSize) *0.5;
       const gridY   = oldY -height +cellSize;
       const targetX = this.cellCoord(gridX, cellSize);
       const targetY = this.cellCoord(gridY, cellSize);
@@ -268,44 +307,55 @@ export class Cursor {
       // Search cells IDs from area
       const colNum = width  /cellSize;
       const rowNum = height /cellSize;
-
-      let cellIDset: Set<string> = new Set();
-
-
+      
+      let sortedUnitList = new Set<Agent>();
+      
       // *******************************************
       // Get all cells IDs
       // *******************************************
-      for(let c = 0; c < colNum; c++) {
-         for(let r = 0; r < rowNum; r++) {
-            
-            cellIDset.add(`${(targetX + cellSize *c) /cellSize}-${(targetY + cellSize *r) /cellSize}`);
-         }
-      }
-
-
-      // *******************************************
-      // Reset all Agents goalCells
-      // *******************************************
-      for(const agent of GManager.oldSelectList) {
-         agent.Pathfinder.goalCell = null;
-      }
-
-
-      // *******************************************
-      // Set all Agents goalCells
-      // *******************************************
-      for(const cellID of cellIDset) {
-         const cell = Grid.cellsList.get(cellID)!;
+      for(let r = 0; r < rowNum; r++) {
+         const rowID = this.indexID(targetY, height, r, cellSize);
          
-         if(cell.isTargeted) continue;
-         
-         for(const agent of GManager.oldSelectList) {
-            const { goalCell } = agent.Pathfinder;
+         for(let c = 0; c < colNum; c++) {
+            const colID = this.indexID(targetX, width, c, cellSize);
             
-            if(cell.isTargeted || goalCell !== null) continue;
+            const cell  = Grid.cellsList.get(`${colID}-${rowID}`);
 
-            cell.isTargeted           = true;
-            agent.Pathfinder.goalCell = cell;
+            if(!cell
+            ||  cell.isTargeted
+            ||  cell.isBlocked
+            || !cell.isVacant) {
+             
+               continue;
+            }
+            
+
+            // *******************************************
+            // Set all Agents goalCells
+            // *******************************************
+            for(const agent of GManager.oldSelectList) {
+               const { Pathfinder } = agent;
+               
+               if(cell.isTargeted || Pathfinder.hasTarget) continue;
+               
+               const heurDistArray = [...GManager.oldSelectList].map((agent: Agent) => ({
+                  id:        agent.id,
+                  heuristic: agent.Pathfinder.calcHeuristic(agent.curCell, cell)
+               }));
+   
+               heurDistArray.sort((prev, next) => prev.heuristic -next.heuristic);
+
+               const nearestAgentID = heurDistArray[0].id
+
+               if(nearestAgentID !== agent.id) continue;
+               
+               cell.isTargeted      = true;
+               Pathfinder.hasTarget = true;
+               Pathfinder.goalCell  = cell;
+
+               GManager.oldSelectList.delete(agent);
+               sortedUnitList.add(agent);
+            }
          }
       }
 
@@ -313,8 +363,9 @@ export class Cursor {
       // *******************************************
       // Start all Agents search path
       // *******************************************
-      for(const agent of GManager.oldSelectList) {
+      for(const agent of sortedUnitList) {
          agent.Pathfinder.searchPath(Grid.cellsList);
+         GManager.oldSelectList.add(agent);
       }
    }
 

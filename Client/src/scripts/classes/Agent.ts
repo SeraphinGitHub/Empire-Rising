@@ -282,6 +282,39 @@ export class Agent {
       ctx.closePath();
    }
 
+   drawInfos(
+      ctx:   CanvasRenderingContext2D,
+      pos:   IPosition,
+      VPpos: IPosition
+   ) {
+      const adjustedPos = {
+         x: pos.x -VPpos.x,
+         y: pos.y -VPpos.y,
+      };
+
+      this.drawID(ctx, adjustedPos);
+   }
+
+   drawID(
+      ctx: CanvasRenderingContext2D,
+      pos: IPosition,
+   ) {
+      const { x, y } = pos;
+
+      // Draw frame
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.fillRect(x -25, y -70, 50, 20);
+
+      ctx.fillStyle = "lime";
+      ctx.font      = "600 18px Verdana";
+      ctx.textAlign = "center";
+
+      const text = `${this.id}`;
+
+      // Draw ID
+      ctx.fillText(text, x, y -54,);
+   }
+
 
    // =========================================================================================
    // Animation States
