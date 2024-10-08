@@ -19,12 +19,12 @@ export interface INumber {
    [key: string]: number,
 }
 
-export interface IPositionList {
+export interface IPosList {
    [key: string]: IPosition,
 }
 
-export interface IPositionList_List {
-   [key: string]: IPositionList,
+export interface IPosList_List {
+   [key: string]: IPosList,
 }
 
 export interface ISquareList {

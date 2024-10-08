@@ -58,7 +58,8 @@ export class Agent {
       this.unitType   = params.unitType;
       this.img.src    = params.imgSrc;
       this.popCost    = params.popCost;
-      this.moveSpeed  = params.moveSpeed;
+      // this.moveSpeed  = params.moveSpeed;
+      this.moveSpeed  = 1;
 
       this.Pathfinder = new Pathfinder(this);
    }
@@ -86,33 +87,61 @@ export class Agent {
    // =========================================================================================
    // Walk through path
    // =========================================================================================
+   reloadSearchPath(cellsList: Map<string, Cell>) {
+
+      const { path } = this.Pathfinder;
+      
+      const nextCell = path[1] ? path[1] : path[0];
+
+      const neighbors = [
+         "topLeft",
+         "top",
+         "topRight",
+         "right",
+         "bottomRight",
+         "bottom",
+         "bottomLeft",
+         "left",
+      ].map(name => cellsList.get(nextCell.neighborsList[name].id)!);
+
+      if(nextCell.isBlocked
+      || neighbors.some((neb) => nextCell.isBlockedDiag(cellsList, neb))) {
+
+         this.resetAnim();
+         this.Pathfinder.searchPath(cellsList);
+      }
+   }
+
    walkPath(Grid: Grid) {
 
       if(!this.isMoving) return;
       
       const { path, nextCell, goalCell } = this.Pathfinder;
       
-      if(!this.hasArrived(nextCell!)) return this.moveTo(nextCell!);
-
-      if(path.length) {
+      
+      this.moveTo(nextCell!);
+      
+      if(this.hasArrived(nextCell!) && path.length) {
          
          this.oldCell = this.curCell;
-         this.curCell = this.Pathfinder.nextCell = path[0];
+         this.curCell = path[0];
+         
+         this.reloadSearchPath(Grid.cellsList);
+
          this.Pathfinder.path.shift();
+         this.Pathfinder.nextCell = path[0];
          
          this.oldCell.setVacant  (this.id, Grid);
          this.curCell.setOccupied(this.id, Grid);
       }
       
-      if(this.hasArrived(goalCell!)) {
+      if(!this.hasArrived(goalCell!)) return;
 
-         this.isMoving  = false;
-         this.animState = 0;
-         this.frameY    = this.lastFrameY;
-         // ***************************
-         // this.Debug_MoveTime();
-         // ***************************
-      }
+      this.resetAnim();
+
+      // ***************************
+      // this.Debug_MoveTime();
+      // ***************************     
    }
 
    moveTo(nextCell: Cell) {
@@ -163,7 +192,13 @@ export class Agent {
       if(isUp   && isRight) this.frameY = 8;
     
       this.lastFrameY = this.frameY;
-   }   
+   }
+   
+   resetAnim() {
+      this.isMoving  = false;
+      this.animState = 0;
+      this.frameY    = this.lastFrameY;
+   }
 
 
    // =========================================================================================

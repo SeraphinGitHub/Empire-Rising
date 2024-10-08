@@ -246,8 +246,9 @@ export class GameManager {
    Viewport:         Viewport;
    Collision:        Collision;
 
-   HideGrid:         boolean;
-   HideViewport:     boolean;
+   hideGrid:         boolean;
+   hideViewport:     boolean;
+   isWall:           boolean;
    
 
    // Images & Sources ==> Need to move in a dedicated class later 
@@ -262,6 +263,10 @@ export class GameManager {
    
    constructor(params: any) {
       
+      this.hideGrid      = params.props.hideGrid;
+      this.hideViewport  = params.props.hideViewport;
+      this.isWall        = params.props.isWall;
+      
       // ***************  Temp  ***************
       this.flatG_Img.src = this.flatG_Src;
       this.highG_Img.src = this.highG_Src;
@@ -271,8 +276,6 @@ export class GameManager {
       this.unitParams    = params.unitParams;
       this.Canvas        = params.Canvas;
       this.Ctx           = params.Ctx;
-      this.HideGrid      = params.props.HideGrid;
-      this.HideViewport  = params.props.HideViewport;
       this.halfGrid      = this.gridSize *0.5;
 
       this.Viewport      = new Viewport  (this, params.docBody);
@@ -608,14 +611,11 @@ export class GameManager {
       if(this.oldSelectList.size === 0) {
          
          for(const agent of this.curSelectList) {
+            agent.isSelected = true;
             this.oldSelectList.add(agent);
          }
 
          this.curSelectList.clear();
-
-         for(const agent of this.oldSelectList) {
-            agent.isSelected = true;
-         }
       }
 
 
@@ -729,7 +729,7 @@ export class GameManager {
             
                agent.drawSprite(ctx_assets, agentPos, Viewport);
                // agent.drawCollider(ctx_assets, agentPos, Viewport);
-               if(!this.HideGrid) agent.drawPath(ctx_isometric);
+               if(!this.hideGrid) agent.drawPath(ctx_isometric);
             }
          }
 

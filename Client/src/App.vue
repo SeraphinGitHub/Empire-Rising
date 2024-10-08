@@ -10,6 +10,7 @@
          <!-- <button class="flex" @click="sendData()"   >Send data</button> -->
          <button class="flex" @click="toggleFrame()">Toggle Viewport</button>
          <button class="flex" @click="toggleGrid()" >Toggle Grid</button>
+         <button class="flex" @click="toggleWall()" >Toggle Wall</button>
       </div>
       
    </section>
@@ -48,8 +49,9 @@
          Ctx:      {},
 
          props: {
-            HideGrid:     false,
-            HideViewport: true,
+            hideGrid:     false,
+            hideViewport: true,
+            isWall:       false,
          },
       }},
 
@@ -109,11 +111,15 @@
          },
 
          toggleFrame() {
-            this.GManager.HideViewport = !this.GManager.HideViewport;
+            this.GManager.hideViewport = !this.GManager.hideViewport;
          },
 
          toggleGrid() {
-            this.GManager.HideGrid = !this.GManager.HideGrid;
+            this.GManager.hideGrid = !this.GManager.hideGrid;
+         },
+
+         toggleWall() {
+            this.GManager.isWall = !this.GManager.isWall;
          },
       },
    }

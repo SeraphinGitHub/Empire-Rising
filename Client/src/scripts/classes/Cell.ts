@@ -1,7 +1,7 @@
 
 import {
    IPosition,
-   IPositionList,
+   IPosList,
    ICost,
    ICoordArray,
    INebList,
@@ -31,7 +31,7 @@ export class Cell {
    screenPos:      IPosition     = {x:0, y:0};
    
    agentIDset:     Set<number>   = new Set();
-   collider:       IPositionList = {};
+   collider:       IPosList      = {};
    neighborsList:  INebList      = {};
    nebCoordList:   ICoordArray   = {
       top:         [ 0, -1,  false], // isDiagonal ==> false

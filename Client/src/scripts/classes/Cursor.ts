@@ -2,8 +2,8 @@
 import {
    ICanvas,
    IPosition,
-   IPositionList,
-   IPositionList_List,
+   IPosList,
+   IPosList_List,
    ISquare,
 } from "../utils/interfaces";
 
@@ -19,26 +19,34 @@ export class Cursor {
    
    Canvas:         ICanvas;
    
-   areaOptions:    any           = {
-      lineWidth:   2,
-      borderColor: "dodgerblue",
-      selectColor: "rgba( 30, 144, 255, 0.3)",
-      targetColor: "blue",
+   areaOptions:    any      = {
+      select: {
+         lineWidth:     2,
+         borderColor:  "dodgerblue",
+         color:        "rgba( 30, 144, 255, 0.3)",
+      },
+
+      target: {
+         separator:     10,
+         resizeStep:    4,
+         color:        "blue",
+      },
    };
-   selectArea:     ISquare       = { x:0,   y:0,   width:0,   height:0 };
-   targetArea:     ISquare       = { x:0,   y:0,   width:0,   height:0 };
-   
-   oldPos:         IPositionList_List = {
+
+   oldPos:         IPosList_List = {
       select: { cart: {x:0, y:0}, iso: {x:0, y:0} },
       scroll: { cart: {x:0, y:0}, iso: {x:0, y:0} },
       target: { cart: {x:0, y:0}, iso: {x:0, y:0} },
    };
-   curPos:         IPositionList = { cart: {x:0, y:0}, iso: {x:0, y:0} };
-   hoverCell:      any           = { id: "",           pos: {x:0, y:0} };
-   
-   isSelecting:    boolean = false;
-   isTargeting:    boolean = false;
-   isScollClick:   boolean = false;
+
+   curPos:         IPosList = { cart: {x:0, y:0}, iso: {x:0, y:0} };
+   selectArea:     ISquare  = { x:0,   y:0,   width:0,   height:0 };
+   targetArea:     ISquare  = { x:0,   y:0,   width:0,   height:0 };
+   hoverCell:      any      = { id:"", pos: {x:0, y:0}            };
+
+   isSelecting:    boolean  = false;
+   isTargeting:    boolean  = false;
+   isScollClick:   boolean  = false;
 
 
    constructor(GManager: GameManager) {
@@ -64,6 +72,11 @@ export class Cursor {
       if(state === "Down") {
          this.isSelecting = true;
          GM.Viewport.resetScroll();
+
+         if(GM.isWall) {
+            const cell = GM.Grid.cellsList.get(this.hoverCell.id)!;
+            cell.isBlocked = true;
+         }
       }
       
       if(state === "Up") {
@@ -88,16 +101,15 @@ export class Cursor {
    }
 
    handle_RightClick (state: string) {
-      const GM = this.GManager;
-
+      
       if(state === "Down") {
+         this.isTargeting = true;
+         this.setTargetArea();
          this.resetSelectArea();
-
-         if(GM.oldSelectList.size  >  1) this.setTargetArea();
-         if(GM.oldSelectList.size === 1) this.setTargetCell();
       }
       
       if(state === "Up") {
+         this.startAgentPathfinding()
          this.isTargeting = false;
       }
    }
@@ -141,8 +153,8 @@ export class Cursor {
       
       if(this.isScollClick) GM.Viewport.mouseScrollCam();
 
-      this.update_SelectArea();
-      // this.update_TargetArea();
+      this.resize_SelectArea();
+      this.resize_TargetArea();
 
       GM.unitSelection();
       GM.Viewport.isScrollDetect = true;
@@ -181,7 +193,7 @@ export class Cursor {
       const { clientX, clientY, which          } = event;
       const { oldPos                           } = this;
             
-      const mousePos: IPositionList = {
+      const mousePos = {
          cart: {
             x: Math.floor(clientX -selectLeft),
             y: Math.floor(clientY -selectTop ),
@@ -246,7 +258,7 @@ export class Cursor {
       selectArea.height = 0;
    }
    
-   update_SelectArea() {
+   resize_SelectArea() {
 
       if(!this.isSelecting || this.isScollClick) return;
 
@@ -256,17 +268,18 @@ export class Cursor {
    }
    
    setTargetCell() {
-      const GM = this.GManager;
+      const { GManager, hoverCell } = this;
+      const { Grid, oldSelectList } = GManager;
       
-      if(!GM.isMouseGridScope()) return;
+      if(!GManager.isMouseGridScope()) return;
       
-      const { cellsList } = GM.Grid;
-      const targetCell    = cellsList.get(this.hoverCell.id)!;
+      const { cellsList }   = Grid;
+      const targetCell      = cellsList.get(hoverCell.id)!;
       
       if(targetCell.isBlocked || !targetCell.isVacant) return;
       
-      const [ agent      ] = GM.oldSelectList;
-      const { Pathfinder } = agent;
+      const [ agent      ]  = oldSelectList;
+      const { Pathfinder }  = agent;
       
       targetCell.isTargeted = true;
       Pathfinder.hasTarget  = true;
@@ -276,33 +289,32 @@ export class Cursor {
 
    setTargetArea() {
 
-      this.isTargeting = true;
-
-      const { GManager, targetArea } = this;
-      const { Grid,     cellSize   } = GManager;
-      const { x: oldX,  y: oldY    } = GManager.screenPos_toGridPos(this.oldPos.target.iso);
-
-
-      const unitCount = this.GManager.oldSelectList.size;
-      let   step      = 6;
-      let   range     = 0;
-      let   remainer  = unitCount % step;
-            
-      if(remainer !== 0) range = remainer;
-      else range = unitCount /step;
+      const { GManager, targetArea, oldPos, areaOptions } = this;
       
-      const width   = step  *cellSize;
-      const height  = range *cellSize;
-      const gridX   = oldX -(width -cellSize) *0.5;
-      const gridY   = oldY -height +cellSize;
-      const targetX = this.cellCoord(gridX, cellSize);
-      const targetY = this.cellCoord(gridY, cellSize);
+      const { separator               } = areaOptions.target;
+      const { cellSize, oldSelectList } = GManager;
+      const { x: oldX,  y: oldY       } = GManager.screenPos_toGridPos(oldPos.target.iso);
 
-      targetArea.x      = targetX,
-      targetArea.y      = targetY,
+      const unitCount   = oldSelectList.size;
+
+      const step        = Math.min (unitCount, separator);
+      const range       = Math.ceil(unitCount /step);
+      const width       = step  *cellSize;
+      const height      = range *cellSize;
+      const gridX       = oldX -(width -cellSize) *0.5;
+      const gridY       = oldY -height +cellSize;
+
+      targetArea.x      = this.cellCoord(gridX, cellSize);
+      targetArea.y      = this.cellCoord(gridY, cellSize);
       targetArea.width  = width;
       targetArea.height = height;
+   }
 
+   startAgentPathfinding() {
+
+      const { GManager, targetArea } = this;
+      const { Grid,       cellSize } = GManager;
+      const { x, y, width,  height } = targetArea;
 
       // Search cells IDs from area
       const colNum = width  /cellSize;
@@ -310,44 +322,21 @@ export class Cursor {
       
       let sortedUnitList = new Set<Agent>();
       
-      // *******************************************
       // Get all cells IDs
-      // *******************************************
       for(let r = 0; r < rowNum; r++) {
-         const rowID = this.indexID(targetY, height, r, cellSize);
+         const rowID = this.indexID(y, height, r, cellSize);
          
          for(let c = 0; c < colNum; c++) {
-            const colID = this.indexID(targetX, width, c, cellSize);
-            
+            const colID = this.indexID(x, width, c, cellSize);
             const cell  = Grid.cellsList.get(`${colID}-${rowID}`);
 
-            if(!cell
-            ||  cell.isTargeted
-            ||  cell.isBlocked
-            || !cell.isVacant) {
-             
-               continue;
-            }
+            if(!cell || cell.isTargeted || cell.isBlocked || !cell.isVacant) continue;
             
-
-            // *******************************************
             // Set all Agents goalCells
-            // *******************************************
             for(const agent of GManager.oldSelectList) {
                const { Pathfinder } = agent;
                
                if(cell.isTargeted || Pathfinder.hasTarget) continue;
-               
-               const heurDistArray = [...GManager.oldSelectList].map((agent: Agent) => ({
-                  id:        agent.id,
-                  heuristic: agent.Pathfinder.calcHeuristic(agent.curCell, cell)
-               }));
-   
-               heurDistArray.sort((prev, next) => prev.heuristic -next.heuristic);
-
-               const nearestAgentID = heurDistArray[0].id
-
-               if(nearestAgentID !== agent.id) continue;
                
                cell.isTargeted      = true;
                Pathfinder.hasTarget = true;
@@ -360,47 +349,45 @@ export class Cursor {
       }
 
 
-      // *******************************************
       // Start all Agents search path
-      // *******************************************
       for(const agent of sortedUnitList) {
          agent.Pathfinder.searchPath(Grid.cellsList);
          GManager.oldSelectList.add(agent);
       }
    }
 
-   update_TargetArea() {
+   resize_TargetArea() {
 
       if(!this.isTargeting || this.isScollClick) return;
 
-      const { GManager, targetArea } = this;
-      const { x: oldX,  y: oldY    } = targetArea;
-      const { x: curX,  y: curY    } = GManager.screenPos_toGridPos(this.curPos.iso);
+      const { GManager, targetArea, curPos, areaOptions } = this;
+
+      const { resizeStep              } = areaOptions.target;
+      const { cellSize, oldSelectList } = GManager;
+      const { y: oldY,  width, height } = targetArea;
+      const { y: curY                 } = GManager.screenPos_toGridPos(curPos.iso);
       
-      const cellSize    = GManager.cellSize;
+      const unitCount   = oldSelectList.size;
       const cellSize_2x = cellSize *2;
-      const dist        = curY -oldY;
-      const step        = 20;
+      const resizeDist  = curY -oldY;
+      const isExpanding = resizeDist > 0;
 
-      // console.log( dist); // ******************************************************
+      if(resizeDist % resizeStep !== 0) return;
 
-      if(dist % step === 0
-      && dist < 0
-      && targetArea.width > cellSize) {
-         
-         if(dist > -500) {
-            targetArea.width  -= cellSize_2x;
-            targetArea.height += cellSize_2x;
+      if((isExpanding    && width  > cellSize_2x)
+      || (resizeDist < 0 && height > cellSize_2x)) {
 
-            // console.log(1); // ******************************************************
-         }
-         
-         else {
-            targetArea.width  += cellSize_2x;
-            targetArea.height -= cellSize_2x;
+         const adjust      = isExpanding ? -cellSize : cellSize;
+         const tempWidth   = width +adjust;
+         const cellsCount  = tempWidth /cellSize;
+         targetArea.width  = tempWidth;
+         targetArea.height = Math.ceil(unitCount /cellsCount) *cellSize;
+   
+         if((tempWidth /cellSize) % 2 !== 0) return;
 
-            // console.log(2); // ******************************************************
-         }
+         const offset  = isExpanding ? cellSize : -cellSize;
+         targetArea.x += offset;
+         targetArea.y -= offset;
       }
    }
 
@@ -410,15 +397,15 @@ export class Cursor {
    // =========================================================================================
    drawSelectArea() {
       
-      const { GManager, selectArea, areaOptions   } = this;
-      const { x,   y,    width,       height      } = selectArea;
-      const { lineWidth, borderColor, selectColor } = areaOptions;
+      const { GManager, selectArea, areaOptions } = this;
+      const { x,   y,    width,       height    } = selectArea;
+      const { lineWidth, borderColor, color     } = areaOptions.select;
       const ctx_Selection = GManager.Ctx.selection;
 
       // Set style
       ctx_Selection.lineWidth   = lineWidth;
       ctx_Selection.strokeStyle = borderColor;
-      ctx_Selection.fillStyle   = selectColor;
+      ctx_Selection.fillStyle   = color;
    
       // Draw area
       ctx_Selection.fillRect  (x, y, width, height);
@@ -445,10 +432,10 @@ export class Cursor {
 
       const { GManager, targetArea, areaOptions } = this;
       const { x, y, width, height               } = targetArea;
-      const { targetColor                       } = areaOptions;
+      const { color                             } = areaOptions.target;
       const ctx_isometric                         = GManager.Ctx.isometric;
 
-      ctx_isometric.fillStyle = targetColor;
+      ctx_isometric.fillStyle = color;
       ctx_isometric.fillRect(x, y, width, height);
    }
 

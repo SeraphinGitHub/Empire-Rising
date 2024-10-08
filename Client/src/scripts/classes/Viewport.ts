@@ -204,7 +204,7 @@ export class Viewport {
 
       this.setOldPos();
       this.setComputed();
-      this.GManager.Cursor.update_SelectArea();
+      this.GManager.Cursor.resize_SelectArea();
    }
    
    mouseScrollCam() {
@@ -247,7 +247,7 @@ export class Viewport {
    // =========================================================================================
    drawInfos(GM: GameManager) {
 
-      if(GM.HideViewport) return;
+      if(GM.hideViewport) return;
 
       const { assets, isometric } = GM.Ctx;
 
