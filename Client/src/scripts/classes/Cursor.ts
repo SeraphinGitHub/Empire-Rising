@@ -73,10 +73,8 @@ export class Cursor {
          this.isSelecting = true;
          GM.Viewport.resetScroll();
 
-         if(GM.isWall) {
-            const cell = GM.Grid.cellsList.get(this.hoverCell.id)!;
-            cell.isBlocked = true;
-         }
+         GM.TEST_WallMode();
+         GM.TEST_UnitMode();
       }
       
       if(state === "Up") {
@@ -328,7 +326,7 @@ export class Cursor {
          
          for(let c = 0; c < colNum; c++) {
             const colID = this.indexID(x, width, c, cellSize);
-            const cell  = Grid.cellsList.get(`${colID}-${rowID}`);
+            const cell  = GManager.getCell(`${colID}-${rowID}`);
 
             if(!cell || cell.isTargeted || cell.isBlocked || !cell.isVacant) continue;
             

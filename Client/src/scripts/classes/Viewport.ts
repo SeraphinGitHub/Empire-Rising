@@ -22,8 +22,8 @@ export class Viewport {
    x:                number    = 0;
    y:                number    = 0;
    width:            number    = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-   height:           number    = 800;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-   detectSize:       number    = 60;
+   height:           number    = 1000;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+   detectSize:       number    = 30;
 
    oldPos:           IPosition = {x:0, y:0};
    scroll:           IScroll = {
@@ -247,7 +247,7 @@ export class Viewport {
    // =========================================================================================
    drawInfos(GM: GameManager) {
 
-      if(GM.hideViewport) return;
+      if(!GM.show_VP) return;
 
       const { assets, isometric } = GM.Ctx;
 

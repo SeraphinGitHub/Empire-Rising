@@ -145,9 +145,8 @@
       justify-content: space-around;
       align-content: flex-start;
       position: fixed;
-      top: 10px;
+      top: 15px;
       height: auto;
       width: 1400px;
-      background: white;
    }
 </style>

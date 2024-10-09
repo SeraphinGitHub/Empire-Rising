@@ -58,8 +58,8 @@ export class Agent {
       this.unitType   = params.unitType;
       this.img.src    = params.imgSrc;
       this.popCost    = params.popCost;
-      // this.moveSpeed  = params.moveSpeed;
-      this.moveSpeed  = 1;
+      this.moveSpeed  = params.moveSpeed;
+      // this.moveSpeed  = 1;
 
       this.Pathfinder = new Pathfinder(this);
    }
@@ -89,9 +89,10 @@ export class Agent {
    // =========================================================================================
    reloadSearchPath(cellsList: Map<string, Cell>) {
 
-      const { path } = this.Pathfinder;
-      
+      const { path, goalCell } = this.Pathfinder;
       const nextCell = path[1] ? path[1] : path[0];
+      
+      if(nextCell!.id === goalCell!.id) return;
 
       const neighbors = [
          "topLeft",
@@ -102,10 +103,13 @@ export class Agent {
          "bottom",
          "bottomLeft",
          "left",
-      ].map(name => cellsList.get(nextCell.neighborsList[name].id)!);
+      ].map((name) => {
+         const neb = nextCell.neighborsList[name];
+         if(neb) return cellsList.get(neb.id);
+      });
 
       if(nextCell.isBlocked
-      || neighbors.some((neb) => nextCell.isBlockedDiag(cellsList, neb))) {
+      || neighbors.some((neb) => nextCell.isBlockedDiag(cellsList, neb!) )) {
 
          this.resetAnim();
          this.Pathfinder.searchPath(cellsList);

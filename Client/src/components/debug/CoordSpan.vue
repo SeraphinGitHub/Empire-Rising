@@ -33,5 +33,7 @@
       position: relative;
       justify-content: flex-start;
       width: 100%;
+      color: white;
+      text-shadow: black 2px 2px 4px;
    }
 </style>

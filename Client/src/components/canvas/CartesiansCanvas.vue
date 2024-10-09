@@ -28,7 +28,7 @@
       mounted() {
 
          this.allCanvas.forEach((canvasName) => {
-            const canvasElem       = this.$refs[canvasName];
+            const canvasElem                = this.$refs[canvasName];
             this.$parent.Canvas[canvasName] = canvasElem;
             this.$parent.Ctx   [canvasName] = canvasElem.getContext("2d");
          });
@@ -47,7 +47,7 @@
 
       /* -----------------------------------  Tempory  ----------------------------------- */
       width:  1400px !important; /* Has to match _GlobalVar.Viewport.width */
-      height:  800px !important; /* Has to match _GlobalVar.Viewport.heght */
+      height:  1000px !important; /* Has to match _GlobalVar.Viewport.heght */
       /* -----------------------------------  Tempory  ----------------------------------- */
      
       background: black;
@@ -65,18 +65,13 @@
       /* background: orange; */
    }
 
-   .canvas-buildings {
+   .canvas-assets {
       z-index: 20;
-      /* background: darkviolet; */
-   }
-
-   .canvas-units {
-      z-index: 30;
       /* background: dodgerblue; */
    }
 
    .canvas-selection {
-      z-index: 40;
+      z-index: 30;
       /* background: red; */
    }
 

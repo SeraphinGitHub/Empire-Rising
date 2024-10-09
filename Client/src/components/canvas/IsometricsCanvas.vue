@@ -37,7 +37,7 @@
 
       /* -----------------------------------  Tempory  ----------------------------------- */
       width:  1400px !important; /* Has to match _GlobalVar.Viewport.width */
-      height:  800px !important; /* Has to match _GlobalVar.Viewport.heght */
+      height:  1000px !important; /* Has to match _GlobalVar.Viewport.heght */
       /* -----------------------------------  Tempory  ----------------------------------- */
    }
 

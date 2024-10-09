@@ -28,7 +28,6 @@ export class Pathfinder {
    openSet:     Set<Cell>          = new Set();
    closedSet:   Set<Cell>          = new Set();
    path:        Cell[]             = [];
-   storedPath:        Cell[]             = [];
 
    hasTarget:   boolean            = false;
 
@@ -202,10 +201,6 @@ export class Pathfinder {
       this.presentCell!.isTargeted = false;
       this.path.reverse();
       this.nextCell   = this.path[0];
-      
-      this.storedPath = this.path;
-
-
       Agent.isMoving  = true;
       Agent.animState = 1;
    }

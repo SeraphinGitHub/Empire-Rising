@@ -2,26 +2,24 @@
 <template>
    <section class="flex" id="root">
 
-      <Coordinates v-if="isLoaded" :htmlData ="htmlData"/>
       <CartCanvas/>
       <IsoCanvas/>
 
-      <div class="flex btn-bar">
-         <!-- <button class="flex" @click="sendData()"   >Send data</button> -->
-         <button class="flex" @click="toggleFrame()">Toggle Viewport</button>
-         <button class="flex" @click="toggleGrid()" >Toggle Grid</button>
-         <button class="flex" @click="toggleWall()" >Toggle Wall</button>
-      </div>
+      <Coordinates v-if="isLoaded" :htmlData ="htmlData"/>
+
+      <ButtonBar/>
       
    </section>
 </template>
 
+
 <script lang="ts">
 
    // Components 
-   import Coordinates from "./components/debug/Coordinates.vue"
-   import IsoCanvas   from "./components/canvas/IsometricsCanvas.vue"
-   import CartCanvas  from "./components/canvas/CartesiansCanvas.vue"
+   import IsoCanvas       from "./components/canvas/IsometricsCanvas.vue"
+   import CartCanvas      from "./components/canvas/CartesiansCanvas.vue"
+   import Coordinates     from "./components/debug/Coordinates.vue"
+   import ButtonBar       from "./components/debug/ButtonBar.vue"
 
    // Scripts
    import { io          } from "socket.io-client";
@@ -32,9 +30,10 @@
       name: "App",
 
       components: {
-         Coordinates,
          IsoCanvas,
          CartCanvas,
+         Coordinates,
+         ButtonBar,
       },
 
       data() {
@@ -47,12 +46,6 @@
          htmlData: null,
          Canvas:   {},
          Ctx:      {},
-
-         props: {
-            hideGrid:     false,
-            hideViewport: true,
-            isWall:       false,
-         },
       }},
 
       async mounted() {
@@ -75,14 +68,8 @@
          
          this.htmlData = this.GManager.setHtmlData();
          
-         setInterval(() => {
-            this.htmlData = this.GManager.setHtmlData();
-         }, 50);
-
-
-         this.$nextTick(() => setTimeout(() => {
-            this.isLoaded = true;
-         }, 0));
+         setInterval(   () => this.htmlData =  this.GManager.setHtmlData(), 50);
+         this.$nextTick(() => setTimeout(() => this.isLoaded = true, 0       ));
       },
 
       methods: {
@@ -109,41 +96,12 @@
             if(this.socket === null) return;
             this.socket.emit("connectSocketIO", { success: true });
          },
-
-         toggleFrame() {
-            this.GManager.hideViewport = !this.GManager.hideViewport;
-         },
-
-         toggleGrid() {
-            this.GManager.hideGrid = !this.GManager.hideGrid;
-         },
-
-         toggleWall() {
-            this.GManager.isWall = !this.GManager.isWall;
-         },
       },
    }
 </script>
 
+
 <style lang="scss">
-   button:active{ background: red !important;}
-
-   .btn-bar {
-      position: fixed;
-      justify-content: space-between !important;
-      bottom: 10px;
-      height: 100px;
-      width: 650px;
-      // background: white;
-
-      button {
-         height: 60px;
-         width: 200px;
-         border: 4px double green;
-         border-radius: 10px;
-         background: lime;
-      }
-   }
 
    #root {
       position: fixed;

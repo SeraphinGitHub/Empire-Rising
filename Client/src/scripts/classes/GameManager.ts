@@ -22,67 +22,42 @@ let randPathIntervals: any = [];
 
 const walls: string[] = [
    "9-21",
-   // Top
-   "21-6",
-   "22-6",
-   "23-6",
-   
-   "24-7",
-   "25-8",
-   "26-9",
-   "27-10",
-   "27-11",
-   "27-12",
-
-   // Middle
-   "12-12",
-   "13-12",
-   "14-12",
-   "15-12",
-   "16-12",
-   "17-12",
-   "18-12",
-   "19-12",
-   "20-12",
-
-   "20-13",
-   "20-14",
-   "20-15",
-   "20-16",
-   "20-17",
-   "20-18",
-
-   "21-18",
-   "22-18",
-   "23-18",
-   "24-18",
-   "25-18",
-
-   // Bottom
-   "13-23",
-   "12-23",
-   "11-23",
-   "10-23",
    "9-23",
+   "9-25",
 
-   "14-13",
-   "14-14",
-   "14-18",
-   "14-19",
-   "14-20",
-   "14-21",
-   "14-22",
-   "14-23",
-   "14-24",
-   "14-25",
-   "14-26",
+   "21-8",
+   "22-8",
+   "23-8",
+   "24-8",
+   "25-8",
+   "25-9",
+   "25-10",
+   "25-11",
+   "25-12",
+   "24-12",
+   "23-12",
+   "22-12",
+   "21-12",
+   "21-11",
+   "21-10",
+   "21-9",
 
-   "15-27",
-   "16-26",
-   "17-25",
-   "18-24",
-   "19-23",
-   "20-22",
+   "29-20",
+   "30-19",
+   "31-18",
+   "32-17",
+   "33-16",
+   "34-17",
+   "35-18",
+   "36-19",
+   "37-20",
+   "36-21",
+   "35-22",
+   "34-23",
+   "33-24",
+   "32-23",
+   "31-22",
+   "30-21",
 ];
 
 const tiles: string[] = [
@@ -214,16 +189,22 @@ const tiles: string[] = [
 export class GameManager {
 
    unitParams:       any;
-   faction:          string = "Orange";
-
-   gridSize:         number = 1600;
-   cellSize:         number = 40;
-   maxPop:           number = 2000;
-   curPop:           number = 0;
-   halfGrid:         number;
-
    Canvas:           ICanvas;
    Ctx:              ICtx;
+   
+   gridSize:         number     = 2000;
+   cellSize:         number     = 40;
+   maxPop:           number     = 2000;
+   curPop:           number     = 0;
+   halfGrid:         number;
+
+   // Constants ==> Do not modify
+   Frame:            number     = 0;
+   ViewAngle:        number     = 0;
+   COS_45:           number     = 0.707;
+   COS_30:           number     = 0.866;
+   
+   faction:          string     = "Orange";
 
    agentsList:       Map<number, Agent> = new Map();
    vacantIDsList:    number[]   = [];
@@ -234,21 +215,16 @@ export class GameManager {
    terrainPos:       IPosition  = {x:0, y:0};
    viewfieldPos:     IPosition  = {x:0, y:0};
 
-   // Constants ==> Do not modify
-   Frame:            number = 0;
-   ViewAngle:        number = 0;
-   COS_45:           number = 0.707;
-   COS_30:           number = 0.866;
-
+   show_Grid:        boolean    = true;
+   show_VP:          boolean    = false;
+   isWallMode:       boolean    = false;
+   isUnitMode:       boolean    = false;
+   
    // Classes instances
    Grid:             Grid;
    Cursor:           Cursor;
    Viewport:         Viewport;
    Collision:        Collision;
-
-   hideGrid:         boolean;
-   hideViewport:     boolean;
-   isWall:           boolean;
    
 
    // Images & Sources ==> Need to move in a dedicated class later 
@@ -262,10 +238,6 @@ export class GameManager {
 
    
    constructor(params: any) {
-      
-      this.hideGrid      = params.props.hideGrid;
-      this.hideViewport  = params.props.hideViewport;
-      this.isWall        = params.props.isWall;
       
       // ***************  Temp  ***************
       this.flatG_Img.src = this.flatG_Src;
@@ -299,29 +271,17 @@ export class GameManager {
       this.createNewAgent("infantry", "swordsman", "9-22",  "");
       this.createNewAgent("infantry", "swordsman", "9-24",  "");
 
-      this.createNewAgent("infantry", "swordsman", "3-13",  "");
-      this.createNewAgent("infantry", "swordsman", "5-13",  "");
-      this.createNewAgent("infantry", "swordsman", "7-13",  "");
-      this.createNewAgent("infantry", "swordsman", "6-15",  "");
-      this.createNewAgent("infantry", "swordsman", "4-15",  "");
+      this.createNewAgent("infantry", "swordsman", "17-21",  "");
+      this.createNewAgent("infantry", "swordsman", "19-21",  "");
+      this.createNewAgent("infantry", "swordsman", "21-21",  "");
+      this.createNewAgent("infantry", "swordsman", "20-23",  "");
+      this.createNewAgent("infantry", "swordsman", "18-23",  "");
 
-      this.createNewAgent("infantry", "swordsman", "3-19",  "");
-      this.createNewAgent("infantry", "swordsman", "5-19",  "");
-      this.createNewAgent("infantry", "swordsman", "7-19",  "");
-      this.createNewAgent("infantry", "swordsman", "6-21",  "");
-      this.createNewAgent("infantry", "swordsman", "4-21",  "");
-
-      this.createNewAgent("infantry", "swordsman", "26-21",  "");
-      this.createNewAgent("infantry", "swordsman", "28-21",  "");
-      this.createNewAgent("infantry", "swordsman", "30-21",  "");
-      this.createNewAgent("infantry", "swordsman", "29-23",  "");
-      this.createNewAgent("infantry", "swordsman", "27-23",  "");
-
-      this.createNewAgent("infantry", "swordsman", "26-27",  "");
-      this.createNewAgent("infantry", "swordsman", "28-27",  "");
-      this.createNewAgent("infantry", "swordsman", "30-27",  "");
-      this.createNewAgent("infantry", "swordsman", "29-29",  "");
-      this.createNewAgent("infantry", "swordsman", "27-29",  "");
+      this.createNewAgent("infantry", "swordsman", "17-27",  "");
+      this.createNewAgent("infantry", "swordsman", "19-27",  "");
+      this.createNewAgent("infantry", "swordsman", "21-27",  "");
+      this.createNewAgent("infantry", "swordsman", "20-29",  "");
+      this.createNewAgent("infantry", "swordsman", "18-29",  "");
       
       // this.createNewAgent("infantry",  "worker",    "5-3", "");
       // this.createNewAgent("cavalry",   "swordsman", "9-2", "");
@@ -329,9 +289,9 @@ export class GameManager {
       // this.createNewAgent("machinery", "ballista",  "8-5", "");
       // this.createNewAgent("machinery", "catapult",  "6-9", "");
 
-      // this.Test_GenerateUnits();
-      this.Test_SetWallsList();
-      tiles.forEach(ID => this.Grid.cellsList.get(ID)!.isDiffTile = true);
+      // this.TEST_GenerateUnits();
+      this.TEST_SetWallsList();
+      tiles.forEach(ID => this.getCell(ID)!.isDiffTile = true);
       setTimeout   (() => this.drawTerrain(), 100);
       // **********************************  Tempory  **********************************
 
@@ -534,6 +494,10 @@ export class GameManager {
    // =========================================================================================
    // Methods
    // =========================================================================================
+   getCell(id: string): Cell | undefined {
+      return this.Grid.cellsList.get(id);
+   }
+
    createNewAgent( // =======>  Super tempory ==> Need huge recast
       divisionName: string,
       typeName:     string,
@@ -543,7 +507,7 @@ export class GameManager {
       const division:  any    = this.unitParams   [divisionName];
       const unitType:  any    = division.unitType [typeName];
       const vacantID:  number = this.vacantIDsList[0];
-      const startCell: Cell   = this.Grid.cellsList.get(cellID)!;
+      const startCell: Cell   = this.getCell(cellID)!;
 
       startCell.isVacant = false;
       startCell.agentIDset.add(vacantID);
@@ -729,7 +693,7 @@ export class GameManager {
             
                agent.drawSprite(ctx_assets, agentPos, Viewport);
                // agent.drawCollider(ctx_assets, agentPos, Viewport);
-               if(!this.hideGrid) agent.drawPath(ctx_isometric);
+               if(this.show_Grid) agent.drawPath(ctx_isometric);
             }
          }
 
@@ -758,20 +722,20 @@ export class GameManager {
    // =========================================================================================
    // Test Methods   ==>   To delete later
    // =========================================================================================
-   Test_Rand(maxValue: number): number {
+   TEST_Rand(maxValue: number): number {
 
       return Math.floor( Math.random() *maxValue );
    }
 
-   Test_PathRandomize(agent: Agent) {
+   TEST_PathRandomize(agent: Agent) {
       
       const { gridSize, cellSize } = this;
       const cellPerSide = Math.floor(gridSize / cellSize);
       
-      let i = this.Test_Rand(cellPerSide);
-      let j = this.Test_Rand(cellPerSide);
+      let i = this.TEST_Rand(cellPerSide);
+      let j = this.TEST_Rand(cellPerSide);
       
-      const targetCell = this.Grid.cellsList.get(`${i}-${j}`)!;
+      const targetCell = this.getCell(`${i}-${j}`)!;
       
       if(targetCell.isBlocked) return;
       
@@ -779,7 +743,7 @@ export class GameManager {
       agent.Pathfinder.searchPath(this.Grid.cellsList);
    }
 
-   Test_GenerateUnits() {
+   TEST_GenerateUnits() {
 
       let pop = 30;
 
@@ -792,13 +756,13 @@ export class GameManager {
       
       while(pop > 0) {
 
-         let unitType = this.Test_Rand(2);
-         let index    = this.Test_Rand(4);
-         let i        = this.Test_Rand(cellPerSide);
-         let j        = this.Test_Rand(cellPerSide);
+         let unitType = this.TEST_Rand(2);
+         let index    = this.TEST_Rand(4);
+         let i        = this.TEST_Rand(cellPerSide);
+         let j        = this.TEST_Rand(cellPerSide);
 
-         if( this.Grid.cellsList.get(`${i}-${j}`)!.isVacant
-         && !this.Grid.cellsList.get(`${i}-${j}`)!.isBlocked) {
+         if( this.getCell(`${i}-${j}`)!.isVacant
+         && !this.getCell(`${i}-${j}`)!.isBlocked) {
 
             let color = "";
 
@@ -809,7 +773,7 @@ export class GameManager {
             if(unitType === 0) this.createNewAgent("infantry", "swordsman", `${i}-${j}`, color);
             if(unitType === 1) this.createNewAgent("infantry", "worker",    `${i}-${j}`, ""   );
             
-            this.Grid.cellsList.get(`${i}-${j}`)!.isVacant = false;
+            this.getCell(`${i}-${j}`)!.isVacant = false;
             pop--;
 
             this.curPop++;
@@ -819,10 +783,10 @@ export class GameManager {
       }
    }
 
-   Test_SetWallsList = () => {
+   TEST_SetWallsList() {
 
       walls.forEach((cellID) => {
-         const cell:     Cell      = this.Grid.cellsList.get(cellID)!;
+         const cell:     Cell      = this.getCell(cellID)!;
          const { x, y }: IPosition = this.gridPos_toScreenPos(cell.center);
          
          cell.isBlocked   = true;
@@ -832,5 +796,23 @@ export class GameManager {
          this.Grid.addToOccupiedMap(cell);
       });
    }
+
+   TEST_WallMode() {
+
+      if(!this.isWallMode) return;
+      
+      const cell = this.getCell(this.Cursor.hoverCell.id)!;
+      cell.isBlocked = true;
+   }
    
+   TEST_UnitMode() {
+
+      if(!this.isUnitMode) return;
+
+      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
+      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
+      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
+      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
+      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
+   }
 }
