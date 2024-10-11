@@ -139,10 +139,8 @@ export class Pathfinder {
 
    scanNeighbors(cellsList: Map<string, Cell>) {
       
-      const presentCell                 = this.presentCell!;
-      const { id, nebStatusList, size } = presentCell;
-      const straightValue               = size *0.5;
-      const diagValue                   = 1.4 *straightValue;
+      const presentCell           = this.presentCell!;
+      const { id, nebStatusList } = presentCell;
 
       // Cycle all neighbors if exists
       for(const sideName in nebStatusList) {
@@ -155,7 +153,7 @@ export class Pathfinder {
          && !neighbor.isBlocked) {
             
             const gCost:       number = this.costMap.get(id)!.gCost;
-            const gValue:      number = isDiagonal ? diagValue : straightValue;
+            const gValue:      number = isDiagonal ? 1.4 : 1;
             const new_gCost:   number = gCost +gValue;
             const nebCostData: ICost | undefined = this.costMap.get(nebID);
             

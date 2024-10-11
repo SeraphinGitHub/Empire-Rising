@@ -122,7 +122,6 @@ export class Agent {
       
       const { path, nextCell, goalCell } = this.Pathfinder;
       
-      
       this.moveTo(nextCell!);
       
       if(this.hasArrived(nextCell!) && path.length) {

@@ -368,8 +368,8 @@ export class Cursor {
 
       // Start all Agents search path
       for(const agent of sortedUnitList) {
-         agent.Pathfinder.searchPath(Grid.cellsList);
          oldSelectList.add(agent);
+         agent.Pathfinder.searchPath(Grid.cellsList);
       }
    }
 
