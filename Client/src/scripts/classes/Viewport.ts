@@ -17,7 +17,7 @@ import {
 // =====================================================================
 export class Viewport {
 
-   private GManager: GameManager;
+   private GM:       GameManager;
 
    x:                number    = 0;
    y:                number    = 0;
@@ -42,7 +42,7 @@ export class Viewport {
       GManager: GameManager,
       docBody:  any,
    ) {
-      this.GManager = GManager;
+      this.GM = GManager;
       this.init(docBody);
    }
 
@@ -59,13 +59,15 @@ export class Viewport {
       this.height = docBody.clientHeight;
    }
 
-   setDOMMatrix() {
+   setDOMMatrix   () {
+      const { isometric, terrain } = this.GM.Canvas;
+      
       // CSS Canvas scroll
-      this.isoComputed = new DOMMatrix(window.getComputedStyle(this.GManager.Canvas.isometric).transform);
-      this.terComputed = new DOMMatrix(window.getComputedStyle(this.GManager.Canvas.terrain  ).transform);
+      this.isoComputed = new DOMMatrix(window.getComputedStyle(isometric).transform);
+      this.terComputed = new DOMMatrix(window.getComputedStyle(terrain  ).transform);
    }
 
-   setViewBounds() {
+   setViewBounds  () {
       const { x, y, width, height, detectSize } = this;
       
       const rightX  = x +width  -detectSize;
@@ -79,13 +81,13 @@ export class Viewport {
       }
    }
 
-   setComputed() {
+   setComputed    (GM: GameManager) {
 
       const { x: vpX,     y: vpY  } = this;
-      const { isometric,  terrain } = this.GManager.Canvas;
+      const { isometric,  terrain } = GM.Canvas;
       
       // Update CSS canvas isometric & terrain
-      this.updateComputed(this.isoComputed, vpX, vpY *2 +this.GManager.halfGrid);
+      this.updateComputed(this.isoComputed, vpX, vpY *2 +GM.halfGrid);
       this.updateComputed(this.terComputed, vpX, vpY);
       
       // Apply transformations
@@ -93,7 +95,7 @@ export class Viewport {
       terrain  .style.transform = this.terComputed!.toString();
    }
 
-   updateComputed(
+   updateComputed (
       computed: any,
       x:        number,
       y:        number
@@ -102,10 +104,9 @@ export class Viewport {
       computed.f = -y;
    }
 
-   getGridPos(): IPosition {
-
-      const GM = this.GManager;
-      const { x, y } = this;
+   getGridPos     (): IPosition {
+      
+      const { GM,  x,  y             } = this;
       const { x: VPgridX, y: VPgridY } = GM.screenPos_toGridPos({ x, y });
 
       return {
@@ -114,13 +115,13 @@ export class Viewport {
       }
    }
 
-   setOldPos() {
+   setOldPos      () {
       const { x, y, oldPos } = this;
       oldPos.x = x;
       oldPos.y = y;
    }
 
-   resetScroll() {
+   resetScroll    () {
       const { oldDelta, curDelta } = this.scroll;
 
       oldDelta.x += curDelta.x;
@@ -134,11 +135,10 @@ export class Viewport {
    // =========================================================================================
    // ScrollCam
    // =========================================================================================
-   detectScrolling() {
+   detectScrolling(GM: GameManager) {
 
-      if(!this.isScrollDetect || this.GManager.Cursor.isScollClick) return;
-      
-      const GM       = this.GManager;
+      if(!this.isScrollDetect || GM.Cursor.isScollClick) return;
+
       const mousePos = GM.Cursor.curPos.cart;
 
       const { top, right, bottom, left } = this.viewBounds!;
@@ -150,15 +150,15 @@ export class Viewport {
    
       if(!isTop && !isRight && !isBottom && !isLeft) return this.isScrollDetect = false;
 
-      this.scrollCam({ isTop, isRight, isBottom, isLeft });
+      this.scrollCam(GM, { isTop, isRight, isBottom, isLeft });
    }
 
-   scrollCam(collide: IBoolean) {
+   scrollCam      (GM: GameManager, collide: IBoolean) {
 
+      const { gridSize                          } = GM;
       const { isTop, isRight,  isBottom, isLeft } = collide;
       const { speed, oldDelta, curDelta         } = this.scroll;
       const { x: VPgridX,      y: VPgridY       } = this.getGridPos();
-      const { gridSize                          } = this.GManager;
       
       const gridEdge  = gridSize +speed;
       const halfSpeed = speed *0.5;
@@ -203,12 +203,12 @@ export class Viewport {
       this.y = curDelta.y +oldDelta.y;
 
       this.setOldPos();
-      this.setComputed();
-      this.GManager.Cursor.resize_SelectArea();
+      this.setComputed(GM);
+
+      GM.Cursor.update_SelectArea(GM);
    }
    
-   mouseScrollCam() {
-      const GM = this.GManager;
+   mouseScrollCam (GM: GameManager) {
       
       if(!GM.Cursor.isScollClick || !GM.isMouseGridScope()) return;
 
@@ -238,14 +238,14 @@ export class Viewport {
          this.y     = curDelta.y;
       }
       
-      this.setComputed();
+      this.setComputed(GM);
    }
 
 
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawInfos(GM: GameManager) {
+   drawInfos      (GM: GameManager) {
 
       if(!GM.show_VP) return;
 
@@ -255,7 +255,7 @@ export class Viewport {
       this.drawBounds(assets);
    }
 
-   drawCenter(ctx: CanvasRenderingContext2D) {
+   drawCenter     (ctx: CanvasRenderingContext2D) {
 
       const { x, y } = this.getGridPos();
 
@@ -266,7 +266,7 @@ export class Viewport {
       ctx.closePath();
    }
 
-   drawBounds(ctx: CanvasRenderingContext2D) {
+   drawBounds     (ctx: CanvasRenderingContext2D) {
    
       for(const i in this.viewBounds) {
          const { x, y, width, height }: ISquare = this.viewBounds[i];

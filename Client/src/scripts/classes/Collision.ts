@@ -5,6 +5,7 @@ import {
    ISquare,
    ICircle,
    ILine,
+   ILineList,
 } from "../utils/interfaces";
 
 
@@ -19,41 +20,6 @@ export class Collision {
    ) {
       if(first > second) return [second, first];
       return [first, second];
-   }
-   
-   extractSides(
-     square: ISquare
-   ) {         
-      return {
-   
-         top: {
-            startX: square.x,
-            startY: square.y,
-            endX:   square.x +square.width,
-            endY:   square.y,
-         },         
-   
-         right: {
-            startX: square.x +square.width,
-            startY: square.y,
-            endX:   square.x +square.width,
-            endY:   square.y +square.height,
-         },
-   
-         bottom: {
-            startX: square.x +square.width,
-            startY: square.y +square.height,
-            endX:   square.x,
-            endY:   square.y +square.height,
-         },
-   
-         left: {
-            startX: square.x,
-            startY: square.y +square.height,
-            endX:   square.x,
-            endY:   square.y,
-         },
-      };
    }
    
    calcDist(
@@ -223,50 +189,21 @@ export class Collision {
 
    line_toSquare(
       line:   ILine,
-      square: ISquare,
+      square: ILineList,
    ): boolean {  
       
-      const rectSide = {
+      const { top, right, bottom, left } = square;
 
-         top: {
-            startX: square.x,
-            startY: square.y,
-            endX:   square.x +square.width,
-            endY:   square.y,
-         },         
-
-         right: {
-            startX: square.x +square.width,
-            startY: square.y,
-            endX:   square.x +square.width,
-            endY:   square.y +square.height,
-         },
-
-         bottom: {
-            startX: square.x +square.width,
-            startY: square.y +square.height,
-            endX:   square.x,
-            endY:   square.y +square.height,
-         },
-
-         left: {
-            startX: square.x,
-            startY: square.y +square.height,
-            endX:   square.x,
-            endY:   square.y,
-         },
-      };
-
-      const topSide    = this.line_toLine(line, rectSide.top   );
-      const rightSide  = this.line_toLine(line, rectSide.right );
-      const bottomSide = this.line_toLine(line, rectSide.bottom);
-      const leftSide   = this.line_toLine(line, rectSide.left  );
+      const isTop    = this.line_toLine(line, top   );
+      const isRight  = this.line_toLine(line, right );
+      const isBottom = this.line_toLine(line, bottom);
+      const isLeft   = this.line_toLine(line, left  );
 
       const isOverLaping: boolean =
-            leftSide
-         || rightSide
-         || topSide
-         || bottomSide
+            isTop
+         || isRight
+         || isBottom
+         || isLeft
       ;
 
       return isOverLaping;

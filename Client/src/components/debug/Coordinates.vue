@@ -107,24 +107,24 @@
          },
 
          setCellCoord() {
-            const { hoverCell } = this.htmlData;
+            const { hoverPos } = this.htmlData;
 
             this.cellCoord = {
                name: "Cell Coord:",
                classX: "cellX",
                classY: "cellY",
-               x: `x : ${hoverCell.pos.x}`,
-               y: `y : ${hoverCell.pos.y}`,
+               x: `x : ${hoverPos.coord.x}`,
+               y: `y : ${hoverPos.coord.y}`,
             }
          },
 
          setCellID() {
-            const { hoverCell } = this.htmlData;
+            const { hoverPos } = this.htmlData;
 
             this.cellID = {
                name: "Cell ID:",
                classID: "ID-cell",
-               id: `id : ${hoverCell.id}`,
+               id: `id : ${hoverPos.cellID}`,
             }
          },
       },

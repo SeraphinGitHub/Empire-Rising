@@ -31,6 +31,10 @@ export interface ISquareList {
    [key: string]: ISquare,
 }
 
+export interface ILineList {
+   [key: string]: ILine,
+}
+
 export interface ICoordArray {
    [key: string]: [number, number, boolean],
 }

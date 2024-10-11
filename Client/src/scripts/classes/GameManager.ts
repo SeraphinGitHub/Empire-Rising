@@ -260,11 +260,11 @@ export class GameManager {
 
    init() {
 
-      this.setCanvasSize();
-      this.setViewAngle();
-      this.setTerrainPos();
-      this.setViewfieldPos();
-      this.setVacantIDsList();
+      this.setCanvasSize    ();
+      this.setViewAngle     ();
+      this.setTerrainPos    ();
+      this.setViewfieldPos  ();
+      this.setVacantIDsList ();
 
       // **********************************  Tempory  **********************************
       this.createNewAgent("infantry", "swordsman", "9-20",  "");
@@ -305,17 +305,19 @@ export class GameManager {
       this.clearCanvas("isometric");
       this.clearCanvas("assets");
       
-      this.Viewport.detectScrolling();
-      this.Viewport.drawInfos(this);
+      this.Viewport.detectScrolling (this);
+      this.Viewport.drawInfos       (this);
       
-      this.draw_UnitsAndBuild();
-      this.drawHoverUnit();
-      this.drawSelectUnit();
+      this.draw_UnitsAndBuild       ();
+      this.drawHoverUnit            ();
+      this.drawSelectUnit           ();
 
-      this.Grid.drawGrid();
-   
-      this.Cursor.drawHoverCell();
-      this.Cursor.drawTargetArea();
+      this.Grid.drawGrid            (this);
+      this.Cursor.drawHoverPos      (this);
+      this.Cursor.drawTargetArea    (this);
+
+      this.Cursor.drawWallArea      (this); // *******************************
+      this.Cursor.update_WallsList  (this); // *******************************
    
       requestAnimationFrame(() => this.runAnimation());
    }
@@ -323,14 +325,14 @@ export class GameManager {
    setHtmlData() {
 
       const { x, y                    } = this.Viewport;
-      const { curPos, hoverCell       } = this.Cursor;
+      const { curPos, hoverPos        } = this.Cursor;
       const { curPop, maxPop, gridPos } = this;
 
       return {
          curPop,
          maxPop,
          gridPos,
-         hoverCell,
+         hoverPos,
          cartPos: curPos.cart,
          viewPort: { x, y },
       }
@@ -340,7 +342,7 @@ export class GameManager {
    // =========================================================================================
    // Terrain & Canvas
    // =========================================================================================
-   getWorldSize(): ISize{
+   getWorldSize      (): ISize{
 
       const hypot:   number = this.gridSize;
       const degrees: number = 26.565;  // ==> Fake isometric angle value
@@ -352,7 +354,7 @@ export class GameManager {
       }
    }
 
-   setCanvasSize() {
+   setCanvasSize     () {
       
       const gridCanvas: any = {
          terrain:   this.getWorldSize(),
@@ -379,12 +381,12 @@ export class GameManager {
       }
    }
 
-   setViewAngle() {
+   setViewAngle      () {
 
       this.ViewAngle = this.gridSize *0.5 -(this.cellSize *this.COS_45 *this.COS_30);
    }
 
-   setTerrainPos() {
+   setTerrainPos     () {
       
       const { width, height }: ISize = this.getWorldSize();
 
@@ -394,7 +396,7 @@ export class GameManager {
       }
    }
 
-   setViewfieldPos() {
+   setViewfieldPos   () {
       
       const diagOffset:    number = this.gridSize *this.COS_45;
       const half_vpWidth:  number = this.Viewport.width  *0.5;
@@ -404,14 +406,14 @@ export class GameManager {
       this.viewfieldPos.y = half_vpHeight -diagOffset *0.5 +(this.cellSize *0.5 *this.COS_30);
    }
 
-   setVacantIDsList() {
+   setVacantIDsList  () {
 
       for(let i = 1; i < this.maxPop; i++) {
          this.vacantIDsList.push(i);
       }
    }
 
-   clearCanvas(canvasName: string) {
+   clearCanvas       (canvasName: string) {
 
       const { width, height } = (canvasName === "isometric")
       ? { width: this.gridSize,       height: this.gridSize        }
@@ -424,12 +426,13 @@ export class GameManager {
    // =========================================================================================
    // Boolean methods
    // =========================================================================================
-   isMouseGridScope(): boolean {
+   isMouseGridScope  (): boolean {
       
-      const { x: mouseX, y: mouseY }: IPosition = this.gridPos;
+      const { gridSize,  gridPos   } = this;
+      const { x: mouseX, y: mouseY } = gridPos;
       
-      if(mouseX > 0 && mouseX < this.gridSize
-      && mouseY > 0 && mouseY < this.gridSize) {
+      if(mouseX > 0 && mouseX < gridSize
+      && mouseY > 0 && mouseY < gridSize) {
 
          return true;
       }
@@ -437,7 +440,7 @@ export class GameManager {
       return false;
    }
 
-   isViewScope(entityPos: IPosition): boolean {
+   isViewScope       (entityPos: IPosition): boolean {
 
       const {
          x:        vpX,
@@ -494,11 +497,11 @@ export class GameManager {
    // =========================================================================================
    // Methods
    // =========================================================================================
-   getCell(id: string): Cell | undefined {
+   getCell           (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
 
-   createNewAgent( // =======>  Super tempory ==> Need huge recast
+   createNewAgent    ( // =======>  Super tempory ==> Need huge recast
       divisionName: string,
       typeName:     string,
       cellID:       string,
@@ -537,7 +540,7 @@ export class GameManager {
       this.agentsList.set(vacantID, newAgent);
    }
 
-   setAgentCollider(agent: Agent): ICircle {
+   setAgentCollider  (agent: Agent): ICircle {
 
       const { x: agentX, y: agentY  } = this.gridPos_toScreenPos(agent.position);
       const { x: vpX,    y: vpY     } = this.Viewport;
@@ -550,7 +553,7 @@ export class GameManager {
       };
    }
 
-   unitSelection() {
+   unitSelection     () {
       const { isSelecting, selectArea, curPos } = this.Cursor;
 
       // If collide with mouse or select area ==> Add agent to CurrentList
@@ -567,7 +570,7 @@ export class GameManager {
       }
    }
 
-   unitDiselection() {
+   unitDiselection   () {
 
       this.clearCanvas("selection");
       
@@ -619,7 +622,7 @@ export class GameManager {
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawSelectUnit() { // ==> Recast later with good selected halo
+   drawSelectUnit    () { // ==> Recast later with good selected halo
       
       if(this.oldSelectList.size === 0 ) return;
 
@@ -632,7 +635,7 @@ export class GameManager {
       }
    }
    
-   drawHoverUnit() {  // ==> Recast later with some agent infos
+   drawHoverUnit     () {  // ==> Recast later with some agent infos
 
       if(this.curSelectList.size === 0 ) return;
 
@@ -651,7 +654,7 @@ export class GameManager {
       }
    }
    
-   drawTerrain() {   // ==> Tempory until WFC terrain generation
+   drawTerrain       () {   // ==> Tempory until WFC terrain generation
 
       for(const [, cell] of this.Grid.cellsList) {
 
@@ -722,7 +725,7 @@ export class GameManager {
    // =========================================================================================
    // Test Methods   ==>   To delete later
    // =========================================================================================
-   TEST_Rand(maxValue: number): number {
+   TEST_Rand         (maxValue: number): number {
 
       return Math.floor( Math.random() *maxValue );
    }
@@ -783,7 +786,7 @@ export class GameManager {
       }
    }
 
-   TEST_SetWallsList() {
+   TEST_SetWallsList () {
 
       walls.forEach((cellID) => {
          const cell:     Cell      = this.getCell(cellID)!;
@@ -796,23 +799,12 @@ export class GameManager {
          this.Grid.addToOccupiedMap(cell);
       });
    }
-
-   TEST_WallMode() {
-
-      if(!this.isWallMode) return;
-      
-      const cell = this.getCell(this.Cursor.hoverCell.id)!;
-      cell.isBlocked = true;
-   }
    
-   TEST_UnitMode() {
+   TEST_UnitMode     () {
 
       if(!this.isUnitMode) return;
 
-      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
-      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
-      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
-      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
-      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell.id,  "");
+      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverPos.cellID,  "");
    }
+
 }

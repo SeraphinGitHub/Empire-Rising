@@ -1,10 +1,10 @@
 
 import {
    IPosition,
-   IPosList,
    ICost,
    ICoordArray,
    INebList,
+   ILineList,
 } from "../utils/interfaces";
 
 import {
@@ -31,7 +31,7 @@ export class Cell {
    screenPos:      IPosition     = {x:0, y:0};
    
    agentIDset:     Set<number>   = new Set();
-   collider:       IPosList      = {};
+   collider:       ILineList     = {};
    neighborsList:  INebList      = {};
    nebCoordList:   ICoordArray   = {
       top:         [ 0, -1,  false], // isDiagonal ==> false
@@ -96,10 +96,10 @@ export class Cell {
 
       // Set diamond corners coord
       this.collider = {
-         top:    { x: centX,   y: y       },
-         right:  { x: x +size, y: centY   },
-         bottom: { x: centX,   y: y +size },
-         left:   { x: x,       y: centY   },
+         top:    { startX: centX,   startY: y,       endX: x +size, endY: centY   },
+         right:  { startX: x +size, startY: centY,   endX: centX,   endY: y +size },
+         bottom: { startX: centX,   startY: y +size, endX: x,       endY: centY   },
+         left:   { startX: x,       startY: centY,   endX: centX,   endY: y       },
       };
    }
 
@@ -299,15 +299,15 @@ export class Cell {
       ctx.fillStyle = "red";
       ctx.beginPath();
 
-      ctx.moveTo(top.x,    top.y   );
-      ctx.lineTo(right.x,  right.y );
-      ctx.lineTo(bottom.x, bottom.y);
-      ctx.lineTo(left.x,   left.y  );
+      ctx.moveTo(top.startX,    top.startY   );
+      ctx.lineTo(right.startX,  right.startY );
+      ctx.lineTo(bottom.startX, bottom.startY);
+      ctx.lineTo(left.startX,   left.startY  );
 
       ctx.fill();
    }
 
-   drawWallLine(ctx: CanvasRenderingContext2D, hoverCell: Cell) {
+   drawRaycast(ctx: CanvasRenderingContext2D, hoverCell: Cell) {
       const { x: cellX,  y: cellY  } = this.center;
       const { x: hoverX, y: hoverY } = hoverCell.center;
 

@@ -205,7 +205,7 @@ export class Pathfinder {
       Agent.animState = 1;
    }
 
-   searchVacancy(cellsList: Map<string, Cell>) { // <== Tempory (Need Recast)
+   // searchVacancy(cellsList: Map<string, Cell>) { // <== Tempory (Need Recast)
 
       // if(curCell.isVacant || curCell.agentIDset.has(this.id)) return;
 
@@ -227,5 +227,5 @@ export class Pathfinder {
       //    this.Pathfinder.searchPath();
       //    vacantPath.shift();
       // }
-   }
+   // }
 }

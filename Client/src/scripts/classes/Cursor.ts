@@ -7,7 +7,11 @@ import {
    ISquare,
 } from "../utils/interfaces";
 
-import { Agent, GameManager } from "./_Export";
+import {
+   Cell,
+   Agent,
+   GameManager,
+} from "./_Export";
 
 
 // =====================================================================
@@ -15,11 +19,11 @@ import { Agent, GameManager } from "./_Export";
 // =====================================================================
 export class Cursor {
 
-   private GManager: GameManager;
+   private GM:     GameManager;
    
    Canvas:         ICanvas;
    
-   areaOptions:    any      = {
+   areaOptions:    any = {
       select: {
          lineWidth:     2,
          borderColor:  "dodgerblue",
@@ -39,18 +43,24 @@ export class Cursor {
       target: { cart: {x:0, y:0}, iso: {x:0, y:0} },
    };
 
-   curPos:         IPosList = { cart: {x:0, y:0}, iso: {x:0, y:0} };
-   selectArea:     ISquare  = { x:0,   y:0,   width:0,   height:0 };
-   targetArea:     ISquare  = { x:0,   y:0,   width:0,   height:0 };
-   hoverCell:      any      = { id:"", pos: {x:0, y:0}            };
+   curPos:         IPosList    = { cart: {x:0, y:0}, iso: {x:0, y:0} };
+   selectArea:     ISquare     = { x:0,   y:0,   width:0,   height:0 };
+   targetArea:     ISquare     = { x:0,   y:0,   width:0,   height:0 };
+   wallArea:       ISquare     = { x:0,   y:0,   width:0,   height:0 };
+   hoverPos:       any         = { cellID:"",    coord: {x:0, y:0}   };
 
-   isSelecting:    boolean  = false;
-   isTargeting:    boolean  = false;
-   isScollClick:   boolean  = false;
+   firstWallCell:  Cell | null = null;
+   wallsID_List:   Set<string> = new Set();
+
+   isSelecting:    boolean     = false;
+   isTargeting:    boolean     = false;
+   isScollClick:   boolean     = false;
+
+   hasWallPoint:   boolean     = true;
 
 
    constructor(GManager: GameManager) {
-      this.GManager = GManager;
+      this.GM       = GManager;
       this.Canvas   = GManager.Canvas;
 
       this.init();
@@ -66,15 +76,16 @@ export class Cursor {
    // =========================================================================================
    // Mouse Behaviors
    // =========================================================================================
-   handle_LeftClick  (state: string) {
-      const GM = this.GManager;
+   handle_LeftClick  (GM: GameManager, state: string) {
 
       if(state === "Down") {
          this.isSelecting = true;
-         GM.Viewport.resetScroll();
-
-         GM.TEST_WallMode();
+         
+         this.hasWallPoint = !this.hasWallPoint;
+         this.setWallArea(GM); // *******************************
+         
          GM.TEST_UnitMode();
+         GM.Viewport.resetScroll();
       }
       
       if(state === "Up") {
@@ -82,12 +93,11 @@ export class Cursor {
       }
    }
 
-   handle_ScrollClick(state: string) {
-      const GM = this.GManager;
+   handle_ScrollClick(GM: GameManager, state: string) {
 
       if(state === "Down") {
          GM.Viewport.isScrollDetect = false;
-         this.resetSelectArea();
+         this.resetSelectArea(GM);
          this.isScollClick = true;
       }
       
@@ -98,16 +108,16 @@ export class Cursor {
       }
    }
 
-   handle_RightClick (state: string) {
+   handle_RightClick (GM: GameManager, state: string) {
       
       if(state === "Down") {
          this.isTargeting = true;
-         this.setTargetArea();
-         this.resetSelectArea();
+         this.setTargetArea  (GM);
+         this.resetSelectArea(GM);
       }
       
       if(state === "Up") {
-         this.startAgentPathfinding()
+         this.startAgentPF(GM)
          this.isTargeting = false;
       }
    }
@@ -116,45 +126,39 @@ export class Cursor {
       event: MouseEvent,
       state: string,
    ) {
+      const { GM } = this;
 
-      if(state === "Down") this.setPosition(event, true);
+      if(state === "Down") this.setPosition(GM, event, true);
       if(state === "Up"  ) this.isSelecting = false;
 
       switch(event.which) {
 
          // Left click
-         case 1: this.handle_LeftClick(state);
+         case 1: this.handle_LeftClick  (GM, state);
          break;
 
          // Scroll click
-         case 2: this.handle_ScrollClick(state);
+         case 2: this.handle_ScrollClick(GM, state);
          break;
 
          // Right click
-         case 3: this.handle_RightClick(state);
+         case 3: this.handle_RightClick (GM, state);
          break;
       }
    }
 
    move(event: MouseEvent) {
       
-      const GM = this.GManager;
+      const { GM } = this;
 
-      // Set mouse position
-      this.setPosition(event, false);
-
-      // Set mouse to grid position
-      GM.gridPos = GM.screenPos_toGridPos(this.curPos.iso);
+      this.setPosition(GM, event, false);
       
-      // Set hoverCell from mouse grid position
-      if(GM.isMouseGridScope()) this.setHoverCell();
-      
-      if(this.isScollClick) GM.Viewport.mouseScrollCam();
-
-      this.resize_SelectArea();
-      this.resize_TargetArea();
+      this.setHoverPos      (GM);
+      this.update_SelectArea(GM);
+      this.update_TargetArea(GM);
 
       GM.unitSelection();
+      GM.Viewport.mouseScrollCam(GM);
       GM.Viewport.isScrollDetect = true;
    }
 
@@ -162,7 +166,7 @@ export class Cursor {
    // =========================================================================================
    // Methods
    // =========================================================================================
-   cellCoord(
+   getCellCoord(
       coord:    number,
       cellSize: number,
    ): number {
@@ -170,7 +174,7 @@ export class Cursor {
       return coord -(coord % cellSize);
    }
       
-   indexID(
+   getIndexID(
       coord:    number,
       value:    number,
       index:    number,
@@ -181,15 +185,15 @@ export class Cursor {
    }
 
    setPosition(
+      GM:        GameManager,
       event:     MouseEvent,
       isPressed: boolean,
    ) {
 
-      const { isometric,            selection  } = this.Canvas;
-      const { top: selectTop, left: selectLeft } = selection.getBoundingClientRect();
-      const { top: isoTop,    left: isoLeft    } = isometric.getBoundingClientRect();
+      const { Canvas, oldPos                   } = this;
+      const { top: selectTop, left: selectLeft } = Canvas.selection.getBoundingClientRect();
+      const { top: isoTop,    left: isoLeft    } = Canvas.isometric.getBoundingClientRect();
       const { clientX, clientY, which          } = event;
-      const { oldPos                           } = this;
             
       const mousePos = {
          cart: {
@@ -203,37 +207,40 @@ export class Cursor {
          },
       }
       
-      if(isPressed) {
-         if(which === 1) oldPos.select = mousePos;
-         if(which === 2) oldPos.scroll = mousePos;
-         if(which === 3) oldPos.target = mousePos;
-      }
-      
       this.curPos = mousePos;
+      GM.gridPos  = GM.screenPos_toGridPos(mousePos.iso);
+
+      if(!isPressed) return;
+
+      if(which === 1) oldPos.select = mousePos;
+      if(which === 2) oldPos.scroll = mousePos;
+      if(which === 3) oldPos.target = mousePos;
    }
    
-   setHoverCell() {
+   setHoverPos       (GM: GameManager) {
       
-      const { gridPos: { x: gridX, y: gridY }, cellSize } = this.GManager;
+      if(!GM.isMouseGridScope()) return;
+
+      const { gridPos, cellSize } = GM;
 
       const cellPos: IPosition = {
-         x: this.cellCoord(gridX, cellSize),
-         y: this.cellCoord(gridY, cellSize),
+         x: this.getCellCoord(gridPos.x, cellSize),
+         y: this.getCellCoord(gridPos.y, cellSize),
       };
    
-      this.hoverCell = {
-         id: `${cellPos.x /cellSize}-${cellPos.y /cellSize}`,
-         pos: cellPos,
+      this.hoverPos = {
+         cellID: `${cellPos.x /cellSize}-${cellPos.y /cellSize}`,
+         coord:  cellPos,
       }
    }
 
-   setSelectArea() {
+   setSelectArea     (GM: GameManager) {
 
-      const { GManager, selectArea, oldPos, curPos } = this;
+      const { selectArea, oldPos, curPos } = this;
 
       const { x: oldX,    y: oldY    } = oldPos.select.cart;
       const { x: curX,    y: curY    } = curPos.cart;
-      const { x: scrollX, y: scrollY } = GManager.Viewport.scroll.curDelta;
+      const { x: scrollX, y: scrollY } = GM.Viewport.scroll.curDelta;
 
       selectArea.x      =       oldX -scrollX;
       selectArea.y      =       oldY -scrollY;
@@ -241,11 +248,11 @@ export class Cursor {
       selectArea.height = curY -oldY +scrollY;
    }
 
-   resetSelectArea() {
+   resetSelectArea   (GM: GameManager) {
 
       if(!this.isSelecting) return;
       
-      this.GManager.clearCanvas("selection");
+      GM.clearCanvas("selection");
       this.isSelecting = false;
 
       const { selectArea } = this;
@@ -256,23 +263,24 @@ export class Cursor {
       selectArea.height = 0;
    }
    
-   resize_SelectArea() {
+   update_SelectArea (GM: GameManager) {
 
       if(!this.isSelecting || this.isScollClick) return;
 
-      this.GManager.clearCanvas("selection");
-      this.setSelectArea();
-      this.drawSelectArea();
+      GM.clearCanvas("selection");
+      this.setSelectArea (GM);
+      this.drawSelectArea(GM);
    }
    
-   setTargetCell() {
-      const { GManager, hoverCell } = this;
-      const { Grid, oldSelectList } = GManager;
+   setTargetCell     (GM: GameManager) {
+
+      const { hoverPos            } = this;
+      const { Grid, oldSelectList } = GM;
       
-      if(!GManager.isMouseGridScope()) return;
+      if(!GM.isMouseGridScope()) return;
       
       const { cellsList }   = Grid;
-      const targetCell      = cellsList.get(hoverCell.id)!;
+      const targetCell      = cellsList.get(hoverPos.cellID)!;
       
       if(targetCell.isBlocked || !targetCell.isVacant) return;
       
@@ -285,13 +293,13 @@ export class Cursor {
       Pathfinder.searchPath(cellsList);
    }
 
-   setTargetArea() {
+   setTargetArea     (GM: GameManager) {
 
-      const { GManager, targetArea, oldPos, areaOptions } = this;
+      const { targetArea, oldPos, areaOptions } = this;
       
       const { separator               } = areaOptions.target;
-      const { cellSize, oldSelectList } = GManager;
-      const { x: oldX,  y: oldY       } = GManager.screenPos_toGridPos(oldPos.target.iso);
+      const { cellSize, oldSelectList } = GM;
+      const { x: oldX,  y: oldY       } = GM.screenPos_toGridPos(oldPos.target.iso);
 
       const unitCount   = oldSelectList.size;
 
@@ -302,17 +310,17 @@ export class Cursor {
       const gridX       = oldX -(width -cellSize) *0.5;
       const gridY       = oldY -height +cellSize;
 
-      targetArea.x      = this.cellCoord(gridX, cellSize);
-      targetArea.y      = this.cellCoord(gridY, cellSize);
+      targetArea.x      = this.getCellCoord(gridX, cellSize);
+      targetArea.y      = this.getCellCoord(gridY, cellSize);
       targetArea.width  = width;
       targetArea.height = height;
    }
 
-   startAgentPathfinding() {
+   startAgentPF      (GM: GameManager) {
 
-      const { GManager, targetArea } = this;
-      const { Grid,       cellSize } = GManager;
-      const { x, y, width,  height } = targetArea;
+      const { Grid, cellSize, oldSelectList } = GM;
+      const { targetArea                    } = this;
+      const { x, y, width,  height          } = targetArea;
 
       // Search cells IDs from area
       const colNum = width  /cellSize;
@@ -322,16 +330,16 @@ export class Cursor {
       
       // Get all cells IDs
       for(let r = 0; r < rowNum; r++) {
-         const rowID = this.indexID(y, height, r, cellSize);
+         const rowID = this.getIndexID(y, height, r, cellSize);
          
          for(let c = 0; c < colNum; c++) {
-            const colID = this.indexID(x, width, c, cellSize);
-            const cell  = GManager.getCell(`${colID}-${rowID}`);
+            const colID = this.getIndexID(x, width, c, cellSize);
+            const cell  = GM.getCell(`${colID}-${rowID}`);
 
             if(!cell || cell.isTargeted || cell.isBlocked || !cell.isVacant) continue;
             
             // Set all Agents goalCells
-            for(const agent of GManager.oldSelectList) {
+            for(const agent of oldSelectList) {
                const { Pathfinder } = agent;
                
                if(cell.isTargeted || Pathfinder.hasTarget) continue;
@@ -340,30 +348,29 @@ export class Cursor {
                Pathfinder.hasTarget = true;
                Pathfinder.goalCell  = cell;
 
-               GManager.oldSelectList.delete(agent);
+               oldSelectList.delete(agent);
                sortedUnitList.add(agent);
             }
          }
       }
 
-
       // Start all Agents search path
       for(const agent of sortedUnitList) {
          agent.Pathfinder.searchPath(Grid.cellsList);
-         GManager.oldSelectList.add(agent);
+         oldSelectList.add(agent);
       }
    }
 
-   resize_TargetArea() {
+   update_TargetArea (GM: GameManager) {
 
       if(!this.isTargeting || this.isScollClick) return;
 
-      const { GManager, targetArea, curPos, areaOptions } = this;
-
+      const { cellSize, gridPos, oldSelectList } = GM;
+      
+      const { targetArea, areaOptions } = this;
       const { resizeStep              } = areaOptions.target;
-      const { cellSize, oldSelectList } = GManager;
       const { y: oldY,  width, height } = targetArea;
-      const { y: curY                 } = GManager.screenPos_toGridPos(curPos.iso);
+      const { y: curY                 } = gridPos;
       
       const unitCount   = oldSelectList.size;
       const cellSize_2x = cellSize *2;
@@ -389,16 +396,141 @@ export class Cursor {
       }
    }
 
+
+
+
+
+
+
+
+
+
+   setWallArea     (GM: GameManager) {
+      
+      if(!this.hasWallPoint || !GM.isWallMode) return;
+
+      const { wallArea, oldPos, wallsID_List } = this;
+      
+      const { Grid, cellSize      } = GM;
+      const { x: oldX,    y: oldY    } = GM.screenPos_toGridPos(oldPos.select.iso);
+
+      wallArea.x      = this.getCellCoord(oldX, cellSize);
+      wallArea.y      = this.getCellCoord(oldY, cellSize);
+
+
+
+
+      const cellPos: IPosition = {
+         x: this.getCellCoord(oldX, cellSize),
+         y: this.getCellCoord(oldY, cellSize),
+      };
+   
+      const cellID = `${cellPos.x /cellSize}-${cellPos.y /cellSize}`;
+
+      this.firstWallCell = GM.getCell(cellID)!;
+
+      // for(const cellID of wallsID_List) {
+      //    const cell = GM.getCell(cellID)!;
+         
+      //    if(!Grid.occupiedCells.has(cell)) Grid.occupiedCells.add(cell);
+      // }
+   }
+   
+
+   update_WallsList(GM: GameManager) {
+
+      if(!this.hasWallPoint || !GM.isWallMode) return;
+
+
+      const { Grid, cellSize, Ctx, Collision  } = GM;
+      const { wallArea, wallsID_List, oldPos             } = this;
+      const { x, y, width,  height } = wallArea;
+
+      const { x: curX,    y: curY    } = GM.gridPos;
+      const { x: oldX,    y: oldY    } = GM.screenPos_toGridPos(oldPos.select.iso);
+      
+      wallArea.width  = this.getCellCoord(curX -oldX, cellSize) +cellSize;
+      wallArea.height = this.getCellCoord(curY -oldY, cellSize) +cellSize;
+
+
+
+
+      const absWidth  = Math.abs(width);
+      const absHeight = Math.abs(height);
+
+      // Search cells IDs from area
+      const colNum = absWidth  /cellSize;
+      const rowNum = absHeight /cellSize;
+      
+      
+      const { firstWallCell, hoverPos } = this;
+      const hoverCell = GM.getCell(hoverPos.cellID)!;
+      
+      const { x: startX, y: startY } = firstWallCell!.center;
+      const { x: endX,   y: endY   } = hoverCell;
+      
+      const raycast = { startX, startY, endX, endY };
+
+      
+      firstWallCell!.drawColor   (Ctx.isometric, "gold");
+      firstWallCell!.drawRaycast (Ctx.isometric, hoverCell);
+      
+      firstWallCell!.drawCollider(Ctx.isometric);
+      hoverCell.     drawCollider(Ctx.isometric);
+      
+      wallsID_List.clear();
+
+      // Get all cells IDs
+      for(let r = 0; r < rowNum; r++) {
+         const rowID = this.getIndexID(y, absHeight, r, cellSize);
+
+         for(let c = 0; c < colNum; c++) {
+            const colID = this.getIndexID(x, absWidth, c, cellSize);
+            const cell  = GM.getCell(`${colID}-${rowID}`)!;
+
+            if(!cell
+            ||  cell.id === firstWallCell!.id) {
+               
+               continue;
+            }
+            
+
+            if(Collision.line_toSquare(raycast, cell.collider)) {
+
+               cell.drawCollider(Ctx.isometric);
+
+               // cell.isBlocked = true;
+               // wallsID_List.add(cell.id);
+            }
+
+            else {
+               // cell.isBlocked = false;
+               // wallsID_List.delete(cell.id);
+            }            
+         }
+      }
+   }
+
+
+
+
+
+
+
+
+
+
    
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawSelectArea() {
+   drawSelectArea(GM: GameManager) {
       
-      const { GManager, selectArea, areaOptions } = this;
+      const { selectArea, areaOptions           } = this;
       const { x,   y,    width,       height    } = selectArea;
       const { lineWidth, borderColor, color     } = areaOptions.select;
-      const ctx_Selection = GManager.Ctx.selection;
+
+      const ctx_Selection = GM.Ctx.selection;
 
       // Set style
       ctx_Selection.lineWidth   = lineWidth;
@@ -410,30 +542,45 @@ export class Cursor {
       ctx_Selection.strokeRect(x, y, width, height);
    }
 
-   drawHoverCell() {
+   drawHoverPos  (GM: GameManager) {
 
-      if(!this.GManager.isMouseGridScope()) return;
+      if(!GM.isMouseGridScope()) return;
       
-      const GM                      = this.GManager;
-      const ctx_isometric           = GM.Ctx.isometric;
-      const { x: cellX, y: cellY }  = this.hoverCell.pos;
+      const ctx_isometric          = GM.Ctx.isometric;
+      const { x: cellX, y: cellY } = this.hoverPos.coord;
 
-      // Draw hoverCell frame
+      // Draw hoverPos frame
       ctx_isometric.strokeStyle = "yellow";
       ctx_isometric.lineWidth   = 4;
       ctx_isometric.strokeRect(cellX, cellY, GM.cellSize, GM.cellSize);
    }
    
-   drawTargetArea() {
+   drawTargetArea(GM: GameManager) {
 
       if(!this.isTargeting) return;
 
-      const { GManager, targetArea, areaOptions } = this;
-      const { x, y, width, height               } = targetArea;
-      const { color                             } = areaOptions.target;
-      const ctx_isometric                         = GManager.Ctx.isometric;
+      const { targetArea, areaOptions } = this;
+      const { x, y, width, height     } = targetArea;
+      const { color                   } = areaOptions.target;
+      const ctx_isometric               = GM.Ctx.isometric;
 
       ctx_isometric.fillStyle = color;
+      ctx_isometric.fillRect(x, y, width, height);
+   }
+
+
+
+
+
+   drawWallArea(GM: GameManager) {
+
+      if(!GM.isWallMode) return;
+
+      const { wallArea            } = this;
+      const { x, y, width, height } = wallArea;
+      const ctx_isometric           = GM.Ctx.isometric;
+
+      ctx_isometric.fillStyle = "rgba(0, 200, 255, 0.7)";
       ctx_isometric.fillRect(x, y, width, height);
    }
 

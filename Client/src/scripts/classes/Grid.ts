@@ -10,7 +10,7 @@ import {
 // =====================================================================
 export class Grid {
 
-   private GManager: GameManager;
+   private GM:       GameManager;
 
    cellsList:        Map<string, Cell> = new Map();
    blockedCells:     Set<Cell>         = new Set();
@@ -18,7 +18,7 @@ export class Grid {
 
    constructor(GManager: GameManager) {
 
-      this.GManager = GManager;
+      this.GM = GManager;
       this.init();
    }
 
@@ -31,7 +31,7 @@ export class Grid {
    setCellsList() {
       let zIndex = 0;
 
-      const { gridSize, cellSize } = this.GManager;
+      const { gridSize, cellSize } = this.GM;
       const cellPerSide = Math.floor(gridSize / cellSize);
       
       for(let i = 0; i < cellPerSide; i++) {     // Collums
@@ -72,12 +72,12 @@ export class Grid {
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawGrid() {
+   drawGrid(GM: GameManager) {
 
-      if(!this.GManager.show_Grid) return;
+      if(!GM.show_Grid) return;
       
       for(const [, cell] of this.cellsList) {
-         cell.drawInfos(this.GManager.Ctx.isometric);
+         cell.drawInfos(GM.Ctx.isometric);
       }
    }
    
