@@ -1,7 +1,7 @@
 
 import {
    ICanvas,
-   IPosition,
+   ILine,
    IPosList,
    IPosList_List,
    ISquare,
@@ -43,20 +43,22 @@ export class Cursor {
       target: { cart: {x:0, y:0}, iso: {x:0, y:0} },
    };
 
-   curPos:         IPosList    = { cart: {x:0, y:0}, iso: {x:0, y:0} };
-   selectArea:     ISquare     = { x:0,   y:0,   width:0,   height:0 };
-   targetArea:     ISquare     = { x:0,   y:0,   width:0,   height:0 };
-   wallArea:       ISquare     = { x:0,   y:0,   width:0,   height:0 };
-   hoverPos:       any         = { cellID:"",    coord: {x:0, y:0}   };
+   curPos:         IPosList     = { cart: {x:0, y:0}, iso: {x:0, y:0} };
+   selectArea:     ISquare      = { x:0,   y:0,   width:0,   height:0 };
+   targetArea:     ISquare      = { x:0,   y:0,   width:0,   height:0 };
+   
+   raycast:        ILine | null = null;
+   hoverCell:      Cell  | null = null;
+   selectCell:     Cell  | null = null;
 
-   firstWallCell:  Cell | null = null;
-   wallsID_List:   Set<string> = new Set();
+   wallsList:      Set<Cell>    = new Set();
 
-   isSelecting:    boolean     = false;
-   isTargeting:    boolean     = false;
-   isScollClick:   boolean     = false;
+   isSelecting:    boolean      = false;
+   isTargeting:    boolean      = false;
+   isScollClick:   boolean      = false;
 
-   hasWallPoint:   boolean     = true;
+   isTriggered:    boolean      = false;
+   hasCreateWall:  boolean      = false;
 
 
    constructor(GManager: GameManager) {
@@ -67,23 +69,37 @@ export class Cursor {
    }
 
    init() {
-      window.addEventListener("mousemove", (event) => this.move  (event));
-      window.addEventListener("mousedown", (event) => this.click (event, "Down"));
-      window.addEventListener("mouseup",   (event) => this.click (event, "Up"  )); 
+      this.initMouseEvent("mousemove", this.move .bind(this)        );
+      this.initMouseEvent("mousedown", this.click.bind(this), "Down");
+      this.initMouseEvent("mouseup",   this.click.bind(this), "Up"  );
    }
 
 
    // =========================================================================================
    // Mouse Behaviors
    // =========================================================================================
+   initMouseEvent(
+      eventName: string,
+      callback:  Function,
+      state?:    string,
+   ) {
+      
+      window.addEventListener(eventName, (event: Event) => {
+         if((event.target as HTMLElement).tagName === "BUTTON") return;
+
+         if(!state) return callback(event);
+         callback(event, state);
+      });
+   }
+
    handle_LeftClick  (GM: GameManager, state: string) {
 
       if(state === "Down") {
          this.isSelecting = true;
-         
-         this.hasWallPoint = !this.hasWallPoint;
-         this.setWallArea(GM); // *******************************
-         
+         this.isTriggered = true;
+
+         this.createWalls (GM);
+         this.setWallsList(GM);
          GM.TEST_UnitMode();
          GM.Viewport.resetScroll();
       }
@@ -112,6 +128,8 @@ export class Cursor {
       
       if(state === "Down") {
          this.isTargeting = true;
+         
+         this.resetWallsList ();
          this.setTargetArea  (GM);
          this.resetSelectArea(GM);
       }
@@ -148,17 +166,16 @@ export class Cursor {
    }
 
    move(event: MouseEvent) {
-      
       const { GM } = this;
 
-      this.setPosition(GM, event, false);
-      
-      this.setHoverPos      (GM);
-      this.update_SelectArea(GM);
-      this.update_TargetArea(GM);
+      this.setPosition           (GM, event, false);
+      this.setHoverCell          (GM);
+      this.update_SelectArea     (GM);
+      this.update_TargetArea     (GM);
+      this.update_WallsList      (GM);
 
-      GM.unitSelection();
-      GM.Viewport.mouseScrollCam(GM);
+      GM.unitSelection           ();
+      GM.Viewport.mouseScrollCam (GM);
       GM.Viewport.isScrollDetect = true;
    }
 
@@ -217,21 +234,16 @@ export class Cursor {
       if(which === 3) oldPos.target = mousePos;
    }
    
-   setHoverPos       (GM: GameManager) {
+   setHoverCell      (GM: GameManager) {
       
-      if(!GM.isMouseGridScope()) return;
+      if(!GM.isMouseGridScope()) return this.hoverCell = null;
 
       const { gridPos, cellSize } = GM;
 
-      const cellPos: IPosition = {
-         x: this.getCellCoord(gridPos.x, cellSize),
-         y: this.getCellCoord(gridPos.y, cellSize),
-      };
+      const colID = this.getCellCoord(gridPos.x, cellSize) /cellSize;
+      const rowID = this.getCellCoord(gridPos.y, cellSize) /cellSize;
    
-      this.hoverPos = {
-         cellID: `${cellPos.x /cellSize}-${cellPos.y /cellSize}`,
-         coord:  cellPos,
-      }
+      this.hoverCell = GM.getCell(`${colID}-${rowID}`)!;
    }
 
    setSelectArea     (GM: GameManager) {
@@ -274,13 +286,13 @@ export class Cursor {
    
    setTargetCell     (GM: GameManager) {
 
-      const { hoverPos            } = this;
       const { Grid, oldSelectList } = GM;
       
       if(!GM.isMouseGridScope()) return;
       
-      const { cellsList }   = Grid;
-      const targetCell      = cellsList.get(hoverPos.cellID)!;
+      const { hoverCell } = this;
+      const { cellsList } = Grid;
+      const targetCell    = hoverCell!;
       
       if(targetCell.isBlocked || !targetCell.isVacant) return;
       
@@ -395,136 +407,83 @@ export class Cursor {
          targetArea.y -= offset;
       }
    }
-
-
-
-
-
-
-
-
-
-
-   setWallArea     (GM: GameManager) {
-      
-      if(!this.hasWallPoint || !GM.isWallMode) return;
-
-      const { wallArea, oldPos, wallsID_List } = this;
-      
-      const { Grid, cellSize      } = GM;
-      const { x: oldX,    y: oldY    } = GM.screenPos_toGridPos(oldPos.select.iso);
-
-      wallArea.x      = this.getCellCoord(oldX, cellSize);
-      wallArea.y      = this.getCellCoord(oldY, cellSize);
-
-
-
-
-      const cellPos: IPosition = {
-         x: this.getCellCoord(oldX, cellSize),
-         y: this.getCellCoord(oldY, cellSize),
-      };
    
-      const cellID = `${cellPos.x /cellSize}-${cellPos.y /cellSize}`;
+   setWallsList      (GM: GameManager) {
 
-      this.firstWallCell = GM.getCell(cellID)!;
-
-      // for(const cellID of wallsID_List) {
-      //    const cell = GM.getCell(cellID)!;
-         
-      //    if(!Grid.occupiedCells.has(cell)) Grid.occupiedCells.add(cell);
-      // }
+      if(!GM.isWallMode) return;
+      
+      this.selectCell = this.hoverCell!;
+      this.raycast    = null;
    }
    
+   update_WallsList  (GM: GameManager) {
 
-   update_WallsList(GM: GameManager) {
-
-      if(!this.hasWallPoint || !GM.isWallMode) return;
-
-
-      const { Grid, cellSize, Ctx, Collision  } = GM;
-      const { wallArea, wallsID_List, oldPos             } = this;
-      const { x, y, width,  height } = wallArea;
-
-      const { x: curX,    y: curY    } = GM.gridPos;
-      const { x: oldX,    y: oldY    } = GM.screenPos_toGridPos(oldPos.select.iso);
+      if(!GM.isWallMode || !this.isTriggered || !this.selectCell) return;
       
-      wallArea.width  = this.getCellCoord(curX -oldX, cellSize) +cellSize;
-      wallArea.height = this.getCellCoord(curY -oldY, cellSize) +cellSize;
+      const { selectCell, hoverCell, wallsList, curPos } = this;
 
-
-
-
-      const absWidth  = Math.abs(width);
-      const absHeight = Math.abs(height);
-
-      // Search cells IDs from area
-      const colNum = absWidth  /cellSize;
-      const rowNum = absHeight /cellSize;
+      const { x: startX, y: startY } = selectCell.center;
+      const { x: endX,   y: endY   } = hoverCell ? hoverCell.center : GM.screenPos_toGridPos(curPos.iso);
       
-      
-      const { firstWallCell, hoverPos } = this;
-      const hoverCell = GM.getCell(hoverPos.cellID)!;
-      
-      const { x: startX, y: startY } = firstWallCell!.center;
-      const { x: endX,   y: endY   } = hoverCell;
-      
-      const raycast = { startX, startY, endX, endY };
+      const raycast = this.raycast = { startX, startY, endX, endY };
 
-      
-      firstWallCell!.drawColor   (Ctx.isometric, "gold");
-      firstWallCell!.drawRaycast (Ctx.isometric, hoverCell);
-      
-      firstWallCell!.drawCollider(Ctx.isometric);
-      hoverCell.     drawCollider(Ctx.isometric);
-      
-      wallsID_List.clear();
+      let tempList: Set<Cell> = new Set([selectCell]);
 
-      // Get all cells IDs
-      for(let r = 0; r < rowNum; r++) {
-         const rowID = this.getIndexID(y, absHeight, r, cellSize);
-
-         for(let c = 0; c < colNum; c++) {
-            const colID = this.getIndexID(x, absWidth, c, cellSize);
-            const cell  = GM.getCell(`${colID}-${rowID}`)!;
-
-            if(!cell
-            ||  cell.id === firstWallCell!.id) {
-               
-               continue;
-            }
+      for(const cell of tempList) {
+         for(const sideName in cell.nebStatusList) {
             
-
-            if(Collision.line_toSquare(raycast, cell.collider)) {
-
-               cell.drawCollider(Ctx.isometric);
-
-               // cell.isBlocked = true;
-               // wallsID_List.add(cell.id);
-            }
-
-            else {
-               // cell.isBlocked = false;
-               // wallsID_List.delete(cell.id);
-            }            
+            // Add all cell's nebs to tempList
+            tempList.add( GM.getCell(cell.nebStatusList[sideName].id)! );
          }
       }
+
+      for(const cell of tempList) {
+         const { isBlocked, isVacant, collider } = cell;
+         
+         if(GM.Collision.line_toSquare(raycast, collider)) {
+            (isBlocked || !isVacant)
+            ? cell.isOverlaped = true
+            : cell.isOverlaped = false;
+            
+            wallsList.add(cell);
+         }
+         else wallsList.delete(cell);
+      }
+   }  
+
+   createWalls       (GM: GameManager) {
+      
+      if(!this.isTriggered) return;
+
+      for(const cell of this.wallsList) {
+         
+         if(!cell
+         ||  cell.isBlocked
+         || !cell.isVacant
+         || !GM.Collision.line_toSquare(this.raycast!, cell.collider)) {
+            
+            continue;
+         }
+
+         cell.isBlocked = true;
+         GM.Grid.addToOccupiedMap(cell);
+      }
+
+      this.wallsList.clear();
    }
 
+   resetWallsList    () {
 
-
-
-
-
-
-
-
+      this.isTriggered = false;
+      this.raycast     = null;
+      this.wallsList.clear();
+   }
 
    
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawSelectArea(GM: GameManager) {
+   drawSelectArea    (GM: GameManager) {
       
       const { selectArea, areaOptions           } = this;
       const { x,   y,    width,       height    } = selectArea;
@@ -542,46 +501,73 @@ export class Cursor {
       ctx_Selection.strokeRect(x, y, width, height);
    }
 
-   drawHoverPos  (GM: GameManager) {
+   drawHoverCell     (GM: GameManager) {
 
-      if(!GM.isMouseGridScope()) return;
+      if(!this.hoverCell) return;
       
-      const ctx_isometric          = GM.Ctx.isometric;
-      const { x: cellX, y: cellY } = this.hoverPos.coord;
+      const ctx      = GM.Ctx.isometric;
+      const { x, y } = this.hoverCell;
 
-      // Draw hoverPos frame
-      ctx_isometric.strokeStyle = "yellow";
-      ctx_isometric.lineWidth   = 4;
-      ctx_isometric.strokeRect(cellX, cellY, GM.cellSize, GM.cellSize);
+      // Draw hoverCell frame
+      ctx.strokeStyle = "yellow";
+      ctx.lineWidth   = 4;
+      ctx.strokeRect(x, y, GM.cellSize, GM.cellSize);
    }
    
-   drawTargetArea(GM: GameManager) {
+   drawTargetArea    (GM: GameManager) {
 
       if(!this.isTargeting) return;
 
       const { targetArea, areaOptions } = this;
       const { x, y, width, height     } = targetArea;
       const { color                   } = areaOptions.target;
-      const ctx_isometric               = GM.Ctx.isometric;
+      const ctx                         = GM.Ctx.isometric;
 
-      ctx_isometric.fillStyle = color;
-      ctx_isometric.fillRect(x, y, width, height);
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, width, height);
    }
 
+   drawRaycast       (ctx: CanvasRenderingContext2D, raycast: ILine) {
 
+      const { startX, startY, endX, endY } = raycast;
 
+      ctx.strokeStyle = "yellow";
+      ctx.beginPath();
 
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX,   endY  );
 
-   drawWallArea(GM: GameManager) {
+      ctx.lineWidth = 4;
+      ctx.stroke();
+   }
+
+   drawWallsList     (GM: GameManager) {
 
       if(!GM.isWallMode) return;
+      
+      const { selectCell, raycast, wallsList } = this;
+      const { isometric                      } = GM.Ctx;
 
-      const { wallArea            } = this;
-      const { x, y, width, height } = wallArea;
-      const ctx_isometric           = GM.Ctx.isometric;
+      if(!selectCell || !raycast) return;
 
-      ctx_isometric.fillStyle = "rgba(0, 200, 255, 0.7)";
-      ctx_isometric.fillRect(x, y, width, height);
+      selectCell.drawColor  (isometric, "gold");
+      this.drawRaycast      (isometric, raycast);
+
+      for(const cell of wallsList) {
+         !cell.isOverlaped
+         ? cell.drawCollider(isometric)
+         : cell.drawColor   (isometric, "blue")
+      }
    }
 
+
+   // =========================================================================================
+   // Update - (Every frame)
+   // =========================================================================================
+   update(GM: GameManager) {
+
+      this.drawHoverCell (GM);
+      this.drawTargetArea(GM);
+      this.drawWallsList (GM);
+   }
 }

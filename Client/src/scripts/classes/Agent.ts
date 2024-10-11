@@ -104,7 +104,7 @@ export class Agent {
          "bottomLeft",
          "left",
       ].map((name) => {
-         const neb = nextCell.neighborsList[name];
+         const neb = nextCell.nebStatusList[name];
          if(neb) return cellsList.get(neb.id);
       });
 

@@ -30,7 +30,14 @@
             property: string,
             event?:   Event,
          ) {
-            this.$parent.GManager[property] = !this.$parent.GManager[property];
+            const GM = this.$parent.GManager;
+
+            GM[property] = !GM[property];
+
+            if(property === "isWallMode") {
+               GM.Cursor.selectCell = null;
+               GM.Cursor.raycast    = null;
+            }
 
             if(!event) return;
 

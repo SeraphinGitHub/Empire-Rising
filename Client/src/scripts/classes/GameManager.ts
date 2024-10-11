@@ -303,36 +303,30 @@ export class GameManager {
       this.Frame++;
    
       this.clearCanvas("isometric");
-      this.clearCanvas("assets");
+      this.clearCanvas("assets"   );
       
-      this.Viewport.detectScrolling (this);
-      this.Viewport.drawInfos       (this);
+      this.draw_UnitsAndBuild ();
+      this.drawHoverUnit      ();
+      this.drawSelectUnit     ();
       
-      this.draw_UnitsAndBuild       ();
-      this.drawHoverUnit            ();
-      this.drawSelectUnit           ();
+      this.Grid     .update   (this);
+      this.Cursor   .update   (this);
+      this.Viewport .update   (this);
 
-      this.Grid.drawGrid            (this);
-      this.Cursor.drawHoverPos      (this);
-      this.Cursor.drawTargetArea    (this);
-
-      this.Cursor.drawWallArea      (this); // *******************************
-      this.Cursor.update_WallsList  (this); // *******************************
-   
       requestAnimationFrame(() => this.runAnimation());
    }
 
    setHtmlData() {
 
       const { x, y                    } = this.Viewport;
-      const { curPos, hoverPos        } = this.Cursor;
+      const { curPos, hoverCell       } = this.Cursor;
       const { curPop, maxPop, gridPos } = this;
-
+      
       return {
          curPop,
          maxPop,
          gridPos,
-         hoverPos,
+         hoverCell: hoverCell ? hoverCell : { id: "null", x: 0, y: 0 },
          cartPos: curPos.cart,
          viewPort: { x, y },
       }
@@ -804,7 +798,7 @@ export class GameManager {
 
       if(!this.isUnitMode) return;
 
-      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverPos.cellID,  "");
+      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell!.id,  "");
    }
 
 }

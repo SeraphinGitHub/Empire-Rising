@@ -140,14 +140,14 @@ export class Pathfinder {
    scanNeighbors(cellsList: Map<string, Cell>) {
       
       const presentCell                 = this.presentCell!;
-      const { id, neighborsList, size } = presentCell;
+      const { id, nebStatusList, size } = presentCell;
       const straightValue               = size *0.5;
       const diagValue                   = 1.4 *straightValue;
 
       // Cycle all neighbors if exists
-      for(const sideName in neighborsList) {
+      for(const sideName in nebStatusList) {
 
-         const { id: nebID, isDiagonal } = neighborsList[sideName];
+         const { id: nebID, isDiagonal } = nebStatusList[sideName];
          const neighbor: Cell            = cellsList.get(nebID)!;
 
          // If this neighbor hasn't been scanned yet
@@ -209,7 +209,7 @@ export class Pathfinder {
 
       // if(curCell.isVacant || curCell.agentIDset.has(this.id)) return;
 
-      // const nebList  = curCell.neighborsList;
+      // const nebList  = curCell.nebStatusList;
       // let vacantPath = [];
 
       // for(const sideName in nebList) {

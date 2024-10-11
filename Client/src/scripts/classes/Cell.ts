@@ -32,7 +32,7 @@ export class Cell {
    
    agentIDset:     Set<number>   = new Set();
    collider:       ILineList     = {};
-   neighborsList:  INebList      = {};
+   nebStatusList:  INebList      = {};
    nebCoordList:   ICoordArray   = {
       top:         [ 0, -1,  false], // isDiagonal ==> false
       topRight:    [ 1, -1,  true ], // isDiagonal ==> true
@@ -47,6 +47,7 @@ export class Cell {
    isVacant:       boolean = true;
    isBlocked:      boolean = false;
    isTargeted:     boolean = false;
+   isOverlaped:    boolean = false;
    isTransp:       boolean = false;
 
    // ----------- Tempory -----------
@@ -122,8 +123,8 @@ export class Cell {
       
       const neighbors: any = {};
       
-      for(const nebName in this.neighborsList) {
-         const nebData = this.neighborsList[nebName];
+      for(const nebName in this.nebStatusList) {
+         const nebData = this.nebStatusList[nebName];
 
          neighbors[nebName] = cellsList.get(nebData.id);
       }
@@ -161,7 +162,7 @@ export class Cell {
          };
       }
    
-      this.neighborsList[side] = neighbor[side];
+      this.nebStatusList[side] = neighbor[side];
    }
 
    isBlockedDiag(
@@ -305,20 +306,6 @@ export class Cell {
       ctx.lineTo(left.startX,   left.startY  );
 
       ctx.fill();
-   }
-
-   drawRaycast(ctx: CanvasRenderingContext2D, hoverCell: Cell) {
-      const { x: cellX,  y: cellY  } = this.center;
-      const { x: hoverX, y: hoverY } = hoverCell.center;
-
-      ctx.strokeStyle = "yellow";
-      ctx.beginPath();
-
-      ctx.moveTo(cellX,  cellY );
-      ctx.lineTo(hoverX, hoverY);
-
-      ctx.lineWidth = 4;
-      ctx.stroke();
    }
 
    drawBlocked (ctx: CanvasRenderingContext2D) {
