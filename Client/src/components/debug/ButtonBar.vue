@@ -3,7 +3,6 @@
    <section class="flex btn-bar">
 
          <div class="flex bar-1">
-            <!-- <button class="flex" @click="sendData()"   >Send data</button> -->
             <button class="flex" @click="toggleGM('show_VP'  )">Viewport</button>
             <button class="flex" @click="toggleGM('show_Grid')">Grid    </button>
          </div>
@@ -19,6 +18,7 @@
 
 <script lang="ts">
    export default {
+      name: "ButtonBar",
 
       data() {
       return {

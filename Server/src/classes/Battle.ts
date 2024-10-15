@@ -1,16 +1,16 @@
 
 import {
-   IPlayerClass,
+   IPlayer,
 } from "utils/interfaces";
 
 // =====================================================================
 // Battle Class
 // =====================================================================
-export class BattleClass {
+export class Battle {
 
    id:           number;
    hostPlayerID: number | undefined;
-   playersList:  IPlayerClass;
+   playersList:  IPlayer;
 
    constructor(params: any) {
       

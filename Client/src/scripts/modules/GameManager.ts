@@ -12,10 +12,13 @@ import {
    Grid,
    Cell,
    Agent,
+} from "../classes/_Export"
+
+import {
    Cursor,
    Viewport,
    Collision,
-} from "../classes/_Export"
+} from "./_Export"
 
 //  ------------  Tempory  ------------
 let randPathIntervals: any = [];
@@ -250,7 +253,7 @@ export class GameManager {
       this.Ctx           = params.Ctx;
       this.halfGrid      = this.gridSize *0.5;
 
-      this.Viewport      = new Viewport  (this, params.docBody);
+      this.Viewport      = new Viewport  (this);
       this.Grid          = new Grid      (this);
       this.Cursor        = new Cursor    (this);
       this.Collision     = new Collision ();
@@ -259,7 +262,6 @@ export class GameManager {
    }
 
    init() {
-
       this.setCanvasSize    ();
       this.setViewAngle     ();
       this.setTerrainPos    ();

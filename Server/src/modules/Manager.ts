@@ -1,169 +1,142 @@
 
 import {
    // IAuthSocket,
-   IPlayerClass
+   IPlayer,
 } from "../utils/interfaces";
 
-import { Socket      } from "socket.io";
-import { PlayerClass } from "../classes/_Export";
-// import jwt             from "jsonwebtoken";
-import dotenv          from "dotenv";
+import {
+   User,
+   Player,
+   Grid,
+} from "../classes/_Export";
+
+import { unitParams } from "../utils/unitParams";
+import { Socket     } from "socket.io";
+import jwt            from "jsonwebtoken";
+import dotenv         from "dotenv";
 dotenv.config();
 
 
-// =====================================================================
-// Variables
-// =====================================================================
-const socketsMap: Map<number, Socket>      = new Map<number, Socket>();
-const playersMap: Map<number, PlayerClass> = new Map<number, PlayerClass>();
-// const syncRate:   number              = Math.floor(1000 / Number(process.env.FRAME_RATE));
-
 
 // =====================================================================
-// TEST --- Variables
+// Manager Class
 // =====================================================================
-let userID = 0;
+export class Manager {
 
-const battle_1 = {
-   id: 12,
-   hostPlayerID: 1,
-   playersList:  {} as IPlayerClass,
-}
+   socketsMap: Map<number, Socket> = new Map<number, Socket>();
+   playersMap: Map<number, Player> = new Map<number, Player>();
+   syncRate:   number              = Math.floor(1000 / Number(process.env.FRAME_RATE));
 
-const user_1 = {
-   id:    1,
-   name: "Arckrøn",
-};
+   Grid: Grid;
 
-const user_2 = {
-   id:    2,
-   name: "Belphegor",
-};
-
-const user_3 = {
-   id:    3,
-   name: "Gorgoroth",
-};
-
-const setUser = () => {
-
-   userID++;
-
-   if(userID > 3) userID = 1;
+   constructor() {
+      
+      this.Grid = new Grid();
+   }
    
-   if(userID === 1 ) return user_1;
-   if(userID === 2 ) return user_2;
-   if(userID === 3 ) return user_3;
-}
-
-
-// =====================================================================
-// SocketIO Connect
-// =====================================================================
-const connectPlayer = (socket: any) => {
-   console.log("Player Connected --SocketIO");
-
-   // const user = setUser();
-
-   // const Player: PlayerClass = new PlayerClass(user);
-   
-   // socket.id = user!.id;
-
-   // socketsMap.set(user!.id, socket);
-   // playersMap.set(user!.id, Player);
-
-   // battle_1.playersList[user!.id] = Player;
-
-   socket.on("connectSocketIO", (data: any) => {
-      console.log(data); // ******************************************************
-   });
-}
-
-
-// =====================================================================
-// SocketIO Disconnect
-// =====================================================================
-const disconnectPlayer = (socket: any) => {
-   socket.on("disconnect", () => {
-
-      // const playerID: number = socket.id;
-      
-      // if(socketsMap.get(playerID) === undefined
-      // || playersMap.get(playerID) === undefined) {
-      //    return;
-      // }
-
-      // playersMap.delete(playerID);
-      // socketsMap.delete(playerID);
-      
-      console.log("Player disconnected --SocketIO");
-   });
-}
-
-
-// =====================================================================
-// Methods
-// =====================================================================
-const updateAll_Players = () => {
-
-   // cyclePlayersMap((socket, player, playerID) => {
-
-   //    player.update(socketList);
-
-   //    cyclePlayersMap((unSocket, unPlayer, otherPlayerID) => {
-   //       if(playerID !== otherPlayerID) {
-   //          let otherPlayer = playersList[playerID];
-
-   //          player.enterViewport(otherPlayer, socket, () => {
-   //             if(!player.detectPlayersList[playerID]) player.detectPlayersList[playerID] = otherPlayer;
-   //             if(!player.renderPlayersList[playerID]) player.renderPlayersList[playerID] = otherPlayer.lightPack();
-
-   //          }, () => {
-   //             if(player.detectPlayersList[playerID]) delete player.detectPlayersList[playerID];
-   //             if(player.renderPlayersList[playerID]) delete player.renderPlayersList[playerID];
-   //          });
-   //       }
-   //    });
-   // });
-}
-
-const sendSyncPack = () => {
-   // ===================================
-   // Sending Light Packs
-   // ( Update: Enemies, Players, NPCs only inside Client viewport )
-   // ===================================
-
-   // this.cyclePlayersMap((socket, player) => {
-   //    socket.emit("serverSync", player.renderPlayersList, player.renderMobsList);
-
-   //    player.renderPlayersList = {};
-   //    player.renderMobsList    = {};
-   // });
-}
-
-const sync = (socket: Socket) => {
-
-   setInterval(() => {
-
-      // this.updateAll_Players();
-      // this.sendSyncPack();
-      
-      socket.emit("sync", { playerID: 123, success: true, message: "syncEvent" });
-
-   }, 1000);
-}
-
-
-// =====================================================================
-// Export Manager
-// =====================================================================
-export const Manager = {
-
    start(socket: Socket) {
-
-      connectPlayer   (socket);
-      disconnectPlayer(socket);
+      this.connectPlayer   (socket);
+      this.disconnectPlayer(socket);
       // sync(socket);
-   },
+   }
+
+
+   // =====================================================================
+   // SocketIO Connect
+   // =====================================================================
+   connectPlayer(socket: any) {
+   
+      console.log("Player Connected --SocketIO");
+      socket.emit("connected");
+
+      socket.on("getParams", () => {
+         socket.emit("sendParams", unitParams);
+      });
+   
+      socket.on("startGame", (data: any) => {
+         const { socketsMap, playersMap } = this;
+   
+         const userID: number = socket.id;
+         const user:   User   = new User  ({ id: userID, name: data.name }); // For DB save ==> later
+         const player: Player = new Player(user);
+   
+         socketsMap.set(userID, socket);
+         playersMap.set(userID, player);
+
+         this.Grid.init(data);
+      });
+   }
+   
+   
+   // =====================================================================
+   // SocketIO Disconnect
+   // =====================================================================
+   disconnectPlayer(socket: any) {
+      socket.on("disconnect", () => {
+         const { socketsMap, playersMap } = this;
+   
+         const userID: number = socket.id;
+         
+         if(!socketsMap.get(userID) || !playersMap.get(userID)) return;
+   
+         playersMap.delete(userID);
+         socketsMap.delete(userID);
+         
+         console.log("Player disconnected --SocketIO");
+      });
+   }
+   
+   
+   // =====================================================================
+   // Methods
+   // =====================================================================
+   updateAll_Players() {
+   
+      // cyclePlayersMap((socket, player, playerID) => {
+   
+      //    player.update(socketList);
+   
+      //    cyclePlayersMap((unSocket, unPlayer, otherPlayerID) => {
+      //       if(playerID !== otherPlayerID) {
+      //          let otherPlayer = playersList[playerID];
+   
+      //          player.enterViewport(otherPlayer, socket, () => {
+      //             if(!player.detectPlayersList[playerID]) player.detectPlayersList[playerID] = otherPlayer;
+      //             if(!player.renderPlayersList[playerID]) player.renderPlayersList[playerID] = otherPlayer.lightPack();
+   
+      //          }, () => {
+      //             if(player.detectPlayersList[playerID]) delete player.detectPlayersList[playerID];
+      //             if(player.renderPlayersList[playerID]) delete player.renderPlayersList[playerID];
+      //          });
+      //       }
+      //    });
+      // });
+   }
+   
+   sendSyncPack() {
+      // ===================================
+      // Sending Light Packs
+      // ( Update: Enemies, Players, NPCs only inside Client viewport )
+      // ===================================
+   
+      // this.cyclePlayersMap((socket, player) => {
+      //    socket.emit("serverSync", player.renderPlayersList, player.renderMobsList);
+   
+      //    player.renderPlayersList = {};
+      //    player.renderMobsList    = {};
+      // });
+   }
+   
+   sync(socket: Socket) {
+   
+      setInterval(() => {
+   
+         // this.updateAll_Players();
+         // this.sendSyncPack();
+         
+         socket.emit("sync", { playerID: 123, success: true, message: "syncEvent" });
+   
+      }, 1000);
+   }
 
 }

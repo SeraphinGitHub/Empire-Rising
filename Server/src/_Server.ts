@@ -2,28 +2,46 @@
 "use strict"
 
 import express, { Request, Response, NextFunction } from "express";
-import { Server, Socket } from "socket.io";
-import { Manager }        from "./modules/Manager";
-// import { DBconnect }      from "./DB/DataBase";
-import http               from "http";
-import cors               from "cors";
-import bodyParser         from "body-parser";
-import dotenv             from "dotenv";
+import { Server,  Socket } from "socket.io";
+import { Manager }         from "./modules/_Export";
+
+import http                from "http";
+import cors                from "cors";
+import dotenv              from "dotenv";
+import bodyParser          from "body-parser";
+import mongoose            from "mongoose";
+import axios               from "axios";
+
 dotenv.config();
+const app = express();
 
-export const app        = express();
-export const httpServer = http.createServer(app);
-export const socketIO   = new Server(httpServer);
+app.use(cors());
+app.use(bodyParser.json());
 
-// DBconnect();
+const httpServer = http.createServer(app);
+const manager    = new Manager();
+const socketIO   = new Server(httpServer, {
+   cors: {
+      origin:         "https://empire-rising.netlify.app/",
+      methods:        ["GET", "POST", "PUT", "DELETE"],
+      allowedHeaders: [
+         "Origin",
+         "X-Requested-With",
+         "Content",
+         "Accept",
+         "Content-Type",
+         "Authorization"
+      ],
+      credentials: true
+   }
+});
+
 
 // =================================================================================
-// Disable CORS errors
+// Set BodyParser & Axios
 // =================================================================================
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(cors());
-
 app.use((
    error: Error,
    req:   Request,
@@ -35,11 +53,19 @@ app.use((
    next();
 });
 
+const startAxios = () => {
+
+   axios.get("----- URL -----")
+   .then((response) => {
+            
+   }).catch((error) => console.log(error));
+}
+
 
 // =================================================================================
 // Methods
 // =================================================================================
-const handleConnect = (
+const handleConnection = (
    res:     Response,
    status:  number,
    message: string,
@@ -49,37 +75,61 @@ const handleConnect = (
    res.status(status).send({ message, data });
 }
 
+
 // =================================================================================
 // Routes
 // =================================================================================
-app.get("/", (req, res) => {
+app.get("/wake", (req, res) => { // To hold server standby with axios
 
    try {
-      handleConnect(res, 200, "Connected with Express !");
+      handleConnection(res, 200, "Connected with Express !");
    }
    catch(error) {
-      handleConnect(res, 500, "Failed to connect with Express !");
+      handleConnection(res, 500, "Failed to connect with Express !");
    }
 });
 
-app.get("/login", (req, res) => {
+app.post("/login", (req, res) => {
 
    try {
-      handleConnect(res, 200, "Logged in successfully !");
+      const { auth } = req.body;
+
+      if(!auth) throw Error;
+      
+      handleConnection(res, 200, "Logged in successfully !", { success: true });
    }
+
    catch(error) {
-      handleConnect(res, 500, "Failed to log in !");
+      handleConnection(res, 500, "Failed to log in !");
    }
 });
 
+
+// =================================================================================
+// SocketIO
+// =================================================================================
 socketIO.on("connection", (socket: Socket) => {
-   Manager.start(socket);
+   manager.start(socket);
 });
 
 
 // =================================================================================
-// Start Server
+// MongoDB connect then ==> Start Server
 // =================================================================================
-httpServer.listen(process.env.PORT || 2800, () => {
+httpServer.listen(process.env.PORT || 3000, () => {
    console.log(`Listening on port ${process.env.PORT}`);
 });
+
+
+// mongoose.connect(process.env.ATLAS_URI!)
+// .then(() => {
+//    console.log("Connected to MongoDB !");
+
+//    httpServer.listen(process.env.PORT || 3000, () => {
+//       console.log(`Listening on port ${process.env.PORT}`);
+//    });
+
+// }).catch(() => console.log("Failed to connect to MongoDB !"));
+
+
+module.exports = app;

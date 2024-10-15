@@ -28,7 +28,7 @@
       mounted() {
 
          this.allCanvas.forEach((canvasName) => {
-            const canvasElem                = this.$refs[canvasName];
+            const canvasElem = this.$refs[canvasName];
             this.$parent.Canvas[canvasName] = canvasElem;
             this.$parent.Ctx   [canvasName] = canvasElem.getContext("2d");
          });

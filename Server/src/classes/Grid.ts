@@ -1,34 +1,31 @@
 
-import { Cell        } from "./_Export";
-import { GameManager } from "../modules/GameManager";
+import { Cell } from "./_Export";
+
 
 // =====================================================================
 // Grid Class
 // =====================================================================
 export class Grid {
 
-   private GM:       GameManager;
-
    cellsList:        Map<string, Cell> = new Map();
    blockedCells:     Set<Cell>         = new Set();
    occupiedCells:    Set<Cell>         = new Set();
 
-   constructor(GManager: GameManager) {
-
-      this.GM = GManager;
-      this.init();
+   constructor() {
+      
    }
 
-   init() {
+   init(params: any) {
       
-      this.setCellsList();
+      this.setCellsList(params);
       this.setNeighbors();
    }
 
-   setCellsList() {
+   setCellsList(params: any) {
       let zIndex = 0;
 
-      const { gridSize, cellSize } = this.GM;
+      const { gridSize, cellSize } = params;
+
       const cellPerSide = Math.floor(gridSize / cellSize);
       
       for(let i = 0; i < cellPerSide; i++) {     // Collums
@@ -63,27 +60,5 @@ export class Grid {
       tempArray.sort((cell: any, nextCell: any) => cell.zIndex -nextCell.zIndex);
 
       this.occupiedCells = new Set(tempArray);
-   }
-
-
-   // =========================================================================================
-   // Draw Methods
-   // =========================================================================================
-   drawGrid(GM: GameManager) {
-
-      if(!GM.show_Grid) return;
-      
-      for(const [, cell] of this.cellsList) {
-         cell.drawInfos(GM.Ctx.isometric);
-      }
-   }
-
-
-   // =========================================================================================
-   // Update - (Every frame)
-   // =========================================================================================
-   update(GM: GameManager) {
-
-      this.drawGrid(GM);
    }
 }

@@ -59,7 +59,6 @@ export class Agent {
       this.img.src    = params.imgSrc;
       this.popCost    = params.popCost;
       this.moveSpeed  = params.moveSpeed;
-      // this.moveSpeed  = 1;
 
       this.Pathfinder = new Pathfinder(this);
    }
@@ -124,7 +123,7 @@ export class Agent {
       
       this.moveTo(nextCell!);
       
-      if(this.hasArrived(nextCell!) && path.length) {
+      if(this.hasArrived(nextCell!)) {
          
          this.oldCell = this.curCell;
          this.curCell = path[0];
@@ -229,7 +228,7 @@ export class Agent {
    drawScanNebs(ctx: CanvasRenderingContext2D) {
       
       // Display scanned neighbors   
-      this.Pathfinder.closedSet.forEach(cell => {
+      this.Pathfinder.closedSet.forEach((cell: Cell) => {
          cell.drawColor(ctx, "rgba(255, 145, 0, 0.6)");
          
          // const costData = this.costMap.get(cell.id)!;
@@ -242,7 +241,7 @@ export class Agent {
       curCell:  Cell,
       nextCell: Cell,
    ) {
-      
+
       ctx.strokeStyle = "lime";
       ctx.beginPath();
       ctx.moveTo(

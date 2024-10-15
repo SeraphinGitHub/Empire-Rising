@@ -10,8 +10,11 @@ import {
 import {
    Cell,
    Agent,
+} from "../classes/_Export"
+
+import {
    GameManager,
-} from "./_Export";
+} from "./_Export"
 
 
 // =====================================================================

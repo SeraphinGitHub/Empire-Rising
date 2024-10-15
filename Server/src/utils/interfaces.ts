@@ -1,8 +1,21 @@
 
 import {
+   Cell,
+   Player,
    Agent,
-   PlayerClass,
 } from "../classes/_Export";
+
+
+// ==================================================================
+// Classes Interfaces
+// ==================================================================
+export interface IPlayer {
+   [key: number]: Player,
+}
+
+export interface IAgent {
+   [key: number]: Agent,
+}
 
 
 // ==================================================================
@@ -20,20 +33,39 @@ export interface INumber {
    [key: string]: number,
 }
 
-export interface IPositionList {
+export interface IPosList {
    [key: string]: IPosition,
 }
 
-export interface INumberList {
-   [key: string]: number[],
+export interface IPosList_List {
+   [key: string]: IPosList,
 }
 
-export interface IPlayerClass {
-   [key: number]: PlayerClass,
+export interface ISquareList {
+   [key: string]: ISquare,
 }
 
-export interface IAgent {
-   [key: number]: Agent,
+export interface ILineList {
+   [key: string]: ILine,
+}
+
+export interface ICoordArray {
+   [key: string]: [number, number, boolean],
+}
+
+export interface INebList {
+   [key: string]: {
+      id:         string,
+      isDiagonal: boolean,
+   },
+}
+
+export interface ICanvas {
+   [key: string]: HTMLCanvasElement,
+}
+
+export interface ICtx {
+   [key: string]: CanvasRenderingContext2D,
 }
 
 
@@ -58,13 +90,22 @@ export interface ICircle extends IPosition {
    radius: number,
 }
 
-export interface ICircle extends IPosition {
-   radius: number,
-}
-
 export interface ILine {
    startX: number;
    startY: number;
    endX:   number;
    endY:   number;
+}
+
+export interface ICost {
+   hCost:        number,
+   gCost:        number,
+   fCost:        number,
+   cameFromCell: Cell | undefined,
+}
+
+export interface IScroll {
+   speed:    number,
+   oldDelta: IPosition,
+   curDelta: IPosition,
 }

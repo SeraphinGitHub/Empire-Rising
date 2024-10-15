@@ -38,25 +38,23 @@ export class Viewport {
    terComputed:      DOMMatrix   | undefined = undefined;
    viewBounds:       ISquareList | undefined = undefined;
 
-   constructor(
-      GManager: GameManager,
-      docBody:  any,
-   ) {
+
+   constructor(GManager: GameManager) {
       this.GM = GManager;
-      this.init(docBody);
+
+      this.init();
    }
 
+   init() {
 
-   init(docBody: any) {
-
-      // this.setSize(docBody);
+      // this.setSize();
       this.setDOMMatrix();
       this.setViewBounds();
    }
 
-   setSize(docBody: any) {
-      this.width  = docBody.clientWidth;
-      this.height = docBody.clientHeight;
+   setSize        () {
+      this.width  = window.innerWidth;
+      this.height = window.innerHeight;
    }
 
    setDOMMatrix   () {
