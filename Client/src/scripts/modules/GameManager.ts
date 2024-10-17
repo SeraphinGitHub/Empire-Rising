@@ -195,8 +195,8 @@ export class GameManager {
    Canvas:           ICanvas;
    Ctx:              ICtx;
    
-   gridSize:         number     = 2000;
-   cellSize:         number     = 40;
+   gridSize:         number;
+   cellSize:         number;
    maxPop:           number     = 2000;
    curPop:           number     = 0;
    halfGrid:         number;
@@ -239,6 +239,10 @@ export class GameManager {
    highG_Src: string = "Terrain/High_Grass.png";
    walls_Src: string = "Buildings/wall.png";
 
+   isFlatG_Loaded: boolean = false;
+   isHighG_Loaded: boolean = false;
+   isWalls_Loaded: boolean = false;
+
    
    constructor(params: any) {
       
@@ -248,6 +252,8 @@ export class GameManager {
       this.walls_Img.src = this.walls_Src;
       // ***************  Temp  ***************
 
+      this.gridSize      = params.gridSize;
+      this.cellSize      = params.cellSize;
       this.unitParams    = params.unitParams;
       this.Canvas        = params.Canvas;
       this.Ctx           = params.Ctx;
@@ -293,8 +299,26 @@ export class GameManager {
 
       // this.TEST_GenerateUnits();
       this.TEST_SetWallsList();
+      
       tiles.forEach(ID => this.getCell(ID)!.isDiffTile = true);
-      setTimeout   (() => this.drawTerrain(), 100);
+
+      this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
+      this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
+      this.walls_Img.addEventListener("load", () => this.isWalls_Loaded = true);
+      
+      const inter_1 = setInterval(() => {
+         
+         if(!this.isFlatG_Loaded
+         || !this.isHighG_Loaded
+         || !this.isWalls_Loaded) {
+            return;
+         }
+
+         this.drawTerrain();
+         clearInterval(inter_1);
+
+      }, 50);
+
       // **********************************  Tempory  **********************************
 
       this.runAnimation();

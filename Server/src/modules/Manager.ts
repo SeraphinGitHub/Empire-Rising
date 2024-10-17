@@ -1,5 +1,6 @@
 
 import {
+   INumber,
    // IAuthSocket,
    IPlayer,
 } from "../utils/interfaces";
@@ -27,7 +28,15 @@ export class Manager {
    playersMap: Map<number, Player> = new Map<number, Player>();
    syncRate:   number              = Math.floor(1000 / Number(process.env.FRAME_RATE));
 
-   Grid: Grid;
+   cellSize:   number  = 40;
+
+   mapSize:    INumber = {
+      small:    2000,
+      medium:   5000,
+      big:      8000,
+   };
+   
+   Grid:       Grid;
 
    constructor() {
       
@@ -49,11 +58,8 @@ export class Manager {
       console.log("Player Connected --SocketIO");
       socket.emit("connected");
 
-      socket.on("getParams", () => {
-         socket.emit("sendParams", unitParams);
-      });
-   
-      socket.on("startGame", (data: any) => {
+      socket.on("setParams", (data: any) => {
+         
          const { socketsMap, playersMap } = this;
    
          const userID: number = socket.id;
@@ -63,7 +69,19 @@ export class Manager {
          socketsMap.set(userID, socket);
          playersMap.set(userID, player);
 
-         this.Grid.init(data);
+         const { mapSize } = data;
+
+         if(!mapSize || !this.mapSize[mapSize]) return;
+   
+         const gridParams = {
+            gridSize: this.mapSize[mapSize],
+            cellSize: this.cellSize,
+         }
+
+         this.Grid.init(gridParams);
+
+         console.log("Game is starting !");
+         socket.emit("startGame", { unitParams, gridParams });
       });
    }
    

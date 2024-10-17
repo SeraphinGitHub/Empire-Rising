@@ -1,6 +1,6 @@
 
 <template>
-   <section class="flex cover">
+   <section class="flex">
       
       <CartCanvas/>
       <IsoCanvas/>
@@ -33,7 +33,9 @@
       },
       
       props: {
-         socket: Object,
+         socket:     Object,
+         unitParams: Object,
+         gridParams: Object,
       },
 
       data() {
@@ -47,17 +49,8 @@
 
       mounted() {
 
-         this.socket.emit("getParams");
-
-         this.socket.on  ("sendParams", (unitParams: any) => {
-            this.initGManager(unitParams);
-
-            this.$nextTick(() => setTimeout(() => {
-               this.loadCoordinates ();
-               this.startGame();
-            }, 0));
-         });
-
+         this.initGManager();
+         this.$nextTick(() => this.loadCoordinates ());
          this.preventCtxMenu ();
          this.onSync         ();
       },
@@ -72,12 +65,14 @@
             };
          },
 
-         initGManager(unitParams: any) {
+         initGManager() {
 
             this.GManager = new GameManager({
-               unitParams,
-               Canvas: this.Canvas,
-               Ctx:    this.Ctx,
+               gridSize:   this.gridParams.gridSize,
+               cellSize:   this.gridParams.cellSize,
+               unitParams: this.unitParams,
+               Canvas:     this.Canvas,
+               Ctx:        this.Ctx,
             });
          },
 
@@ -85,14 +80,6 @@
 
             this.socket.on("sync", (data: any) => {
                console.log(data);
-            });
-         },
-
-         startGame() {
-            this.socket.emit("startGame", {
-               name:     this.$parent.accName,
-               gridSize: this.GManager.gridSize,
-               cellSize: this.GManager.cellSize,
             });
          },
 
