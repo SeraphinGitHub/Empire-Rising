@@ -22,7 +22,7 @@ export class Viewport {
    x:                number    = 0;
    y:                number    = 0;
    width:            number    = 1400; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
-   height:           number    = 1000;  // Has to match CSS canvas Isometircs.vue & Cartesian.vue
+   height:           number    = 1000; // Has to match CSS canvas Isometircs.vue & Cartesian.vue
    detectSize:       number    = 30;
 
    oldPos:           IPosition = {x:0, y:0};

@@ -1,2 +1,2 @@
 
-export { Manager } from "./Manager";
+export { ServerManager } from "./ServerManager";

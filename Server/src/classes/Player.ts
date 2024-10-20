@@ -1,23 +1,25 @@
 
+import {
+   Agent,
+} from "../classes/_Export";
+
 
 // =====================================================================
 // Player Class
 // =====================================================================
 export class Player {
 
-   id:   number;
-   name: string;
+   id:         string;
+   battleID:   string = "";
+   name:       string = "";
+   faction:    string = "";
+   
+   unitsList: Map<number, Agent   > = new Map<number, Agent   >();
+   // buildList: Map<number, Building> = new Map<number, Building>();
 
-   unitsList: {};
-   buildList: {};
-
-   constructor(params: any) {
+   constructor(id: string) {
       
-      this.id   = params.id;
-      this.name = params.name;
-
-      this.unitsList = {};
-      this.buildList = {};
+      this.id = id;
    }
 
 }

@@ -2,9 +2,7 @@
 "use strict"
 
 import express, { Request, Response, NextFunction } from "express";
-import { Server,  Socket } from "socket.io";
-import { Manager }         from "./modules/_Export";
-
+import { ServerManager }   from "./modules/_Export";
 import http                from "http";
 import cors                from "cors";
 import dotenv              from "dotenv";
@@ -19,22 +17,27 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const httpServer = http.createServer(app);
-const manager    = new Manager();
-const socketIO   = new Server(httpServer, {
-   cors: {
-      origin:         "https://empire-rising.netlify.app/",
-      methods:        ["GET", "POST", "PUT", "DELETE"],
-      allowedHeaders: [
-         "Origin",
-         "X-Requested-With",
-         "Content",
-         "Accept",
-         "Content-Type",
-         "Authorization"
-      ],
-      credentials: true
-   }
-});
+const SManager   = new ServerManager();
+
+// ********************  Tempory  ********************
+const battleParams = {
+   id: "47",
+
+   playersList: [
+      { id: "1", name: "Illidan",   faction: "Orange" },
+      { id: "2", name: "Malfurion", faction: "Purple" },
+   ],
+   
+   settings: {
+      maxPop:  "_500",
+      mapSize: "small",
+   },
+}
+// ********************  Tempory  ********************
+
+SManager.start(httpServer);
+SManager.createBattle(battleParams);
+SManager.startBattle (battleParams.id);
 
 
 // =================================================================================
@@ -102,14 +105,6 @@ app.post("/login", (req, res) => {
    catch(error) {
       handleConnection(res, 500, "Failed to log in !");
    }
-});
-
-
-// =================================================================================
-// SocketIO
-// =================================================================================
-socketIO.on("connection", (socket: Socket) => {
-   manager.start(socket);
 });
 
 

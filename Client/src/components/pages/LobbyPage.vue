@@ -7,7 +7,7 @@
          <div class="flex params">
             <label>Faction</label>
 
-            <select v-model="faction" class="flex" @change="setBattleSpecs()">
+            <select v-model="faction" class="flex" @change="setMapSettings()">
                <option value="Orange">Orange</option>
                <option value="Red"   >Red   </option>
                <option value="Blue"  >Blue  </option>
@@ -18,7 +18,7 @@
          <div class="flex params">
             <label>Map Size</label>
 
-            <select v-model="mapSize" class="flex" @change="setBattleSpecs()">
+            <select v-model="mapSize" class="flex" @change="setMapSettings()">
                <option value="big"   >Big   </option>
                <option value="medium">Medium</option>
                <option value="small" >Small </option>
@@ -40,7 +40,7 @@
 
       data() {
       return {
-         battleSpecs: {
+         mapSettings: {
             faction: null,
             mapSize: null,
          },
@@ -50,18 +50,18 @@
       }},
 
       mounted() {
-         this.setBattleSpecs();
+         this.setMapSettings();
       },
 
       methods: {
 
          enterGameBtn() {
-            this.$emit("enterGame", this.battleSpecs);
+            this.$emit("enterGame", this.mapSettings);
          },
 
-         setBattleSpecs() {
-            this.battleSpecs.faction = this.faction;
-            this.battleSpecs.mapSize = this.mapSize;
+         setMapSettings() {
+            this.mapSettings.faction = this.faction;
+            this.mapSettings.mapSize = this.mapSize;
          }
       }
    }

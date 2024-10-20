@@ -50,8 +50,8 @@
       return {
          URL:          "http://localhost:3000",
 
+         isLogin:       false,
          // isLogin:       true,
-         
          isMenu:        false,
          isLobby:       false,
          isGame:        false,
@@ -59,7 +59,6 @@
          socket:        null,
          unitParams:    null,
          gridParams:    null,
-         userName:      null, // ==> Tempory
       }},
 
       mounted() {
@@ -73,17 +72,9 @@
                
                if(!await this.connectExpress()) return console.log("Failed to connect Express");
                
-               this.userName = "Malfurion";
-               this.isLogin  = false;
-               this.loadGame({
-                  faction: "Orange",
-                  mapSize: "small",
-               });
-
+               this.loadGame();
             }, 0);
          },
-
-
 
          async logUser(inputField: IString) {
 
@@ -128,19 +119,17 @@
             this.isLobby = true;
          },
 
-         loadGame(battleSpecs: any) {
+         loadGame() {
             
             this.connectSocketIO();
             
             if(!this.socket) return console.log({ Error: "Failed to connect SocketIO !"});
 
             this.socket.on("connected", () => {
-               this.socket.emit("setParams", { name: this.userName, ...battleSpecs });
+               this.socket.emit("initClient");
             });
 
-            this.socket.on("startGame", (data: any) => {
-               this.unitParams = data.unitParams;
-               this.gridParams = data.gridParams;
+            this.socket.on("startGame", () => {
                this.isLobby    = false;
                this.isGame     = true;
             }, console.log("Game is starting !"));

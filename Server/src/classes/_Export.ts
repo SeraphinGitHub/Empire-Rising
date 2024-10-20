@@ -1,8 +1,9 @@
 
-export { User       } from "./User";
-export { Player     } from "./Player";
-export { Battle     } from "./Battle";
-export { Grid       } from "./Grid";
-export { Cell       } from "./Cell";
 export { Agent      } from "./Agent";
+export { Battle     } from "./Battle";
+export { Cell       } from "./Cell";
+export { Grid       } from "./Grid";
+export { Match      } from "./Match";
 export { Pathfinder } from "./Pathfinder";
+export { Player     } from "./Player";
+export { User       } from "./User";
