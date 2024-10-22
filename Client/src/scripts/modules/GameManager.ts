@@ -1,8 +1,8 @@
 
 import {
    ICanvas,
-   ICircle,
    ICtx,
+   ICircle,
    IPosition,
    ISize,
    ISquare,
@@ -20,170 +20,7 @@ import {
    Collision,
 } from "./_Export"
 
-//  ------------  Tempory  ------------
-let randPathIntervals: any = [];
-
-const walls: string[] = [
-   "9-21",
-   "9-23",
-   "9-25",
-
-   "21-8",
-   "22-8",
-   "23-8",
-   "24-8",
-   "25-8",
-   "25-9",
-   "25-10",
-   "25-11",
-   "25-12",
-   "24-12",
-   "23-12",
-   "22-12",
-   "21-12",
-   "21-11",
-   "21-10",
-   "21-9",
-
-   "29-20",
-   "30-19",
-   "31-18",
-   "32-17",
-   "33-16",
-   "34-17",
-   "35-18",
-   "36-19",
-   "37-20",
-   "36-21",
-   "35-22",
-   "34-23",
-   "33-24",
-   "32-23",
-   "31-22",
-   "30-21",
-];
-
-const tiles: string[] = [
-   "6-9",
-   "6-10",
-   "7-9",
-   "7-8",
-   "6-8",
-   "5-9",
-   "5-8",
-   "5-10",
-   "7-10",
-   "8-9",
-   "8-8",
-   "9-8",
-   "9-7",
-   "10-7",
-   "8-7",
-   "9-6",
-   "5-11",
-   "4-11",
-   "4-10",
-   "3-10",
-   "4-9",
-   "6-7",
-   "7-11",
-   "8-10",
-   "4-12",
-   "3-11",
-   "13-13",
-   "13-14",
-   "12-13",
-   "11-12",
-   "12-11",
-   "8-23",
-   "9-24",
-   "10-24",
-   "11-24",
-   "13-26",
-   "13-27",
-   "14-27",
-   "14-28",
-   "15-28",
-   "16-27",
-   "17-26",
-   "19-13",
-   "19-14",
-   "19-15",
-   "18-13",
-   "23-7",
-   "24-8",
-   "25-9",
-   "26-10",
-   "26-11",
-   "24-8",
-   "22-7",
-   "17-4",
-   "18-4",
-   "18-5",
-   "17-5",
-   "16-3",
-   "17-3",
-   "16-4",
-   "15-3",
-   "16-2",
-   "31-4",
-   "32-4",
-   "33-4",
-   "33-4",
-   "33-5",
-   "32-5",
-   "33-6",
-   "33-3",
-   "34-4",
-   "25-23",
-   "26-24",
-   "27-25",
-   "28-26",
-   "28-27",
-   "28-29",
-   "27-30",
-   "26-30",
-   "26-31",
-   "25-31",
-   "24-31",
-   "27-26",
-   "28-25",
-   "29-26",
-   "29-26",
-   "29-28",
-   "29-27",
-   "29-29",
-   "25-23",
-   "25-23",
-   "25-24",
-   "26-25",
-   "27-24",
-   "29-25",
-   "28-30",
-   "27-30",
-   "27-31",
-   "30-27",
-   "22-27",
-   "21-28",
-   "21-29",
-   "20-30",
-   "19-30",
-   "20-29",
-   "20-29",
-   "19-31",
-   "20-31",
-   "18-29",
-   "18-30",
-   "22-29",
-   "4-28",
-   "5-28",
-   "5-29",
-   "6-29",
-   "7-29",
-   "6-30",
-   "6-28",
-];
-//  ------------  Tempory  ------------
+import { Socket } from "socket.io-client";
 
 
 // =====================================================================
@@ -191,15 +28,19 @@ const tiles: string[] = [
 // =====================================================================
 export class GameManager {
 
-   unitParams:       any;
+   UNIT_PARAMS:      any;
+   WALLS:            string[];
+   TILES:            string[];
+
    Canvas:           ICanvas;
    Ctx:              ICtx;
-   
-   gridSize:         number;
+   socket:           Socket;
+
    cellSize:         number;
-   maxPop:           number     = 2000;
-   curPop:           number     = 0;
+   gridSize:         number;
    halfGrid:         number;
+   maxPop:           number;
+   curPop:           number     = 0;
 
    // Constants ==> Do not modify
    Frame:            number     = 0;
@@ -207,7 +48,8 @@ export class GameManager {
    COS_45:           number     = 0.707;
    COS_30:           number     = 0.866;
    
-   faction:          string     = "Orange";
+   team:             string     = "1";
+   teamColor:        string     = "Orange";
 
    agentsList:       Map<number, Agent> = new Map();
    vacantIDsList:    number[]   = [];
@@ -244,20 +86,30 @@ export class GameManager {
    isWalls_Loaded: boolean = false;
 
    
-   constructor(params: any) {
+   constructor(
+      Canvas:   ICanvas,
+      Ctx:      ICtx,
+      socket:   Socket,
+      initPack: any,
+   ) {
       
       // ***************  Temp  ***************
       this.flatG_Img.src = this.flatG_Src;
       this.highG_Img.src = this.highG_Src;
       this.walls_Img.src = this.walls_Src;
       // ***************  Temp  ***************
+      
+      this.Canvas        = Canvas;
+      this.Ctx           = Ctx;
+      this.socket        = socket;
 
-      this.gridSize      = params.gridSize;
-      this.cellSize      = params.cellSize;
-      this.unitParams    = params.unitParams;
-      this.Canvas        = params.Canvas;
-      this.Ctx           = params.Ctx;
-      this.halfGrid      = this.gridSize *0.5;
+      this.cellSize      = initPack.cellSize;
+      this.gridSize      = initPack.gridSize;
+      this.halfGrid      = initPack.halfGrid;
+      this.maxPop        = initPack.maxPop;
+      this.UNIT_PARAMS   = initPack.UNIT_PARAMS;
+      this.WALLS         = initPack.WALLS; // ==> Tempory
+      this.TILES         = initPack.TILES; // ==> Tempory
 
       this.Viewport      = new Viewport  (this);
       this.Grid          = new Grid      (this);
@@ -275,21 +127,21 @@ export class GameManager {
       this.setVacantIDsList ();
 
       // **********************************  Tempory  **********************************
-      this.createNewAgent("infantry", "swordsman", "9-20",  "");
-      this.createNewAgent("infantry", "swordsman", "9-22",  "");
-      this.createNewAgent("infantry", "swordsman", "9-24",  "");
+      // this.createNewAgent("infantry", "swordsman", "9-20",  "");
+      // this.createNewAgent("infantry", "swordsman", "9-22",  "");
+      // this.createNewAgent("infantry", "swordsman", "9-24",  "");
 
-      this.createNewAgent("infantry", "swordsman", "17-21",  "");
-      this.createNewAgent("infantry", "swordsman", "19-21",  "");
-      this.createNewAgent("infantry", "swordsman", "21-21",  "");
-      this.createNewAgent("infantry", "swordsman", "20-23",  "");
-      this.createNewAgent("infantry", "swordsman", "18-23",  "");
+      // this.createNewAgent("infantry", "swordsman", "17-21",  "");
+      // this.createNewAgent("infantry", "swordsman", "19-21",  "");
+      // this.createNewAgent("infantry", "swordsman", "21-21",  "");
+      // this.createNewAgent("infantry", "swordsman", "20-23",  "");
+      // this.createNewAgent("infantry", "swordsman", "18-23",  "");
 
-      this.createNewAgent("infantry", "swordsman", "17-27",  "");
-      this.createNewAgent("infantry", "swordsman", "19-27",  "");
-      this.createNewAgent("infantry", "swordsman", "21-27",  "");
-      this.createNewAgent("infantry", "swordsman", "20-29",  "");
-      this.createNewAgent("infantry", "swordsman", "18-29",  "");
+      // this.createNewAgent("infantry", "swordsman", "17-27",  "");
+      // this.createNewAgent("infantry", "swordsman", "19-27",  "");
+      // this.createNewAgent("infantry", "swordsman", "21-27",  "");
+      // this.createNewAgent("infantry", "swordsman", "20-29",  "");
+      // this.createNewAgent("infantry", "swordsman", "18-29",  "");
       
       // this.createNewAgent("infantry",  "worker",    "5-3", "");
       // this.createNewAgent("cavalry",   "swordsman", "9-2", "");
@@ -300,13 +152,13 @@ export class GameManager {
       // this.TEST_GenerateUnits();
       this.TEST_SetWallsList();
       
-      tiles.forEach(ID => this.getCell(ID)!.isDiffTile = true);
+      this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
 
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
       this.walls_Img.addEventListener("load", () => this.isWalls_Loaded = true);
       
-      const inter_1 = setInterval(() => {
+      const loadTerrain = setInterval(() => {
          
          if(!this.isFlatG_Loaded
          || !this.isHighG_Loaded
@@ -315,9 +167,16 @@ export class GameManager {
          }
 
          this.drawTerrain();
-         clearInterval(inter_1);
+         clearInterval(loadTerrain);
 
       }, 50);
+
+      this.socket.on("addNewAgent", (data: any) => this.createNewAgent( // ==> ********** TEST  **********
+         data.divisionName,
+         data.typeName,
+         data.cellID,
+         data.diffImgSrc
+      ));
 
       // **********************************  Tempory  **********************************
 
@@ -527,7 +386,7 @@ export class GameManager {
       cellID:       string,
       diffImgSrc:   string,
    ) {
-      const division:  any    = this.unitParams   [divisionName];
+      const division:  any    = this.UNIT_PARAMS  [divisionName];
       const unitType:  any    = division.unitType [typeName];
       const vacantID:  number = this.vacantIDsList[0];
       const startCell: Cell   = this.getCell(cellID)!;
@@ -808,7 +667,7 @@ export class GameManager {
 
    TEST_SetWallsList () {
 
-      walls.forEach((cellID) => {
+      this.WALLS.forEach((cellID: string) => {
          const cell:     Cell      = this.getCell(cellID)!;
          const { x, y }: IPosition = this.gridPos_toScreenPos(cell.center);
          
@@ -825,6 +684,13 @@ export class GameManager {
       if(!this.isUnitMode) return;
 
       this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell!.id,  "");
+
+      this.socket.emit("createAgent", {
+         divisionName: "infantry",
+         typeName:     "swordsman",
+         cellID:       this.Cursor.hoverCell!.id,
+         diffImgSrc:   "",
+      });
    }
 
 }

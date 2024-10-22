@@ -6,11 +6,10 @@ import {
 
 import {
    Player,
-   Battle,
 } from "../classes/_Export";
 
 import { Server,  Socket } from "socket.io";
-import { unitParams      } from "../utils/unitParams";
+import { BattleManager   } from "./_Export";
 import dotenv              from "dotenv";
 dotenv.config();
 
@@ -20,9 +19,11 @@ dotenv.config();
 // =====================================================================
 export class ServerManager {
 
-   socketsList:  Map<string, Socket> = new Map<string, Socket>();
-   playersList:  Map<string, Player> = new Map<string, Player>();
-   battlesList:  Map<string, Battle> = new Map<string, Battle>();
+   io:           Server;
+
+   socketsList:  Map<string, Socket       > = new Map();
+   playersList:  Map<string, Player       > = new Map();
+   battlesList:  Map<string, BattleManager> = new Map();
    
    syncRate:     number  = Math.floor(1000 / Number(process.env.FRAME_RATE));
 
@@ -40,13 +41,10 @@ export class ServerManager {
       big:       8000,
    };
 
-   
-   // =====================================================================
-   // Socket Connect / Disconnect
-   // =====================================================================
-   start(httpServer:  any) {
 
-      const serverIO: Server = new Server(httpServer, {
+   constructor(httpServer: any) {
+
+      this.io = new Server(httpServer, {
          cors: {
             origin:         "https://empire-rising.netlify.app/",
             methods:        ["GET", "POST", "PUT", "DELETE"],
@@ -62,32 +60,37 @@ export class ServerManager {
          }
       });
 
-      serverIO.on("connection", (socket) => this.connect(socket));
+      this.start();
    }
 
-   connect(socket: Socket) {
+   
+   // =====================================================================
+   // Socket Connect / Disconnect
+   // =====================================================================
+   start() {
+      this.io.on("connection", (socket) => {
+         socket.on("disconnect", () => this.disconnect(socket));
 
-      const eventList: { [key: string]: (data: any) => void } = {
-         "disconnect": () => this.disconnect(socket),
-         "initClient": () => this.initClient(socket),
-      };
-      
-      for(const [ channel, callback ] of Object.entries(eventList)) {
-         socket.on(channel, callback);
-      }
+         socket.emit("connected");
+         console.log({ message: "--SocketIO-- Player Connected !" });
 
-      const userID = socket.id;
+         socket.on("createBattle", (data: any) => this.createBattle(socket, data));
+         socket.on("joinBattle",   (data: any) => this.joinBattle  (socket, data));
+         socket.on("loadBattle",   (data: any) => this.loadBattle  (        data));
 
-      this.socketsList.set(userID, socket);
-      this.playersList.set(userID, new Player(userID));
 
-      socket.emit("connected");
-      console.log("Player Connected --SocketIO");
+         socket.on("createAgent",  (data: any) => this.createAgent(data)); // ==> TEST
+      });
+   }
+
+   createAgent(data: any) {
+
+      this.battleState("addNewAgent", "47", data);
    }
 
 
    // =====================================================================
-   // Socket Methods
+   // Methods
    // =====================================================================
    disconnect(socket: Socket) {
 
@@ -111,60 +114,75 @@ export class ServerManager {
       battlesList.delete(userID);
       playID_List.delete(userID);
       
-      console.log("Player disconnected --SocketIO");
+      console.log({ message: "--SocketIO-- Player disconnected" });
    }
 
-   initClient(socket: Socket) {
-
-      console.log("Game is starting !");
-      socket.emit("startGame");
+   generateBattleID(): string { // ==> Need to add logic
+      
+      return "47";
    }
 
+   createBattle(socket: Socket, data: any) {
 
-   // =====================================================================
-   // Methods
-   // =====================================================================
-   setPlayer(
-      battleID:    string,
-      playerInfos: any,
-   ): Player {
+      const { mapSettings, ...playerProps } = data;
 
-      const { id, name, faction } = playerInfos;
+      const newBattle      = new BattleManager({
+         id:       this.generateBattleID(),
+         maxPop:   this.maxPopSpec [mapSettings.maxPop ],
+         gridSize: this.mapSizeSpec[mapSettings.mapSize],
 
-      const player = this.playersList.get(id)!;
+      }), { id: battleID } = newBattle;
 
-      player.battleID = battleID;
-      player.name     = name;
-      player.faction  = faction;
+      const newPlayer      = new Player({
+         id: socket.id,
+         battleID,
+         ...playerProps
 
-      this.playersList.set(id, player);
+      }), { id: playerID } = newPlayer;
 
-      return player;
-   }
-
-   createBattle(params: any) {
-
-      const { id: battleID, playersList } = params;
-
-      const newBattle = new Battle({
-         id:       battleID,
-         maxPop:   this.maxPopSpec [params.maxPop ],
-         gridSize: this.mapSizeSpec[params.mapSize],
-      });
-
-      for(const playerInfos of playersList) {
-         
-         const player = this.setPlayer(battleID, playerInfos), { id: playerID } = player;
-         newBattle.playID_List.add(playerID);
-      }
-
+      newBattle.addPlayerID(playerID);
+      
       this.battlesList.set(battleID, newBattle);
+      this.playersList.set(playerID, newPlayer);
+      
+      socket.join(battleID);
+      socket.emit("battleCreated", battleID); // Need to add Client logic
    }
 
-   startBattle(battleID: string) {
+   joinBattle(socket: Socket, data: any) {
 
-      const battle = this.battlesList.get(battleID)!;
-      battle.start();
+      const { battleID, ...playerProps } = data;
+      const battle = this.battlesList.get(battleID);
+
+      if(!battle) return console.log({ error: "No battle found !" });
+
+      const newPlayer      = new Player({
+         id: socket.id,
+         ...playerProps
+      }), { id: playerID } = newPlayer;
+
+      battle.addPlayerID(playerID);
+      socket.join(battleID);
+      
+      this.playersList.set(playerID, newPlayer);
+   }
+
+   loadBattle(data: any) {
+
+      const { battleID } = data;
+      const battle = this.battlesList.get(battleID);
+
+      if(!battle) return console.log({ error: "No battle found !" });
+
+      this.battleState("initBattle", battleID, battle.initPack());
+   }
+
+   battleState(
+      channel:  string,
+      battleID: string,
+      dataPack: any,
+   ) {
+      this.io.to(battleID).emit(channel, dataPack);
    }
 
 

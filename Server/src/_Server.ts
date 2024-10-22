@@ -17,27 +17,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const httpServer = http.createServer(app);
-const SManager   = new ServerManager();
-
-// ********************  Tempory  ********************
-const battleParams = {
-   id: "47",
-
-   playersList: [
-      { id: "1", name: "Illidan",   faction: "Orange" },
-      { id: "2", name: "Malfurion", faction: "Purple" },
-   ],
-   
-   settings: {
-      maxPop:  "_500",
-      mapSize: "small",
-   },
-}
-// ********************  Tempory  ********************
-
-SManager.start(httpServer);
-SManager.createBattle(battleParams);
-SManager.startBattle (battleParams.id);
+new ServerManager(httpServer);
 
 
 // =================================================================================

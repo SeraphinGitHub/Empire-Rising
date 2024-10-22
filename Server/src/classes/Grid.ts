@@ -1,5 +1,6 @@
 
-import { Cell } from "./_Export";
+import { BattleManager } from "../modules/_Export";
+import { Cell          } from "./_Export";
 
 
 // =====================================================================
@@ -7,24 +8,26 @@ import { Cell } from "./_Export";
 // =====================================================================
 export class Grid {
 
-   cellsList:        Map<string, Cell> = new Map();
-   blockedCells:     Set<Cell>         = new Set();
-   occupiedCells:    Set<Cell>         = new Set();
+   private BM:    BattleManager;
 
-   constructor() {
-      
+   cellsList:     Map<string, Cell> = new Map();
+   occupiedCells: Set<Cell>         = new Set();
+
+   constructor(BManager: BattleManager) {
+
+      this.BM = BManager;
+      this.init();
    }
 
-   init(params: any) {
-      
-      this.setCellsList(params);
+   init() {
+      this.setCellsList();
       this.setNeighbors();
    }
 
-   setCellsList(params: any) {
+   setCellsList() {
       let zIndex = 0;
 
-      const { gridSize, cellSize } = params;
+      const { gridSize, cellSize } = this.BM;
 
       const cellPerSide = Math.floor(gridSize / cellSize);
       

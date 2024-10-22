@@ -33,9 +33,8 @@
       },
       
       props: {
-         socket:     Object,
-         unitParams: Object,
-         gridParams: Object,
+         socket:   Object,
+         initPack: Object,
       },
 
       data() {
@@ -67,13 +66,12 @@
 
          initGManager() {
 
-            this.GManager = new GameManager({
-               gridSize:   this.gridParams.gridSize,
-               cellSize:   this.gridParams.cellSize,
-               unitParams: this.unitParams,
-               Canvas:     this.Canvas,
-               Ctx:        this.Ctx,
-            });
+            this.GManager = new GameManager(
+               this.Canvas,
+               this.Ctx,
+               this.socket,
+               this.initPack,
+            );
          },
 
          onSync() {

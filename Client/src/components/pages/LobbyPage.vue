@@ -44,9 +44,6 @@
             faction: null,
             mapSize: null,
          },
-
-         faction:   "Orange",
-         mapSize:   "small",
       }},
 
       mounted() {
@@ -71,10 +68,6 @@
 <style scoped lang="scss">
 
    section {
-      width:  400px;
-      height: 600px;
-      border: 4px double grey;
-      border-radius: 20px;
       background: linear-gradient(to bottom right,
          black,
          darkviolet,

@@ -3,7 +3,10 @@
    <section class="flex cover" id="root">
       
       <LoginPage v-if="isLogin" class="page"
-         @userLogin   ="logUser"
+         @userLogin    ="logUser"
+         @createBattle ="easyLogin"
+         @joinBattle   ="easyLogin"
+         @loadBattle   ="easyLoadGame"
       />
 
       <MenuPage  v-if="isMenu"  class="page"
@@ -11,13 +14,12 @@
       />
 
       <LobbyPage v-if="isLobby" class="page"
-         @enterGame   ="loadGame"
+         @enterGame ="loadGame"
       />
 
       <GamePage  v-if="isGame"
-         :socket     ="socket"
-         :unitParams ="unitParams"
-         :gridParams ="gridParams"
+         :socket   ="socket"
+         :initPack ="initPack"
       />
 
    </section>
@@ -48,33 +50,44 @@
 
       data() {
       return {
-         URL:          "http://localhost:3000",
+         URL:       "http://localhost:3000",
 
-         isLogin:       false,
-         // isLogin:       true,
-         isMenu:        false,
-         isLobby:       false,
-         isGame:        false,
+         isLogin:    true,
+         isMenu:     false,
+         isLobby:    false,
+         isGame:     false,
 
-         socket:        null,
-         unitParams:    null,
-         gridParams:    null,
+         socket:     null,
+         initPack:   null,
       }},
-
-      mounted() {
-         this.easyLaunch();
-      },
 
       methods: {
 
-         easyLaunch() {
-            setTimeout(async () => {
-               
-               if(!await this.connectExpress()) return console.log("Failed to connect Express");
-               
-               this.loadGame();
-            }, 0);
+         async easyLogin(params: any) {
+
+            if(!await this.connectExpress()) return console.log("Failed to connect Express");
+            
+            this.connectSocketIO();
+         
+            if(!this.socket) return console.log({ Error: "Failed to connect SocketIO !"});
+
+            this.socket.on("connected", () => {
+               this.socket.emit(params.channel, params);
+            });
          },
+
+         easyLoadGame(params: any) {
+
+            this.socket.emit("loadBattle", params);
+
+            this.socket.on("initBattle", (iniPack: any) => {
+               this.initPack = iniPack;
+               this.isLogin  = false;
+               this.isGame   = true;
+            }, console.log({ message: "Game is starting !" }));
+         },
+
+
 
          async logUser(inputField: IString) {
 
@@ -129,9 +142,10 @@
                this.socket.emit("initClient");
             });
 
-            this.socket.on("startGame", () => {
-               this.isLobby    = false;
-               this.isGame     = true;
+            this.socket.on("initBattle", (iniPack: any) => {
+               this.initPack = iniPack;
+               this.isLobby  = false;
+               this.isGame   = true;
             }, console.log("Game is starting !"));
          },
       },
@@ -180,11 +194,15 @@
    // Tempory
    // ***************************************************
    .page {
+      width:  500px;
+      height: 600px;
+      border: 4px double grey;
+      border-radius: 20px;
 
       input,
       button {
          margin: 20px;
-         height: 50px;
+         height: 60px;
          border: 4px double black;
          border-radius: 8px;
          background: silver;
@@ -199,8 +217,7 @@
       }
    
       button {
-         margin: 50px;
-         width: 60%;
+         width: 50%;
          background: linear-gradient(to bottom,
             green,
             lime,
@@ -211,9 +228,9 @@
       }
    
       button:active {
-         margin: 55px;
-         width:  55%;
-         height: 40px;
+         margin: 25px;
+         width:  45%;
+         height: 50px;
       }
    }
 
