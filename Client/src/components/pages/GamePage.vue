@@ -48,10 +48,9 @@
 
       mounted() {
 
-         this.initGManager();
-         this.$nextTick(() => this.loadCoordinates ());
+         this.initGManager   ();
          this.preventCtxMenu ();
-         this.onSync         ();
+         this.$nextTick(     () => this.loadCoordinates());
       },
 
       methods: {
@@ -72,13 +71,6 @@
                this.socket,
                this.initPack,
             );
-         },
-
-         onSync() {
-
-            this.socket.on("sync", (data: any) => {
-               console.log(data);
-            });
          },
 
          loadCoordinates() {

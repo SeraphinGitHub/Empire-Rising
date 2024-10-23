@@ -12,19 +12,23 @@ export class Player {
    id:        string;
    battleID:  string;
    name:      string;
-   team:      string;
    teamColor: string;
+
+   team:      number;
+   maxPop:    number = 0;
+   curPop:    number = 0;
    
-   unitsList: Map<number, Agent   > = new Map<number, Agent   >();
-   // buildList: Map<number, Building> = new Map<number, Building>();
+   unitsList: Map<number, Agent   > = new Map();
+   // buildList: Map<number, Building> = new Map();
 
    constructor(params: any) {
       
       this.id        = params.id;
       this.battleID  = params.battleID;
       this.name      = params.name;
-      this.team      = params.team;
       this.teamColor = params.teamColor;
+      this.team      = params.team;
+
    }
 
 }

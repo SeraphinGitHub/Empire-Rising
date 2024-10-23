@@ -37,7 +37,7 @@
 
                channel:    "createBattle",
                name:       "Illidan",
-               team:       "1",
+               team:        1,
                teamColor:  "Orange",
 
                mapSettings: {
@@ -52,7 +52,7 @@
 
                channel:   "joinBattle",
                name:      "Malfurion",
-               team:      "2",
+               team:       2,
                teamColor: "Purple",
 
                battleID: "47",

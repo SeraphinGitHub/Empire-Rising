@@ -1,16 +1,12 @@
 
 import {
-   INumber,
-   IPlayer,
-} from "utils/interfaces";
-
-import {
-   Player,
    Grid,
+   Cell,
+   Agent,
+   Player,
 } from "../classes/_Export";
 
-import { UNIT_PARAMS } from "../utils/unitParams";
-
+import { UNIT_STATS } from "../utils/unitStats";
 
 const WALLS: string[] = [
    "9-21",
@@ -179,34 +175,35 @@ const TILES: string[] = [
 // =====================================================================
 export class BattleManager {
 
-   id:           string;
-   playID_List:  Set<string> = new Set();
+   id:               string;
 
-   cellSize:     number = 40;
-   gridSize:     number;
-   halfGrid:     number;
-   maxPop:       number;
-   curPop:       number = 0;
+   cellSize:         number = 40;
+   gridSize:         number;
+   halfGrid:         number;
+   battleMaxPop:     number;
+   curPop:           number = 0;
+
+   playersList:      Map<string, Player> = new Map();
+   vacantIDsList:    number[]            = [];
    
-   Grid:         Grid;
+   Grid:             Grid;
 
 
    constructor(params: any) {
       
-      this.id       = params.id;
-      this.maxPop   = params.maxPop;
-      this.gridSize = params.gridSize;
-      this.halfGrid = this.gridSize *0.5;
+      this.id           = params.id;
+      this.gridSize     = params.gridSize;
+      this.battleMaxPop = params.maxPop;
+      this.halfGrid     = this.gridSize *0.5;
 
-      this.Grid     = new Grid(this);
+      this.Grid         = new Grid(this);
+
+      this.init();
    }
 
-
-   // =========================================================================================
-   // Methods
-   // =========================================================================================
-   addPlayerID(playerId: string) {
-      this.playID_List.add(playerId);
+   init() {
+      this.setVacantIDsList();
+      this.setPlayersMaxPop();
    }
 
    initPack() {
@@ -215,20 +212,79 @@ export class BattleManager {
          cellSize,
          gridSize,
          halfGrid,
-         maxPop,
       } = this;
 
       return {
-         UNIT_PARAMS,
+         UNIT_STATS,
 
          cellSize,
          gridSize,
          halfGrid,
-         maxPop,
+         maxPop: this.getMaxPop(),
 
          WALLS, // ==> Tempory
          TILES, // ==> Tempory
       }
+   }
+
+
+   // =========================================================================================
+   // Methods
+   // =========================================================================================
+   getCell(id: string): Cell | undefined {
+      return this.Grid.cellsList.get(id);
+   }
+
+   getMaxPop(): number {
+      const { battleMaxPop, playersList } = this;
+      return Math.floor(battleMaxPop /playersList.size);
+   }
+
+   setVacantIDsList() {
+
+      for(let i = 1; i < this.battleMaxPop; i++) {
+         this.vacantIDsList.push(i);
+      }
+   }
+
+   setPlayersMaxPop() {
+
+      for(const [, player] of this.playersList) {
+         player.maxPop = this.getMaxPop();
+      }
+   }
+
+   addNewPlayer(newPlayer: Player) {
+      this.playersList.set(newPlayer.id, newPlayer);
+   }
+
+   createNewAgent(
+      player: Player,
+      unitID: string,
+      cellID: string,
+   ) {
+      const agentStats: any    = UNIT_STATS[unitID],    { popCost            } = agentStats;      
+      const startCell:  Cell   = this.getCell(cellID)!, { x: cellX, y: cellY } = startCell.center;
+      const vacantID:   number = this.vacantIDsList[0];
+
+      startCell.agentIDset.add(vacantID);
+      startCell.isVacant = false;
+
+      this.Grid.addToOccupiedMap(startCell);
+      this.vacantIDsList.splice(0, popCost);
+      this.curPop   += popCost;
+      player.curPop += popCost;
+
+      const newAgent = new Agent({
+         id:         vacantID,
+         team:       player.team,
+         teamColor:  player.teamColor,
+         stats:      agentStats,
+         position: { x: cellX, y: cellY }, // ==> Tempory until create rally point !
+         startCell,                        // ==> Tempory until create BuildingsClass with spawn position
+      });
+      
+      player.unitsList.set(vacantID, newAgent);
    }
 
 }

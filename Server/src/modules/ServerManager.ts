@@ -21,9 +21,9 @@ export class ServerManager {
 
    io:           Server;
 
-   socketsList:  Map<string, Socket       > = new Map();
-   playersList:  Map<string, Player       > = new Map();
-   battlesList:  Map<string, BattleManager> = new Map();
+   socketsList: Map<string, Socket       > = new Map();
+   playBatList: Map<string, string       > = new Map();
+   battlesList: Map<string, BattleManager> = new Map();
    
    syncRate:     number  = Math.floor(1000 / Number(process.env.FRAME_RATE));
 
@@ -94,17 +94,17 @@ export class ServerManager {
    // =====================================================================
    disconnect(socket: Socket) {
 
-      const { socketsList, playersList, battlesList } = this;
+      const { socketsList, playBatList, battlesList } = this;
       const userID = socket.id;
 
-      const player      =          playersList.get(userID);
-      const battle      = player ? battlesList.get(player.battleID) : null;
-      const playID_List = battle ? battle.playID_List               : null;
+      const battleID    =            playBatList.get(userID);
+      const battle      = battleID ? battlesList.get(battleID) : null;
+      const playersList = battle   ? battle.playersList        : null;
 
-      if(!player
+      if(!battleID
       || !battle
-      || !playID_List
-      || !playID_List.has(userID)) {
+      || !playersList
+      || !playersList.has(userID)) {
 
          return;
       }
@@ -112,7 +112,7 @@ export class ServerManager {
       socketsList.delete(userID);
       playersList.delete(userID);
       battlesList.delete(userID);
-      playID_List.delete(userID);
+      playersList.delete(userID);
       
       console.log({ message: "--SocketIO-- Player disconnected" });
    }
@@ -137,13 +137,12 @@ export class ServerManager {
          id: socket.id,
          battleID,
          ...playerProps
-
       }), { id: playerID } = newPlayer;
 
-      newBattle.addPlayerID(playerID);
-      
+      newBattle.addNewPlayer(newPlayer);
+
+      this.playBatList.set(playerID, battleID);
       this.battlesList.set(battleID, newBattle);
-      this.playersList.set(playerID, newPlayer);
       
       socket.join(battleID);
       socket.emit("battleCreated", battleID); // Need to add Client logic
@@ -161,10 +160,10 @@ export class ServerManager {
          ...playerProps
       }), { id: playerID } = newPlayer;
 
-      battle.addPlayerID(playerID);
+      battle.addNewPlayer(newPlayer);
+
+      this.playBatList.set(playerID, battleID);
       socket.join(battleID);
-      
-      this.playersList.set(playerID, newPlayer);
    }
 
    loadBattle(data: any) {

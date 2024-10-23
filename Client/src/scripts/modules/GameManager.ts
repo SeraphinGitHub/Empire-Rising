@@ -28,7 +28,7 @@ import { Socket } from "socket.io-client";
 // =====================================================================
 export class GameManager {
 
-   UNIT_PARAMS:      any;
+   UNIT_STATS:       any;
    WALLS:            string[];
    TILES:            string[];
 
@@ -51,8 +51,6 @@ export class GameManager {
    team:             string     = "1";
    teamColor:        string     = "Orange";
 
-   agentsList:       Map<number, Agent> = new Map();
-   vacantIDsList:    number[]   = [];
    oldSelectList:    Set<Agent> = new Set();
    curSelectList:    Set<Agent> = new Set();
    
@@ -107,7 +105,7 @@ export class GameManager {
       this.gridSize      = initPack.gridSize;
       this.halfGrid      = initPack.halfGrid;
       this.maxPop        = initPack.maxPop;
-      this.UNIT_PARAMS   = initPack.UNIT_PARAMS;
+      this.UNIT_STATS    = initPack.UNIT_STATS;
       this.WALLS         = initPack.WALLS; // ==> Tempory
       this.TILES         = initPack.TILES; // ==> Tempory
 
@@ -124,7 +122,6 @@ export class GameManager {
       this.setViewAngle     ();
       this.setTerrainPos    ();
       this.setViewfieldPos  ();
-      this.setVacantIDsList ();
 
       // **********************************  Tempory  **********************************
       // this.createNewAgent("infantry", "swordsman", "9-20",  "");
@@ -285,13 +282,6 @@ export class GameManager {
       this.viewfieldPos.y = half_vpHeight -diagOffset *0.5 +(this.cellSize *0.5 *this.COS_30);
    }
 
-   setVacantIDsList  () {
-
-      for(let i = 1; i < this.maxPop; i++) {
-         this.vacantIDsList.push(i);
-      }
-   }
-
    clearCanvas       (canvasName: string) {
 
       const { width, height } = (canvasName === "isometric")
@@ -378,45 +368,6 @@ export class GameManager {
    // =========================================================================================
    getCell           (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
-   }
-
-   createNewAgent    ( // =======>  Super tempory ==> Need huge recast
-      divisionName: string,
-      typeName:     string,
-      cellID:       string,
-      diffImgSrc:   string,
-   ) {
-      const division:  any    = this.UNIT_PARAMS  [divisionName];
-      const unitType:  any    = division.unitType [typeName];
-      const vacantID:  number = this.vacantIDsList[0];
-      const startCell: Cell   = this.getCell(cellID)!;
-
-      startCell.isVacant = false;
-      startCell.agentIDset.add(vacantID);
-
-      this.Grid.addToOccupiedMap(startCell);
-      this.curPop += division.popCost;
-      this.vacantIDsList.splice(0, division.popCost);
-
-      let imgSrc = unitType.imgSrc;
-      if(diffImgSrc !== "") imgSrc = diffImgSrc;
-
-      // Set agent position
-      const { x: cellX, y: cellY } = startCell.center;
-      const position = { x: cellX, y: cellY }; // Tempory until create rally point !
-
-      const newAgent = new Agent({
-         id:          vacantID,
-         collider:    division.collider,
-         position,
-         startCell,   // <== Tempory until create BuildingsClass with spawn position
-         unitType,
-         imgSrc,
-         moveSpeed:   unitType.moveSpeed,
-         popCost:     division.popCost,
-      });
-      
-      this.agentsList.set(vacantID, newAgent);
    }
 
    setAgentCollider  (agent: Agent): ICircle {

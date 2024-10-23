@@ -17,14 +17,23 @@ import {
 export class Agent {
 
    id:          number;
-   popCost:     number;
+   team:        number;
+   name:        string;
+   basePath:    string;
+   
+   popCost:     number;   
+   health:      number;
+   armor:       number;
+   damages:     number;
    moveSpeed:   number;
+   buildSpeed:  number;
+   attackSpeed: number;
+   animDelay:   number;
+
    frameX:      number = 0;
    frameY:      number = 11;
    lastFrameY:  number = 11;
    animState:   number = 0;
-
-   unitType:    string;
 
    position:    IPosition;
    collider:    INumber;
@@ -50,17 +59,32 @@ export class Agent {
 
    
    constructor(params: any) {
+      const { stats } = params;
 
-      this.id         = params.id;
-      this.position   = params.position;
-      this.collider   = params.collider;
-      this.curCell    = params.startCell;
-      this.unitType   = params.unitType;
-      this.img.src    = params.imgSrc;
-      this.popCost    = params.popCost;
-      this.moveSpeed  = params.moveSpeed;
+      this.id          = params.id;
+      this.team        = params.team;
+      this.position    = params.position;
+      this.curCell     = params.startCell;
+      
+      this.name        = stats.name;
+      this.basePath    = stats.basePath;
+      this.collider    = stats.collider;
+      this.popCost     = stats.popCost;
+      this.health      = stats.health;
+      this.armor       = stats.armor;
+      this.damages     = stats.damages;
+      this.moveSpeed   = stats.moveSpeed;
+      this.buildSpeed  = stats.buildSpeed;
+      this.attackSpeed = stats.attackSpeed;
+      this.animDelay   = stats.animDelay;
 
-      this.Pathfinder = new Pathfinder(this);
+      this.Pathfinder  = new Pathfinder(this);
+      
+      this.setImageSource(params.teamColor);
+   }
+
+   setImageSource(teamColor: string) {
+      this.img.src = `${this.basePath}${teamColor}.png`;
    }
 
    hasArrived(cell: Cell): boolean {

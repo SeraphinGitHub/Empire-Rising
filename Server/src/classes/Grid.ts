@@ -8,18 +8,14 @@ import { Cell          } from "./_Export";
 // =====================================================================
 export class Grid {
 
-   private BM:    BattleManager;
+   private BManager: BattleManager;
 
-   cellsList:     Map<string, Cell> = new Map();
-   occupiedCells: Set<Cell>         = new Set();
+   cellsList:        Map<string, Cell> = new Map();
+   occupiedCells:    Set<Cell>         = new Set();
 
    constructor(BManager: BattleManager) {
+      this.BManager = BManager;
 
-      this.BM = BManager;
-      this.init();
-   }
-
-   init() {
       this.setCellsList();
       this.setNeighbors();
    }
@@ -27,7 +23,7 @@ export class Grid {
    setCellsList() {
       let zIndex = 0;
 
-      const { gridSize, cellSize } = this.BM;
+      const { gridSize, cellSize } = this.BManager;
 
       const cellPerSide = Math.floor(gridSize / cellSize);
       
