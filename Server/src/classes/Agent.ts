@@ -17,11 +17,13 @@ import {
 export class Agent {
 
    id:          number;
+   playerID:    string;
    team:        number;
+   teamColor:   string;
    name:        string;
    basePath:    string;
    
-   popCost:     number;   
+   popCost:     number;
    health:      number;
    armor:       number;
    damages:     number;
@@ -44,7 +46,6 @@ export class Agent {
    isSelected:  boolean = false;
    isAttacking: boolean = false;
 
-   img:         HTMLImageElement = new Image();
    sprites:     INumber = { height: 64, width: 64, offsetY: 25 };
    bigSprites:  INumber = { height: 64, width: 192 };
 
@@ -62,12 +63,13 @@ export class Agent {
       const { stats } = params;
 
       this.id          = params.id;
+      this.playerID    = params.playerID;
       this.team        = params.team;
+      this.teamColor   = params.teamColor;
       this.position    = params.position;
-      this.curCell     = params.startCell;
+      this.curCell     = params.curCell;
       
       this.name        = stats.name;
-      this.basePath    = stats.basePath;
       this.collider    = stats.collider;
       this.popCost     = stats.popCost;
       this.health      = stats.health;
@@ -77,14 +79,30 @@ export class Agent {
       this.buildSpeed  = stats.buildSpeed;
       this.attackSpeed = stats.attackSpeed;
       this.animDelay   = stats.animDelay;
+      this.basePath    = stats.basePath;
 
       this.Pathfinder  = new Pathfinder(this);
-      
-      this.setImageSource(params.teamColor);
    }
 
-   setImageSource(teamColor: string) {
-      this.img.src = `${this.basePath}${teamColor}.png`;
+   initPack() {
+      return {
+         id:            this.id,
+         playerID:      this.playerID,
+         team:          this.team,
+         teamColor:     this.teamColor,
+         popCost:       this.popCost,
+         curCell:       this.curCell,
+         position:      this.position,
+         collider:      this.collider,
+         health:        this.health,
+         armor:         this.armor,
+         damages:       this.damages,
+         moveSpeed:     this.moveSpeed,
+         buildSpeed:    this.buildSpeed,
+         attackSpeed:   this.attackSpeed,
+         animDelay:     this.animDelay,
+         basePath:      this.basePath,
+      }
    }
 
    hasArrived(cell: Cell): boolean {

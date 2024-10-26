@@ -48,8 +48,11 @@ export class GameManager {
    COS_45:           number     = 0.707;
    COS_30:           number     = 0.866;
    
-   team:             string     = "1";
+   team:             number     = 1;
    teamColor:        string     = "Orange";
+
+
+   agentsList: Map<number, Agent       > = new Map(); // **********************************************
 
    oldSelectList:    Set<Agent> = new Set();
    curSelectList:    Set<Agent> = new Set();
@@ -127,18 +130,6 @@ export class GameManager {
       // this.createNewAgent("infantry", "swordsman", "9-20",  "");
       // this.createNewAgent("infantry", "swordsman", "9-22",  "");
       // this.createNewAgent("infantry", "swordsman", "9-24",  "");
-
-      // this.createNewAgent("infantry", "swordsman", "17-21",  "");
-      // this.createNewAgent("infantry", "swordsman", "19-21",  "");
-      // this.createNewAgent("infantry", "swordsman", "21-21",  "");
-      // this.createNewAgent("infantry", "swordsman", "20-23",  "");
-      // this.createNewAgent("infantry", "swordsman", "18-23",  "");
-
-      // this.createNewAgent("infantry", "swordsman", "17-27",  "");
-      // this.createNewAgent("infantry", "swordsman", "19-27",  "");
-      // this.createNewAgent("infantry", "swordsman", "21-27",  "");
-      // this.createNewAgent("infantry", "swordsman", "20-29",  "");
-      // this.createNewAgent("infantry", "swordsman", "18-29",  "");
       
       // this.createNewAgent("infantry",  "worker",    "5-3", "");
       // this.createNewAgent("cavalry",   "swordsman", "9-2", "");
@@ -168,12 +159,8 @@ export class GameManager {
 
       }, 50);
 
-      this.socket.on("addNewAgent", (data: any) => this.createNewAgent( // ==> ********** TEST  **********
-         data.divisionName,
-         data.typeName,
-         data.cellID,
-         data.diffImgSrc
-      ));
+      // ==> ********** TEST  **********
+      this.socket.on("unitRecruited", (data: any) => this.createNewAgent(data));
 
       // **********************************  Tempory  **********************************
 
@@ -448,6 +435,37 @@ export class GameManager {
       }
    }
 
+   createNewAgent(data: any) {
+
+      const newAgent = new Agent({
+         id:               data.id,
+         playerID:         data.playerID,
+         team:             data.team,
+         teamColor:        data.teamColor,
+         position:         data.position,
+         curCell:          data.curCell,
+
+         stats: {
+            popCost:       data.popCost,        
+            collider:      data.collider,
+            health:        data.health,
+            armor:         data.armor,
+            damages:       data.damages,
+            moveSpeed:     data.moveSpeed,
+            buildSpeed:    data.buildSpeed,
+            attackSpeed:   data.attackSpeed,
+            animDelay:     data.animDelay,
+            basePath:      data.basePath,
+         },
+      });
+
+      const cell = this.getCell(data.curCell.id)!;
+      
+      cell.agentIDset.add(data.id);
+      this.Grid.addToOccupiedMap(cell);
+      this.agentsList.set(data.id, newAgent);
+   }
+
 
    // =========================================================================================
    // Draw Methods
@@ -578,42 +596,42 @@ export class GameManager {
 
    TEST_GenerateUnits() {
 
-      let pop = 30;
+      // let pop = 30;
 
-      const { gridSize, cellSize } = this;
-      const cellPerSide = Math.floor(gridSize / cellSize);
+      // const { gridSize, cellSize } = this;
+      // const cellPerSide = Math.floor(gridSize / cellSize);
 
-      const blue   = "Units/Swordsman_Blue.png";
-      const purple = "Units/Swordsman_Purple.png";
-      const red    = "Units/Swordsman_Red.png";
+      // const blue   = "Units/Swordsman_Blue.png";
+      // const purple = "Units/Swordsman_Purple.png";
+      // const red    = "Units/Swordsman_Red.png";
       
-      while(pop > 0) {
+      // while(pop > 0) {
 
-         let unitType = this.TEST_Rand(2);
-         let index    = this.TEST_Rand(4);
-         let i        = this.TEST_Rand(cellPerSide);
-         let j        = this.TEST_Rand(cellPerSide);
+      //    let unitType = this.TEST_Rand(2);
+      //    let index    = this.TEST_Rand(4);
+      //    let i        = this.TEST_Rand(cellPerSide);
+      //    let j        = this.TEST_Rand(cellPerSide);
 
-         if( this.getCell(`${i}-${j}`)!.isVacant
-         && !this.getCell(`${i}-${j}`)!.isBlocked) {
+      //    if( this.getCell(`${i}-${j}`)!.isVacant
+      //    && !this.getCell(`${i}-${j}`)!.isBlocked) {
 
-            let color = "";
+      //       let color = "";
 
-            if(index === 0) color = blue;
-            if(index === 1) color = purple;
-            if(index === 2) color = red;
+      //       if(index === 0) color = blue;
+      //       if(index === 1) color = purple;
+      //       if(index === 2) color = red;
 
-            if(unitType === 0) this.createNewAgent("infantry", "swordsman", `${i}-${j}`, color);
-            if(unitType === 1) this.createNewAgent("infantry", "worker",    `${i}-${j}`, ""   );
+      //       if(unitType === 0) this.createNewAgent("infantry", "swordsman", `${i}-${j}`, color);
+      //       if(unitType === 1) this.createNewAgent("infantry", "worker",    `${i}-${j}`, ""   );
             
-            this.getCell(`${i}-${j}`)!.isVacant = false;
-            pop--;
+      //       this.getCell(`${i}-${j}`)!.isVacant = false;
+      //       pop--;
 
-            this.curPop++;
-         }
+      //       this.curPop++;
+      //    }
          
-         else continue;
-      }
+      //    else continue;
+      // }
    }
 
    TEST_SetWallsList () {
@@ -633,14 +651,10 @@ export class GameManager {
    TEST_UnitMode     () {
 
       if(!this.isUnitMode) return;
-
-      this.createNewAgent("infantry", "swordsman", this.Cursor.hoverCell!.id,  "");
-
-      this.socket.emit("createAgent", {
-         divisionName: "infantry",
-         typeName:     "swordsman",
-         cellID:       this.Cursor.hoverCell!.id,
-         diffImgSrc:   "",
+      
+      this.socket.emit("recruitUnit", {
+         unitID: "_0101",
+         cellID:  this.Cursor.hoverCell!.id,
       });
    }
 

@@ -84,7 +84,8 @@
                this.initPack = iniPack;
                this.isLogin  = false;
                this.isGame   = true;
-            }, console.log({ message: "Game is starting !" }));
+               console.log({ message: "Game is starting !" });
+            });
          },
 
 

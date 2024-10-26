@@ -6,7 +6,8 @@ import {
    Player,
 } from "../classes/_Export";
 
-import { UNIT_STATS } from "../utils/unitStats";
+import { Server, Socket } from "socket.io";
+import { UNIT_STATS     } from "../utils/unitStats";
 
 const WALLS: string[] = [
    "9-21",
@@ -174,20 +175,18 @@ const TILES: string[] = [
 // BattleManager Class
 // =====================================================================
 export class BattleManager {
-
+   
    id:               string;
+   playersID_Set:    Set<string> = new Set();
 
-   cellSize:         number = 40;
+   cellSize:         number   = 40;
    gridSize:         number;
    halfGrid:         number;
    battleMaxPop:     number;
-   curPop:           number = 0;
-
-   playersList:      Map<string, Player> = new Map();
-   vacantIDsList:    number[]            = [];
+   curPop:           number   = 0;
+   vacantIDsList:    number[] = [];
    
    Grid:             Grid;
-
 
    constructor(params: any) {
       
@@ -203,24 +202,16 @@ export class BattleManager {
 
    init() {
       this.setVacantIDsList();
-      this.setPlayersMaxPop();
    }
 
    initPack() {
-
-      const {
-         cellSize,
-         gridSize,
-         halfGrid,
-      } = this;
-
       return {
          UNIT_STATS,
 
-         cellSize,
-         gridSize,
-         halfGrid,
-         maxPop: this.getMaxPop(),
+         cellSize:   this.cellSize,
+         gridSize:   this.gridSize,
+         halfGrid:   this.halfGrid,
+         maxPop:     this.getMaxPop(),
 
          WALLS, // ==> Tempory
          TILES, // ==> Tempory
@@ -231,13 +222,29 @@ export class BattleManager {
    // =========================================================================================
    // Methods
    // =========================================================================================
+   createNewPlayer(
+      socket: Socket,
+      props:  any,
+   ): Player {
+      
+      const newPlayer = new Player({
+         id:       socket.id,
+         battleID: this.id,
+         ...props
+      }), { id: playerID} = newPlayer;
+
+      this.playersID_Set.add(playerID);
+
+      return newPlayer;
+   }
+   
    getCell(id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
 
    getMaxPop(): number {
-      const { battleMaxPop, playersList } = this;
-      return Math.floor(battleMaxPop /playersList.size);
+      const { battleMaxPop, playersID_Set } = this;
+      return Math.floor(battleMaxPop /playersID_Set.size);
    }
 
    setVacantIDsList() {
@@ -247,44 +254,8 @@ export class BattleManager {
       }
    }
 
-   setPlayersMaxPop() {
+   toOtherSocket() {
 
-      for(const [, player] of this.playersList) {
-         player.maxPop = this.getMaxPop();
-      }
-   }
-
-   addNewPlayer(newPlayer: Player) {
-      this.playersList.set(newPlayer.id, newPlayer);
-   }
-
-   createNewAgent(
-      player: Player,
-      unitID: string,
-      cellID: string,
-   ) {
-      const agentStats: any    = UNIT_STATS[unitID],    { popCost            } = agentStats;      
-      const startCell:  Cell   = this.getCell(cellID)!, { x: cellX, y: cellY } = startCell.center;
-      const vacantID:   number = this.vacantIDsList[0];
-
-      startCell.agentIDset.add(vacantID);
-      startCell.isVacant = false;
-
-      this.Grid.addToOccupiedMap(startCell);
-      this.vacantIDsList.splice(0, popCost);
-      this.curPop   += popCost;
-      player.curPop += popCost;
-
-      const newAgent = new Agent({
-         id:         vacantID,
-         team:       player.team,
-         teamColor:  player.teamColor,
-         stats:      agentStats,
-         position: { x: cellX, y: cellY }, // ==> Tempory until create rally point !
-         startCell,                        // ==> Tempory until create BuildingsClass with spawn position
-      });
-      
-      player.unitsList.set(vacantID, newAgent);
    }
 
 }
