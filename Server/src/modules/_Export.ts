@@ -1,3 +1,3 @@
 
-export { BattleManager } from "./BattleManager";
+export { Battle        } from "./Battle";
 export { ServerManager } from "./ServerManager";

@@ -16,8 +16,9 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const httpServer = http.createServer(app);
-new ServerManager(httpServer);
+const httpServer    = http.createServer(app);
+const serverManager = new ServerManager(httpServer);
+serverManager.start();
 
 
 // =================================================================================

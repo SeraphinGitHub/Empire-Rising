@@ -6,7 +6,6 @@ import {
 
 import {
    Cell,
-   Grid,
    Pathfinder,
 } from "./_Export";
 
@@ -17,7 +16,7 @@ import {
 export class Agent {
 
    id:          number;
-   team:        number;
+   teamID:      number;
    name:        string;
    
    popCost:     number;   
@@ -36,9 +35,11 @@ export class Agent {
 
    position:    IPosition;
    collider:    INumber;
-   oldCell:     Cell | null = null;
+   nextCell:    Cell | null = null;
    curCell:     Cell;
+   path:        Cell[]  = [];
    
+   hasArrived:  boolean = true;
    isMoving:    boolean = false;
    isSelected:  boolean = false;
    isAttacking: boolean = false;
@@ -61,7 +62,7 @@ export class Agent {
       const { stats } = params;
 
       this.id          = params.id;
-      this.team        = params.team;
+      this.teamID      = params.teamID;
       this.position    = params.position;
       this.curCell     = params.curCell;
       
@@ -81,6 +82,23 @@ export class Agent {
       this.setImageSource(stats.basePath, params.teamColor);
    }
 
+   initPack() {
+      return {
+         id:            this.id,
+         isSelected:    this.isSelected,
+      }
+   }
+
+   updatePack() {
+      return {
+         id:            this.id,
+         isSelected:    this.isSelected,
+         teamID:        this.teamID,
+         position:      this.position,
+         curCellID:     this.curCell.id,
+      }
+   }
+
    setImageSource(
       basePath:  string,
       teamColor: string,
@@ -88,7 +106,7 @@ export class Agent {
       this.img.src = `${basePath}${teamColor}.png`;
    }
 
-   hasArrived(cell: Cell): boolean {
+   hasReachedCell(cell: Cell): boolean {
       
       const { x: posX,  y: posY  } = this.position;
       const { x: cellX, y: cellY } = cell.center;
@@ -111,71 +129,48 @@ export class Agent {
    // =========================================================================================
    // Walk through path
    // =========================================================================================
-   reloadSearchPath(cellsList: Map<string, Cell>) {
+   walkPath() {
 
-      const { path, goalCell } = this.Pathfinder;
-      const nextCell = path[1] ? path[1] : path[0];
-      
-      if(nextCell!.id === goalCell!.id) return;
-
-      const neighbors = [
-         "topLeft",
-         "top",
-         "topRight",
-         "right",
-         "bottomRight",
-         "bottom",
-         "bottomLeft",
-         "left",
-      ].map((name) => {
-         const neb = nextCell.nebStatusList[name];
-         if(neb) return cellsList.get(neb.id);
-      });
-
-      if(nextCell.isBlocked
-      || neighbors.some((neb) => nextCell.isBlockedDiag(cellsList, neb!) )) {
-
-         this.resetAnim();
-         this.Pathfinder.searchPath(cellsList);
-      }
-   }
-
-   walkPath(Grid: Grid) {
-
+      // if(this.isMoving && this.nextCell) this.moveTo(this.nextCell);
       if(!this.isMoving) return;
       
-      const { path, nextCell, goalCell } = this.Pathfinder;
-      
-      this.moveTo(nextCell!);
-      
-      if(this.hasArrived(nextCell!)) {
-         
-         this.oldCell = this.curCell;
-         this.curCell = path[0];
-         
-         this.reloadSearchPath(Grid.cellsList);
+      const nextCell: Cell | undefined = this.path[0];
 
-         this.Pathfinder.path.shift();
-         this.Pathfinder.nextCell = path[0];
+      if(!nextCell) return;
+      
+      this.hasArrived = false;
+      this.animState = 1;
+
+      this.moveTo(nextCell);
+      
+      if(this.hasReachedCell(nextCell)) {
          
-         this.oldCell.setVacant  (this.id, Grid);
-         this.curCell.setOccupied(this.id, Grid);
+         this.hasArrived = true;
+         // this.isMoving = false;
+         this.animState = 0;
+         
+         // this.oldCell    = this.curCell;
+         this.curCell    = nextCell;
+         
+         // this.reloadSearchPath(Grid.cellsList);
+
+         this.path.shift();
+         // this.Pathfinder.nextCell = path[0];
+         
+         // this.oldCell.setVacant  (this.id, Grid);
+         // this.curCell.setOccupied(this.id, Grid);
       }
       
-      if(!this.hasArrived(goalCell!)) return;
+      // if(!this.hasReachedCell(goalCell!)) return;
+      // this.resetAnim();
 
-      this.resetAnim();
-
-      // ***************************
-      // this.Debug_MoveTime();
-      // ***************************     
    }
 
    moveTo(nextCell: Cell) {
-
+      
       const { x: posX,  y: posY  } = this.position;
       const { x: nextX, y: nextY } = nextCell.center;
-      
+
       const deltaX = this.mathFloor_100(nextX -posX);
       const deltaY = this.mathFloor_100(nextY -posY);
 
@@ -220,12 +215,6 @@ export class Agent {
     
       this.lastFrameY = this.frameY;
    }
-   
-   resetAnim() {
-      this.isMoving  = false;
-      this.animState = 0;
-      this.frameY    = this.lastFrameY;
-   }
 
 
    // =========================================================================================
@@ -233,16 +222,14 @@ export class Agent {
    // =========================================================================================
    drawPath(ctx: CanvasRenderingContext2D) {
       
-      if(!this.Pathfinder.path.length) return;
-
-      const { path } = this.Pathfinder;
+      if(!this.path.length) return;
 
       // Display path
-      for(let i = 0; i < path.length; i++) {
-         const curCell = path[i];
+      for(let i = 0; i < this.path.length; i++) {
+         const curCell = this.path[i];
          
-         if(i +1 < path.length) {
-            const nextCell = path[i +1];
+         if(i +1 < this.path.length) {
+            const nextCell = this.path[i +1];
             this.drawPathLine(ctx, curCell, nextCell);
          }
       }

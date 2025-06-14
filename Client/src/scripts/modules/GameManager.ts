@@ -22,7 +22,9 @@ import {
 
 import { Socket } from "socket.io-client";
 
-
+const targetFPS = 60;
+const interval = 1000 / targetFPS; // ~33.33ms for 30 FPS
+let lastTime = 0;
 // =====================================================================
 // Game Manager Class
 // =====================================================================
@@ -48,11 +50,12 @@ export class GameManager {
    COS_45:           number     = 0.707;
    COS_30:           number     = 0.866;
    
-   team:             number     = 1;
+   teamID:           number     = 1;
    teamColor:        string     = "Orange";
 
 
-   agentsList: Map<number, Agent       > = new Map(); // **********************************************
+   unitsList:        Map<number, Agent> = new Map();
+   // buildsList:       Map<number, Building> = new Map();
 
    oldSelectList:    Set<Agent> = new Set();
    curSelectList:    Set<Agent> = new Set();
@@ -117,7 +120,15 @@ export class GameManager {
       this.Cursor        = new Cursor    (this);
       this.Collision     = new Collision ();
 
+      this.setInitUnits(initPack.unitsList);
+      // this.buildsList    = initPack.buildsList;
+      
       this.init();
+   }
+
+   emit(channel: string, data: any) { // **************************
+
+      this.socket.emit(channel, data);
    }
 
    init() {
@@ -127,20 +138,8 @@ export class GameManager {
       this.setViewfieldPos  ();
 
       // **********************************  Tempory  **********************************
-      // this.createNewAgent("infantry", "swordsman", "9-20",  "");
-      // this.createNewAgent("infantry", "swordsman", "9-22",  "");
-      // this.createNewAgent("infantry", "swordsman", "9-24",  "");
-      
-      // this.createNewAgent("infantry",  "worker",    "5-3", "");
-      // this.createNewAgent("cavalry",   "swordsman", "9-2", "");
-      // this.createNewAgent("cavalry",   "bowman",    "2-6", "");
-      // this.createNewAgent("machinery", "ballista",  "8-5", "");
-      // this.createNewAgent("machinery", "catapult",  "6-9", "");
-
-      // this.TEST_GenerateUnits();
-      this.TEST_SetWallsList();
-      
-      this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
+      // this.TEST_SetWallsList();
+      // this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
 
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
@@ -159,30 +158,39 @@ export class GameManager {
 
       }, 50);
 
-      // ==> ********** TEST  **********
-      this.socket.on("unitRecruited", (data: any) => this.createNewAgent(data));
+      this.socket.on("updatePop",     (data: any) => this.updatePop      (data));
+      this.socket.on("unitRecruited", (data: any) => this.createNewAgent (data));
+      this.socket.on("agentMove",     (data: any) => this.servAgentMove  (data));
 
       // **********************************  Tempory  **********************************
 
-      this.runAnimation();
+      // this.runAnimation(currentTime);
+      requestAnimationFrame((currentTime) => this.runAnimation(currentTime));
    }
 
-   runAnimation() {
+   runAnimation(currentTime: number) {
 
-      this.Frame++;
-   
-      this.clearCanvas("isometric");
-      this.clearCanvas("assets"   );
-      
-      this.draw_UnitsAndBuild ();
-      this.drawHoverUnit      ();
-      this.drawSelectUnit     ();
-      
-      this.Grid     .update   (this);
-      this.Cursor   .update   (this);
-      this.Viewport .update   (this);
+      const delta = currentTime - lastTime;
 
-      requestAnimationFrame(() => this.runAnimation());
+      if(delta >= interval) {
+         lastTime = currentTime - (delta % interval); // remove drift
+         
+         this.Frame++;
+      
+         this.clearCanvas("isometric");
+         this.clearCanvas("assets"   );
+         
+         this.draw_UnitsAndBuild ();
+         this.drawHoverUnit      ();
+         this.drawSelectUnit     ();
+         
+         this.Grid     .update   (this);
+         this.Cursor   .update   (this);
+         this.Viewport .update   (this);
+      }
+
+
+      requestAnimationFrame((newTime) => this.runAnimation(newTime));
    }
 
    setHtmlData() {
@@ -198,6 +206,13 @@ export class GameManager {
          hoverCell: hoverCell ? hoverCell : { id: "null", x: 0, y: 0 },
          cartPos: curPos.cart,
          viewPort: { x, y },
+      }
+   }
+
+   setInitUnits(unitsList: any) {
+
+      for(const unit of unitsList) {
+         this.createNewAgent(unit);
       }
    }
 
@@ -353,6 +368,23 @@ export class GameManager {
    // =========================================================================================
    // Methods
    // =========================================================================================
+   updatePop(data: any) {
+      
+      if(typeof(data) == "number") this.curPop = data;
+   }
+
+   setAgentsID_List() {
+
+      let agentsID_List = [];
+
+      for(const agent of this.oldSelectList) {
+
+         agentsID_List.push( agent.id );
+      }
+
+      return agentsID_List;
+   }
+
    getCell           (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
@@ -374,7 +406,7 @@ export class GameManager {
       const { isSelecting, selectArea, curPos } = this.Cursor;
 
       // If collide with mouse or select area ==> Add agent to CurrentList
-      for(const [, agent] of this.agentsList) {
+      for(const [, agent] of this.unitsList) {
          const agentCol = this.setAgentCollider(agent);
          
          if(isSelecting
@@ -440,7 +472,7 @@ export class GameManager {
       const newAgent = new Agent({
          id:               data.id,
          playerID:         data.playerID,
-         team:             data.team,
+         teamID:           data.teamID,
          teamColor:        data.teamColor,
          position:         data.position,
          curCell:          data.curCell,
@@ -463,8 +495,66 @@ export class GameManager {
       
       cell.agentIDset.add(data.id);
       this.Grid.addToOccupiedMap(cell);
-      this.agentsList.set(data.id, newAgent);
+      this.unitsList.set(data.id, newAgent);
    }
+
+
+
+
+   // *******************************************************
+   servAgentMove(data: any) {
+
+      const { id, pathID }: any = data;
+      
+      const clientAgent:    Agent | undefined = this.unitsList.get(id);
+      // const nextCell:       Cell  | undefined = this.Grid.cellsList.get( shortPathID[0] );
+      // const nextNextCell:   Cell  | undefined = this.Grid.cellsList.get( shortPathID[1] );
+
+      if(clientAgent) {
+
+         let path = [];
+
+         for(const cellID of pathID) {
+            
+            const cell: Cell | undefined = this.Grid.cellsList.get(cellID);
+
+            if(cell) path.push(cell);
+         }
+         
+         clientAgent.path     = path;
+         clientAgent.isMoving = true;
+
+         // let isMoving:   boolean     = false;
+         // let animState:  number      = 0;
+         // let targetCell: Cell | null = null;
+         
+         // const curCellID = clientAgent.curCell.id;
+         
+         // if(nextCell
+         // && nextCell.id === curCellID
+         // && nextNextCell) {
+
+         //    targetCell = nextNextCell;
+         // }
+         
+         // else if(nextCell) {
+         //    targetCell = nextCell;
+         // }
+
+         // if(targetCell) {
+         //    isMoving  = true;
+         //    animState = 1;
+         // }
+
+         
+         // clientAgent.hasArrived  = false;
+         // clientAgent.animState = 1;
+         // clientAgent.nextCell  = targetCell;
+      }
+   }
+   // *******************************************************
+
+
 
 
    // =========================================================================================
@@ -525,7 +615,7 @@ export class GameManager {
          isometric: ctx_isometric,
       } = this.Ctx;
 
-      const { Grid, Viewport, Frame, walls_Img } = this;
+      const { Viewport, Frame, walls_Img } = this;
 
       for(const cell of this.Grid.occupiedCells) {
 
@@ -534,10 +624,10 @@ export class GameManager {
             
             for(const agentID of cell.agentIDset) {
 
-               const agent    = this.agentsList.get(agentID)!;
+               const agent    = this.unitsList.get(agentID)!;
                const agentPos = this.gridPos_toScreenPos(agent.position);
          
-               agent.walkPath(Grid);
+               agent.walkPath();
                agent.updateAnimState(Frame);
             
                if(!this.isViewScope(agentPos)) continue;

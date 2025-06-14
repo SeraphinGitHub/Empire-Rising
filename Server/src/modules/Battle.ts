@@ -2,12 +2,14 @@
 import {
    Grid,
    Cell,
-   Agent,
    Player,
+   Agent,
 } from "../classes/_Export";
 
 import { Server, Socket } from "socket.io";
 import { UNIT_STATS     } from "../utils/unitStats";
+import dotenv             from "dotenv";
+dotenv.config();
 
 const WALLS: string[] = [
    "9-21",
@@ -172,12 +174,18 @@ const TILES: string[] = [
 
 
 // =====================================================================
-// BattleManager Class
+// Battle Class
 // =====================================================================
-export class BattleManager {
-   
+export class Battle {
+
+   syncRate:         number = Math.floor(1000 / Number(process.env.FRAME_RATE));
+
+   private Room:     Server;
    id:               string;
+
    playersID_Set:    Set<string> = new Set();
+   unitsList:        Map<number, Agent   > = new Map();
+   // buildsList:       Map<number, Building> = new Map();
 
    cellSize:         number   = 40;
    gridSize:         number;
@@ -190,6 +198,7 @@ export class BattleManager {
 
    constructor(params: any) {
       
+      this.Room         = params.ServerIO.to(params.id);
       this.id           = params.id;
       this.gridSize     = params.gridSize;
       this.battleMaxPop = params.maxPop;
@@ -202,8 +211,10 @@ export class BattleManager {
 
    init() {
       this.setVacantIDsList();
+      this.sync();
    }
 
+   // initPack ==> (Sent to each client)
    initPack() {
       return {
          UNIT_STATS,
@@ -211,11 +222,54 @@ export class BattleManager {
          cellSize:   this.cellSize,
          gridSize:   this.gridSize,
          halfGrid:   this.halfGrid,
-         maxPop:     this.getMaxPop(),
+         maxPop:     this.setPlayerMaxPop(),
+         unitsList:  this.setClient_UnitsList(),
+         // buildsList: this.buildsList,
 
          WALLS, // ==> Tempory
          TILES, // ==> Tempory
       }
+   }
+
+   spread(
+      channel: string,
+      data:    any,
+   ) {
+      this.Room.emit(channel, data);
+   }
+
+   watchAgents() {
+
+      for(const [, agent] of this.unitsList) {
+            
+         agent.walkPath(this.Grid);
+
+         // if(!agent.hasArrived) continue;
+
+         // const pathID        = agent.Pathfinder.pathID;
+         // // const cell_1_ID   = path[0] ? path[0].id : null;
+         // // const cell_2_ID   = path[1] ? path[1].id : null;
+
+         // if (agent.lastSentPathID === pathID[0]) continue; // skip if already sent
+
+         // agent.lastSentPathID = pathID[0]; // update with new key
+
+         // // const shortPathID = [ cell_1_ID, cell_2_ID ];
+
+         // this.spread("agentMove", {
+         //    id: agent.id,
+         //    // shortPathID,
+         //    pathID,
+         // });
+      }
+   }
+
+   sync() {
+      setInterval(() => {  // temp ==> very bad perf, need something better
+         
+         this.watchAgents();
+         
+      }, this.syncRate);
    }
 
 
@@ -229,6 +283,7 @@ export class BattleManager {
       
       const newPlayer = new Player({
          id:       socket.id,
+         socket:   socket,
          battleID: this.id,
          ...props
       }), { id: playerID} = newPlayer;
@@ -242,9 +297,19 @@ export class BattleManager {
       return this.Grid.cellsList.get(id);
    }
 
-   getMaxPop(): number {
+   setPlayerMaxPop(): number {
       const { battleMaxPop, playersID_Set } = this;
       return Math.floor(battleMaxPop /playersID_Set.size);
+   }
+
+   getIndexID(
+      coord:    number,
+      value:    number,
+      index:    number,
+      cellSize: number,
+   ): number {
+
+      return ( coord +value - (cellSize * (index +1)) ) /cellSize;
    }
 
    setVacantIDsList() {
@@ -254,8 +319,65 @@ export class BattleManager {
       }
    }
 
-   toOtherSocket() {
+   setClient_UnitsList() {
+      let cl_UnitsList = [];
 
+      for(const [, unit] of this.unitsList) {
+         cl_UnitsList.push(unit.initPack());
+      }
+      
+      return cl_UnitsList;
+   }
+
+   startAgentPF(data: any) {
+
+      const { Grid, cellSize            } = this;
+      const { targetArea, AgentsID_List } = data;
+      const { x, y, width, height       } = targetArea;
+
+      // Search cells IDs from area
+      const colNum = width  /cellSize;
+      const rowNum = height /cellSize;
+      
+      let sortedUnitList = new Set<Agent>();
+      
+      // Get all cells IDs
+      for(let r = 0; r < rowNum; r++) {
+         const rowID = this.getIndexID(y, height, r, cellSize);
+         
+         for(let c = 0; c < colNum; c++) {
+            const colID = this.getIndexID(x, width, c, cellSize);
+            const cell  = this.getCell(`${colID}-${rowID}`);
+
+            if(!cell || cell.isTargeted || cell.isBlocked || !cell.isVacant) continue;
+            
+            
+            // Set all Agents goalCells
+            for(const id of AgentsID_List) {
+               const agent = this.unitsList.get(id)!;
+               const { Pathfinder } = agent;
+               
+               if(cell.isTargeted || Pathfinder.hasTarget) continue;
+               
+               cell.isTargeted      = true;
+               Pathfinder.hasTarget = true;
+               Pathfinder.goalCell  = cell;
+               
+               sortedUnitList.add(agent);
+            }
+         }
+      }
+
+      // Start all Agents search path
+      for(const agent of sortedUnitList) {
+         
+         agent.Pathfinder.searchPath(Grid.cellsList);
+
+         this.spread("agentMove", {
+            id:     agent.id,
+            pathID: agent.Pathfinder.pathID,
+         });
+      }
    }
 
 }

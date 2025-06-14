@@ -2,7 +2,7 @@
 <template>
    <section class="flex cover" id="root">
       
-      <LoginPage v-if="isLogin" class="page"
+      <LoginPage v-if="isLogin" class="page disable_CSS"
          @userLogin    ="logUser"
          @createBattle ="easyLogin"
          @joinBattle   ="easyLogin"
@@ -155,6 +155,10 @@
 
 
 <style lang="scss">
+
+   .disable_CSS {
+      display: none !important;
+   }
 
    html * {
       /* Reset */

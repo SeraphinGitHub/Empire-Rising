@@ -24,6 +24,18 @@
    export default {
       name: "LoginPage",
 
+      
+      // ************  Tempory  ************
+      mounted() {
+         this.createBattleBtn();
+
+         setTimeout(() => {
+            this.startBattleBtn();
+         }, 500);
+      },
+      // ************  Tempory  ************
+
+
       methods: {
 
          loginBtn() {
@@ -37,11 +49,11 @@
 
                channel:    "createBattle",
                name:       "Illidan",
-               team:        1,
+               teamID:      1,
                teamColor:  "Orange",
 
                mapSettings: {
-                  maxPop:  "_500",
+                  maxPop:  "_200",
                   mapSize: "small",
                },
             });
@@ -52,7 +64,7 @@
 
                channel:   "joinBattle",
                name:      "Malfurion",
-               team:       2,
+               teamID:     2,
                teamColor: "Purple",
 
                battleID: "47",
@@ -68,7 +80,7 @@
 
 
 <style scoped lang="scss">
-   
+
    section {
       background: linear-gradient(to bottom right,
          black,

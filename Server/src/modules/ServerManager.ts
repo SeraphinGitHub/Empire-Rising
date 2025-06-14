@@ -9,9 +9,7 @@ import {
 } from "../classes/_Export";
 
 import { Server,  Socket } from "socket.io";
-import { BattleManager   } from "./_Export";
-import dotenv              from "dotenv";
-dotenv.config();
+import { Battle          } from "./_Export";
 
 
 // =====================================================================
@@ -21,11 +19,9 @@ export class ServerManager {
 
    ServerIO:    Server;
 
-   socketsList: Map<string, Socket       > = new Map();
-   playersList: Map<string, Player       > = new Map();
-   battlesList: Map<string, BattleManager> = new Map();
-   
-   syncRate:     number  = Math.floor(1000 / Number(process.env.FRAME_RATE));
+   socketsList: Map<string, Socket> = new Map();
+   playersList: Map<string, Player> = new Map();
+   battlesList: Map<string, Battle> = new Map();
 
    maxPopSpec:   INumber = {
       _200:      200,
@@ -59,8 +55,6 @@ export class ServerManager {
             credentials: true
          }
       });
-
-      this.start();
    }
 
    
@@ -124,7 +118,8 @@ export class ServerManager {
 
       const { mapSettings, ...playerProps } = data;
 
-      const newBattle      = new BattleManager({
+      const newBattle      = new Battle({
+         ServerIO: this.ServerIO,
          id:       this.generateBattleID(),
          maxPop:   this.maxPopSpec [mapSettings.maxPop ],
          gridSize: this.mapSizeSpec[mapSettings.mapSize],
@@ -166,7 +161,7 @@ export class ServerManager {
 
       if(!battle || !player) return console.log({ error: "Could not load battle !" });
       
-      player.watch(this.ServerIO, socket, battle);
+      player.watch(battle);
    }
 
 }

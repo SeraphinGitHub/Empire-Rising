@@ -18,7 +18,7 @@ export class Agent {
 
    id:          number;
    playerID:    string;
-   team:        number;
+   teamID:      number;
    teamColor:   string;
    name:        string;
    basePath:    string;
@@ -42,6 +42,9 @@ export class Agent {
    oldCell:     Cell | null = null;
    curCell:     Cell;
    
+   lastSentPathID: string | null = null;
+
+   hasArrived:  boolean = true;
    isMoving:    boolean = false;
    isSelected:  boolean = false;
    isAttacking: boolean = false;
@@ -64,7 +67,7 @@ export class Agent {
 
       this.id          = params.id;
       this.playerID    = params.playerID;
-      this.team        = params.team;
+      this.teamID      = params.teamID;
       this.teamColor   = params.teamColor;
       this.position    = params.position;
       this.curCell     = params.curCell;
@@ -88,7 +91,7 @@ export class Agent {
       return {
          id:            this.id,
          playerID:      this.playerID,
-         team:          this.team,
+         teamID:        this.teamID,
          teamColor:     this.teamColor,
          popCost:       this.popCost,
          curCell:       this.curCell,
@@ -105,17 +108,17 @@ export class Agent {
       }
    }
 
-   hasArrived(cell: Cell): boolean {
+   hasReachedCell(cell: Cell): boolean {
       
       const { x: posX,  y: posY  } = this.position;
       const { x: cellX, y: cellY } = cell.center;
   
       if(posX !== cellX
       || posY !== cellY) {
-
+         
          return false;
       }
-
+      
       return true;
    }
 
@@ -164,11 +167,13 @@ export class Agent {
       const { path, nextCell, goalCell } = this.Pathfinder;
       
       this.moveTo(nextCell!);
+      this.hasArrived = false;
       
-      if(this.hasArrived(nextCell!)) {
+      if(this.hasReachedCell(nextCell!)) {
          
-         this.oldCell = this.curCell;
-         this.curCell = path[0];
+         this.hasArrived = true;
+         this.oldCell    = this.curCell;
+         this.curCell    = path[0];
          
          this.reloadSearchPath(Grid.cellsList);
 
@@ -179,8 +184,7 @@ export class Agent {
          this.curCell.setOccupied(this.id, Grid);
       }
       
-      if(!this.hasArrived(goalCell!)) return;
-
+      if(!this.hasReachedCell(goalCell!)) return;
       this.resetAnim();
 
       // ***************************
@@ -239,9 +243,11 @@ export class Agent {
    }
    
    resetAnim() {
-      this.isMoving  = false;
-      this.animState = 0;
-      this.frameY    = this.lastFrameY;
+
+      this.isMoving   = false;
+      this.hasArrived = true;
+      this.animState  = 0;
+      this.frameY     = this.lastFrameY;
    }
 
 

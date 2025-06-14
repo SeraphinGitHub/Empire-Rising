@@ -5,7 +5,7 @@ import {
 } from "../classes/_Export";
 
 import { Server, Socket } from "socket.io";
-import { BattleManager  } from "modules/BattleManager";
+import { Battle         } from "modules/Battle";
 import { UNIT_STATS     } from "../utils/unitStats";
 
 
@@ -14,85 +14,86 @@ import { UNIT_STATS     } from "../utils/unitStats";
 // =====================================================================
 export class Player {
    
+   private socket: Socket;
+   
    id:        string;
    battleID:  string;
    name:      string;
    teamColor: string;
 
-   team:      number;
+   teamID:    number;
    maxPop:    number = 0;
    curPop:    number = 0;
-   
-   unitsList: Map<number, Agent   > = new Map();
-   // buildList: Map<number, Building> = new Map();
 
    constructor(params: any) {
       
       this.id        = params.id;
+      this.socket    = params.socket;
       this.battleID  = params.battleID;
       this.name      = params.name;
       this.teamColor = params.teamColor;
-      this.team      = params.team;
-
-      this.init();
+      this.teamID    = params.teamID;
    }
 
-   init() {
+
+   
+   // ***************  Tempory  ***************
+   TEST_Unit(battle: Battle) {
+
+      if(this.teamID === 1) {
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-21" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-21" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-21" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-23" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-23" });
+      }
+
+      if(this.teamID === 2) {
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-27" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-27" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-27" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-29" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-29" });
+      }
+
+      this.socket.emit("updatePop",  this.curPop);
+   }
+   // ***************  Tempory  ***************
+
+
+   
+   watch(battle: Battle) {
+
+      this.maxPop = battle.setPlayerMaxPop();
       
-      // ******************** TEST ********************
-      // if(this.team === 1) { 
-      //    BM.createNewAgent(this, "_0101", "17-21");
-      //    BM.createNewAgent(this, "_0101", "19-21");
-      //    BM.createNewAgent(this, "_0101", "21-21");
-      //    BM.createNewAgent(this, "_0101", "20-23");
-      //    BM.createNewAgent(this, "_0101", "18-23");
-      // }
+      this.socket.emit("initBattle", battle.initPack());
 
-      // if(this.team === 2) {
-      //    BM.createNewAgent(this, "_0101", "17-27");
-      //    BM.createNewAgent(this, "_0101", "19-27");
-      //    BM.createNewAgent(this, "_0101", "21-27");
-      //    BM.createNewAgent(this, "_0101", "20-29");
-      //    BM.createNewAgent(this, "_0101", "18-29");
-      // }
-      // ******************** TEST ********************
-   }
+      this.socket.on("recruitUnit",  (data: any) => this.recruitUnit(battle, data));
+      this.socket.on("startAgentPF", (data: any) => battle.startAgentPF(data));
 
-   watch(
-      ServerIO: Server,
-      socket:   Socket,
-      battle:   BattleManager,
-   ) {
-      this.setMaxPop(battle);
-      socket.emit("initBattle", battle.initPack());
 
-      socket.on("recruitUnit", (data: any) => this.recruitUnit(ServerIO, battle, data));
+      this.TEST_Unit(battle); // ==> Test ******************
    }
 
 
    // =========================================================================================
    // Methods
    // =========================================================================================
-   setMaxPop(battle: BattleManager) {
-      this.maxPop = battle.getMaxPop();
-   }
-
    recruitUnit(
-      ServerIO: Server,
-      battle:   BattleManager,
-      data:     any,
+      battle: Battle,
+      data:   any,
    ) {
       
-      // Add create unit timer here ==> Later on !
+      // Add "create unit timer" here ==> Later on !
 
       const { unitID, cellID } = data;
       const newUnit = this.createNewAgent(battle, unitID, cellID);
 
-      ServerIO.to(battle.id).emit("unitRecruited", newUnit);
+      battle.spread("unitRecruited", newUnit);
    }
 
    createNewAgent(
-      battle: BattleManager,
+      battle: Battle,
       unitID: string,
       cellID: string,
    ) {
@@ -111,14 +112,16 @@ export class Player {
       const newAgent = new Agent({
          id:         vacantID,
          playerID:   this.id,
-         team:       this.team,
+         teamID:     this.teamID,
          teamColor:  this.teamColor,
          stats:      agentStats,
          position: { x: cellX, y: cellY }, // ==> Tempory until create rally point !
          curCell:    startCell,            // ==> Tempory until create BuildingsClass with spawn position
       });
       
-      this.unitsList.set(vacantID, newAgent);
+      battle.unitsList.set(vacantID, newAgent);
+
+      this.socket.emit("updatePop", this.curPop);
 
       return newAgent.initPack();
    }

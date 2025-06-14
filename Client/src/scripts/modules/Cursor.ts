@@ -138,7 +138,7 @@ export class Cursor {
       }
       
       if(state === "Up") {
-         this.startAgentPF(GM)
+         GM.emit("startAgentPF", { targetArea: this.targetArea, AgentsID_List: GM.setAgentsID_List() });
          this.isTargeting = false;
       }
    }
@@ -192,16 +192,6 @@ export class Cursor {
    ): number {
 
       return coord -(coord % cellSize);
-   }
-      
-   getIndexID(
-      coord:    number,
-      value:    number,
-      index:    number,
-      cellSize: number,
-   ): number {
-
-      return ( coord +value - (cellSize * (index +1)) ) /cellSize;
    }
 
    setPosition(
@@ -329,51 +319,6 @@ export class Cursor {
       targetArea.y      = this.getCellCoord(gridY, cellSize);
       targetArea.width  = width;
       targetArea.height = height;
-   }
-
-   startAgentPF      (GM: GameManager) {
-
-      const { Grid, cellSize, oldSelectList } = GM;
-      const { targetArea                    } = this;
-      const { x, y, width,  height          } = targetArea;
-
-      // Search cells IDs from area
-      const colNum = width  /cellSize;
-      const rowNum = height /cellSize;
-      
-      let sortedUnitList = new Set<Agent>();
-      
-      // Get all cells IDs
-      for(let r = 0; r < rowNum; r++) {
-         const rowID = this.getIndexID(y, height, r, cellSize);
-         
-         for(let c = 0; c < colNum; c++) {
-            const colID = this.getIndexID(x, width, c, cellSize);
-            const cell  = GM.getCell(`${colID}-${rowID}`);
-
-            if(!cell || cell.isTargeted || cell.isBlocked || !cell.isVacant) continue;
-            
-            // Set all Agents goalCells
-            for(const agent of oldSelectList) {
-               const { Pathfinder } = agent;
-               
-               if(cell.isTargeted || Pathfinder.hasTarget) continue;
-               
-               cell.isTargeted      = true;
-               Pathfinder.hasTarget = true;
-               Pathfinder.goalCell  = cell;
-
-               oldSelectList.delete(agent);
-               sortedUnitList.add(agent);
-            }
-         }
-      }
-
-      // Start all Agents search path
-      for(const agent of sortedUnitList) {
-         oldSelectList.add(agent);
-         agent.Pathfinder.searchPath(Grid.cellsList);
-      }
    }
 
    update_TargetArea (GM: GameManager) {
