@@ -6,7 +6,6 @@ import {
 
 import {
    Cell,
-   Pathfinder,
 } from "./_Export";
 
 
@@ -34,12 +33,14 @@ export class Agent {
    animState:   number = 0;
 
    position:    IPosition;
-   collider:    INumber;
+   collider:    INumber;   
    nextCell:    Cell | null = null;
-   curCell:     Cell;
-   path:        Cell[]  = [];
+
+   nextCell_2:    Cell | null = null;
+   nextCell_3:    Cell | null = null;
    
-   hasArrived:  boolean = true;
+   curCell:     Cell;
+   
    isMoving:    boolean = false;
    isSelected:  boolean = false;
    isAttacking: boolean = false;
@@ -54,8 +55,6 @@ export class Agent {
       attack:  { index: 6, spritesNumber: 5  },
       died:    { index: 1, spritesNumber: 10 },
    };
-
-   Pathfinder: Pathfinder;
 
    
    constructor(params: any) {
@@ -76,8 +75,6 @@ export class Agent {
       this.buildSpeed  = stats.buildSpeed;
       this.attackSpeed = stats.attackSpeed;
       this.animDelay   = stats.animDelay;
-
-      this.Pathfinder = new Pathfinder(this);
 
       this.setImageSource(stats.basePath, params.teamColor);
    }
@@ -106,20 +103,6 @@ export class Agent {
       this.img.src = `${basePath}${teamColor}.png`;
    }
 
-   hasReachedCell(cell: Cell): boolean {
-      
-      const { x: posX,  y: posY  } = this.position;
-      const { x: cellX, y: cellY } = cell.center;
-  
-      if(posX !== cellX
-      || posY !== cellY) {
-
-         return false;
-      }
-
-      return true;
-   }
-
    mathFloor_100(value: number): number {
 
       return Math.floor( value *100 ) /100;
@@ -131,39 +114,29 @@ export class Agent {
    // =========================================================================================
    walkPath() {
 
-      // if(this.isMoving && this.nextCell) this.moveTo(this.nextCell);
-      if(!this.isMoving) return;
-      
-      const nextCell: Cell | undefined = this.path[0];
+      if(!this.isMoving || !this.nextCell) return;
 
-      if(!nextCell) return;
-      
-      this.hasArrived = false;
-      this.animState = 1;
-
-      this.moveTo(nextCell);
-      
-      if(this.hasReachedCell(nextCell)) {
-         
-         this.hasArrived = true;
-         // this.isMoving = false;
-         this.animState = 0;
-         
-         // this.oldCell    = this.curCell;
-         this.curCell    = nextCell;
-         
-         // this.reloadSearchPath(Grid.cellsList);
-
-         this.path.shift();
-         // this.Pathfinder.nextCell = path[0];
-         
-         // this.oldCell.setVacant  (this.id, Grid);
-         // this.curCell.setOccupied(this.id, Grid);
+      // Moving toward nextCell
+      if(this.nextCell.id !== this.curCell.id) {
+         this.moveTo(this.nextCell);
       }
       
-      // if(!this.hasReachedCell(goalCell!)) return;
-      // this.resetAnim();
-
+      // Arrived at nextCell
+      else {
+         this.curCell    = this.nextCell; 
+         this.nextCell   = this.nextCell_2 ?? null;
+         // this.nextCell_2 = this.nextCell_3 ?? null;
+         // this.nextCell_3 = null;
+      
+         if(this.nextCell) {
+            this.moveTo(this.nextCell);
+         }
+         
+         else {
+            this.isMoving = false;
+            this.animState = 0;
+         }
+      }
    }
 
    moveTo(nextCell: Cell) {
@@ -194,6 +167,7 @@ export class Agent {
       if(dist === 0) {
          this.position.x = nextX;
          this.position.y = nextY;
+         this.curCell    = nextCell;
          return;
       }
 
@@ -222,30 +196,32 @@ export class Agent {
    // =========================================================================================
    drawPath(ctx: CanvasRenderingContext2D) {
       
-      if(!this.path.length) return;
+      // if(!this.Pathfinder.path.length) return;
 
-      // Display path
-      for(let i = 0; i < this.path.length; i++) {
-         const curCell = this.path[i];
+      // const { path } = this.Pathfinder;
+
+      // // Display path
+      // for(let i = 0; i < path.length; i++) {
+      //    const curCell = path[i];
          
-         if(i +1 < this.path.length) {
-            const nextCell = this.path[i +1];
-            this.drawPathLine(ctx, curCell, nextCell);
-         }
-      }
+      //    if(i +1 < path.length) {
+      //       const nextCell = path[i +1];
+      //       this.drawPathLine(ctx, curCell, nextCell);
+      //    }
+      // }
 
-      this.drawScanNebs(ctx);
+      // this.drawScanNebs(ctx);
    }
 
    drawScanNebs(ctx: CanvasRenderingContext2D) {
       
       // Display scanned neighbors   
-      this.Pathfinder.closedSet.forEach((cell: Cell) => {
-         cell.drawColor(ctx, "rgba(255, 145, 0, 0.6)");
+      // this.Pathfinder.closedSet.forEach((cell: Cell) => {
+      //    cell.drawColor(ctx, "rgba(255, 145, 0, 0.6)");
          
-         // const costData = this.costMap.get(cell.id)!;
-         // cell.drawData (ctx, costData);
-      });
+      //    // const costData = this.costMap.get(cell.id)!;
+      //    // cell.drawData (ctx, costData);
+      // });
    }
 
    drawPathLine(

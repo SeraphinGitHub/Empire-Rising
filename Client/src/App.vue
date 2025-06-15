@@ -9,6 +9,13 @@
          @loadBattle   ="easyLoadGame"
       />
 
+      <!-- <LoginPage v-if="isLogin" class="page"
+         @userLogin    ="logUser"
+         @createBattle ="easyLogin"
+         @joinBattle   ="easyLogin"
+         @loadBattle   ="easyLoadGame"
+      /> -->
+
       <MenuPage  v-if="isMenu"  class="page"
          @accessMulti ="toggleMulti"
       />

@@ -42,7 +42,8 @@ export class Agent {
    oldCell:     Cell | null = null;
    curCell:     Cell;
    
-   lastSentPathID: string | null = null;
+   // lastSentPathID: string | null = null;
+   hasUpdated:  boolean = false;
 
    hasArrived:  boolean = true;
    isMoving:    boolean = false;
@@ -171,6 +172,8 @@ export class Agent {
       
       if(this.hasReachedCell(nextCell!)) {
          
+         this.hasUpdated = false;
+
          this.hasArrived = true;
          this.oldCell    = this.curCell;
          this.curCell    = path[0];
@@ -184,8 +187,7 @@ export class Agent {
          this.curCell.setOccupied(this.id, Grid);
       }
       
-      if(!this.hasReachedCell(goalCell!)) return;
-      this.resetAnim();
+      if(this.hasReachedCell(goalCell!)) this.resetAnim();
 
       // ***************************
       // this.Debug_MoveTime();

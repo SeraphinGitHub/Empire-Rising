@@ -28,7 +28,6 @@ export class Pathfinder {
    openSet:     Set<Cell>          = new Set();
    closedSet:   Set<Cell>          = new Set();
    path:        Cell[]             = [];
-   pathID:      string[]           = [];
 
    hasTarget:   boolean            = false;
 
@@ -73,7 +72,6 @@ export class Pathfinder {
       this.closedSet = new Set();
       this.hasTarget = false;
       this.path      = [];
-      this.pathID    = [];
    }
 
    searchPath(cellsList: Map<string, Cell>) {
@@ -196,7 +194,6 @@ export class Pathfinder {
          if(!cameFromCell) break;
          
          this.path.push(cameFromCell);
-         this.pathID.push(cameFromCell.id);
          goalCell = cameFromCell;
       }
 
@@ -204,7 +201,6 @@ export class Pathfinder {
       
       this.presentCell!.isTargeted = false;
       this.path.reverse();
-      this.pathID.reverse();
       this.nextCell   = this.path[0];
       
       Agent.isMoving  = true;

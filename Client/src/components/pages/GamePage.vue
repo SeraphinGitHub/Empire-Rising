@@ -44,6 +44,8 @@
          htmlData: null,
          Canvas:   {},
          Ctx:      {},
+         playerName: "",
+         teamColor:  "",
       }},
 
       mounted() {
@@ -77,6 +79,11 @@
                
             this.htmlData = this.GManager.setHtmlData();
             this.isLoaded = true;
+
+            setTimeout(() => {
+               this.playerName = this.GManager.name;
+               this.teamColor  = this.GManager.teamColor;
+            }, 100);
    
             setInterval(() => this.htmlData = this.GManager.setHtmlData(), 50);
          },

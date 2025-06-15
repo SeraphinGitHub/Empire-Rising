@@ -36,6 +36,15 @@ export class Player {
    }
 
 
+   initPack() {
+      return {
+         name:      this.name,
+         teamID:    this.teamID,
+         teamColor: this.teamColor,
+      }
+   }
+
+
    
    // ***************  Tempory  ***************
    TEST_Unit(battle: Battle) {
@@ -67,6 +76,7 @@ export class Player {
       this.maxPop = battle.setPlayerMaxPop();
       
       this.socket.emit("initBattle", battle.initPack());
+      this.socket.emit("initPlayer", this.initPack());
 
       this.socket.on("recruitUnit",  (data: any) => this.recruitUnit(battle, data));
       this.socket.on("startAgentPF", (data: any) => battle.startAgentPF(data));

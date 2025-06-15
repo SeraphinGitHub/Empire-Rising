@@ -246,21 +246,20 @@ export class Battle {
 
          // if(!agent.hasArrived) continue;
 
-         // const pathID        = agent.Pathfinder.pathID;
-         // // const cell_1_ID   = path[0] ? path[0].id : null;
-         // // const cell_2_ID   = path[1] ? path[1].id : null;
+         if(agent.hasUpdated) continue; // skip if already sent
+         agent.hasUpdated = true; // update with new key
 
-         // if (agent.lastSentPathID === pathID[0]) continue; // skip if already sent
+         const path         = agent.Pathfinder.path;
+         const nextCellID_1 = path[0] ? path[0].id : null;
+         const nextCellID_2 = path[1] ? path[1].id : null;
+         const nextCellID_3 = path[2] ? path[2].id : null;
 
-         // agent.lastSentPathID = pathID[0]; // update with new key
+         const shortPathID = [ nextCellID_1, nextCellID_2, nextCellID_3 ];
 
-         // // const shortPathID = [ cell_1_ID, cell_2_ID ];
-
-         // this.spread("agentMove", {
-         //    id: agent.id,
-         //    // shortPathID,
-         //    pathID,
-         // });
+         this.spread("agentMove", {
+            id: agent.id,
+            shortPathID,
+         });
       }
    }
 
@@ -372,11 +371,6 @@ export class Battle {
       for(const agent of sortedUnitList) {
          
          agent.Pathfinder.searchPath(Grid.cellsList);
-
-         this.spread("agentMove", {
-            id:     agent.id,
-            pathID: agent.Pathfinder.pathID,
-         });
       }
    }
 

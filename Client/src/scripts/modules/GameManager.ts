@@ -50,8 +50,9 @@ export class GameManager {
    COS_45:           number     = 0.707;
    COS_30:           number     = 0.866;
    
-   teamID:           number     = 1;
-   teamColor:        string     = "Orange";
+   teamID:           number     = 0;
+   teamColor:        string     = "";
+   name:             string     = "";
 
 
    unitsList:        Map<number, Agent> = new Map();
@@ -131,6 +132,15 @@ export class GameManager {
       this.socket.emit(channel, data);
    }
 
+   initPlayer(data: any) {
+
+      const { name, teamID, teamColor } = data;
+
+      this.name      = name;
+      this.teamID    = teamID;
+      this.teamColor = teamColor;
+   }
+
    init() {
       this.setCanvasSize    ();
       this.setViewAngle     ();
@@ -158,19 +168,20 @@ export class GameManager {
 
       }, 50);
 
+      this.socket.on("initPlayer",    (data: any) => this.initPlayer     (data));
       this.socket.on("updatePop",     (data: any) => this.updatePop      (data));
       this.socket.on("unitRecruited", (data: any) => this.createNewAgent (data));
       this.socket.on("agentMove",     (data: any) => this.servAgentMove  (data));
 
       // **********************************  Tempory  **********************************
 
-      // this.runAnimation(currentTime);
+      // this.runAnimation();
       requestAnimationFrame((currentTime) => this.runAnimation(currentTime));
    }
 
    runAnimation(currentTime: number) {
 
-      const delta = currentTime - lastTime;
+      const delta = currentTime -lastTime;
 
       if(delta >= interval) {
          lastTime = currentTime - (delta % interval); // remove drift
@@ -413,7 +424,7 @@ export class GameManager {
          && this.Collision.square_toCircle(selectArea,  agentCol) 
          || this.Collision.point_toCircle (curPos.cart, agentCol)) {
             
-            this.curSelectList.add(agent);
+            if(agent.teamID === this.teamID) this.curSelectList.add(agent);
          }
          else this.curSelectList.delete(agent);
       }
@@ -504,52 +515,37 @@ export class GameManager {
    // *******************************************************
    servAgentMove(data: any) {
 
-      const { id, pathID }: any = data;
+      const { id, shortPathID }: any = data;
       
-      const clientAgent:    Agent | undefined = this.unitsList.get(id);
-      // const nextCell:       Cell  | undefined = this.Grid.cellsList.get( shortPathID[0] );
-      // const nextNextCell:   Cell  | undefined = this.Grid.cellsList.get( shortPathID[1] );
+      const clientAgent: Agent | undefined = this.unitsList.get(id);
+      const nextCell_1:  Cell  | undefined = this.Grid.cellsList.get( shortPathID[0] );
+      const nextCell_2:  Cell  | undefined = this.Grid.cellsList.get( shortPathID[1] );
+      const nextCell_3:  Cell  | undefined = this.Grid.cellsList.get( shortPathID[2] );
 
       if(clientAgent) {
-
-         let path = [];
-
-         for(const cellID of pathID) {
-            
-            const cell: Cell | undefined = this.Grid.cellsList.get(cellID);
-
-            if(cell) path.push(cell);
+         
+         if(nextCell_1) {
+            clientAgent.nextCell = nextCell_1;
          }
-         
-         clientAgent.path     = path;
-         clientAgent.isMoving = true;
 
-         // let isMoving:   boolean     = false;
-         // let animState:  number      = 0;
-         // let targetCell: Cell | null = null;
-         
-         // const curCellID = clientAgent.curCell.id;
-         
-         // if(nextCell
-         // && nextCell.id === curCellID
-         // && nextNextCell) {
+         if(nextCell_2) {
+            clientAgent.nextCell_2 = nextCell_2;
+         }
 
-         //    targetCell = nextNextCell;
-         // }
-         
-         // else if(nextCell) {
-         //    targetCell = nextCell;
-         // }
+         if(nextCell_3) {
+            // clientAgent.nextCell_3 = nextCell_3;
+         }
 
-         // if(targetCell) {
-         //    isMoving  = true;
-         //    animState = 1;
-         // }
 
-         
-         // clientAgent.hasArrived  = false;
-         // clientAgent.animState = 1;
-         // clientAgent.nextCell  = targetCell;
+         if(!clientAgent.isMoving) {
+            clientAgent.isMoving   = true;
+            clientAgent.animState  = 1;
+         }
+
+         if(!nextCell_1) {
+            clientAgent.isMoving  = false;
+            clientAgent.animState = 0;
+         }
       }
    }
    // *******************************************************
@@ -680,8 +676,8 @@ export class GameManager {
       
       if(targetCell.isBlocked) return;
       
-      agent.Pathfinder.goalCell = targetCell;
-      agent.Pathfinder.searchPath(this.Grid.cellsList);
+      // agent.Pathfinder.goalCell = targetCell;
+      // agent.Pathfinder.searchPath(this.Grid.cellsList);
    }
 
    TEST_GenerateUnits() {
