@@ -22,9 +22,7 @@ import {
 
 import { Socket } from "socket.io-client";
 
-const targetFPS = 60;
-const interval = 1000 / targetFPS; // ~33.33ms for 30 FPS
-let lastTime = 0;
+
 // =====================================================================
 // Game Manager Class
 // =====================================================================
@@ -37,6 +35,10 @@ export class GameManager {
    Canvas:           ICanvas;
    Ctx:              ICtx;
    socket:           Socket;
+
+   frameRate:        number;
+   lastUpdate:       number     = 0;
+   interval:         number     = 0;
 
    cellSize:         number;
    gridSize:         number;
@@ -107,7 +109,8 @@ export class GameManager {
       this.Canvas        = Canvas;
       this.Ctx           = Ctx;
       this.socket        = socket;
-
+      
+      this.frameRate     = initPack.frameRate;
       this.cellSize      = initPack.cellSize;
       this.gridSize      = initPack.gridSize;
       this.halfGrid      = initPack.halfGrid;
@@ -142,6 +145,9 @@ export class GameManager {
    }
 
    init() {
+
+      this.interval = Math.floor(1000 / this.frameRate);
+
       this.setCanvasSize    ();
       this.setViewAngle     ();
       this.setTerrainPos    ();
@@ -175,16 +181,15 @@ export class GameManager {
 
       // **********************************  Tempory  **********************************
 
-      // this.runAnimation();
       requestAnimationFrame((currentTime) => this.runAnimation(currentTime));
    }
 
    runAnimation(currentTime: number) {
 
-      const delta = currentTime -lastTime;
+      const delta = currentTime -this.lastUpdate;
 
-      if(delta >= interval) {
-         lastTime = currentTime - (delta % interval); // remove drift
+      if(delta >= this.interval) {
+         this.lastUpdate = currentTime - (delta % this.interval); // remove drift
          
          this.Frame++;
       
@@ -396,6 +401,17 @@ export class GameManager {
       return agentsID_List;
    }
 
+   setAgentMiniPath(miniPathID: string[]): [ Cell | null, Cell | null, Cell | null ] {
+
+      const [ cellID_1, cellID_2, cellID_3 ] = miniPathID;
+
+      const cell_1 = this.Grid.cellsList.get( cellID_1 ) ?? null;
+      const cell_2 = this.Grid.cellsList.get( cellID_2 ) ?? null;
+      const cell_3 = this.Grid.cellsList.get( cellID_3 ) ?? null;
+
+      return [ cell_1, cell_2, cell_3 ];
+   }
+
    getCell           (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
@@ -515,38 +531,15 @@ export class GameManager {
    // *******************************************************
    servAgentMove(data: any) {
 
-      const { id, shortPathID }: any = data;
+      const { id, miniPathID }: any = data;
       
-      const clientAgent: Agent | undefined = this.unitsList.get(id);
-      const nextCell_1:  Cell  | undefined = this.Grid.cellsList.get( shortPathID[0] );
-      const nextCell_2:  Cell  | undefined = this.Grid.cellsList.get( shortPathID[1] );
-      const nextCell_3:  Cell  | undefined = this.Grid.cellsList.get( shortPathID[2] );
+      const agent: Agent | undefined = this.unitsList.get(id);
+      
+      if(!agent || agent.nextCell) return;
 
-      if(clientAgent) {
-         
-         if(nextCell_1) {
-            clientAgent.nextCell = nextCell_1;
-         }
-
-         if(nextCell_2) {
-            clientAgent.nextCell_2 = nextCell_2;
-         }
-
-         if(nextCell_3) {
-            // clientAgent.nextCell_3 = nextCell_3;
-         }
-
-
-         if(!clientAgent.isMoving) {
-            clientAgent.isMoving   = true;
-            clientAgent.animState  = 1;
-         }
-
-         if(!nextCell_1) {
-            clientAgent.isMoving  = false;
-            clientAgent.animState = 0;
-         }
-      }
+      agent.miniPath = this.setAgentMiniPath(miniPathID);
+      
+      if(!agent.nextCell) agent.nextCell = agent.miniPath[0];
    }
    // *******************************************************
 

@@ -34,13 +34,10 @@ export class Agent {
 
    position:    IPosition;
    collider:    INumber;   
-   nextCell:    Cell | null = null;
-
-   nextCell_2:    Cell | null = null;
-   nextCell_3:    Cell | null = null;
-   
+   nextCell:    Cell | null = null;   
    curCell:     Cell;
-   
+   miniPath:    [Cell | null, Cell | null, Cell | null] = [null, null, null]
+
    isMoving:    boolean = false;
    isSelected:  boolean = false;
    isAttacking: boolean = false;
@@ -114,29 +111,28 @@ export class Agent {
    // =========================================================================================
    walkPath() {
 
-      if(!this.isMoving || !this.nextCell) return;
+      if(!this.nextCell) return;
+
+      this.isMoving  = true;
+      this.animState = 1;
 
       // Moving toward nextCell
-      if(this.nextCell.id !== this.curCell.id) {
-         this.moveTo(this.nextCell);
-      }
-      
+      this.moveTo(this.nextCell);
+
       // Arrived at nextCell
-      else {
-         this.curCell    = this.nextCell; 
-         this.nextCell   = this.nextCell_2 ?? null;
-         // this.nextCell_2 = this.nextCell_3 ?? null;
-         // this.nextCell_3 = null;
+      if(this.curCell.id !== this.nextCell.id) return;
+
+      this.curCell = this.nextCell;
       
-         if(this.nextCell) {
-            this.moveTo(this.nextCell);
-         }
+      this.miniPath.shift();
+
+      this.nextCell = this.miniPath[0] ?? null;
+      
+      if(this.nextCell) return;
+
+      this.isMoving  = false;
+      this.animState = 0;
          
-         else {
-            this.isMoving = false;
-            this.animState = 0;
-         }
-      }
    }
 
    moveTo(nextCell: Cell) {
@@ -152,16 +148,6 @@ export class Agent {
       const isUp    = deltaY < 0;
       const isDown  = deltaY > 0;
 
-      let moveSpeed = this.moveSpeed;
-
-      // if(isDown && isLeft
-      // || isDown && isRight
-      // || isUp   && isLeft
-      // || isUp   && isRight) {
-         
-      //    moveSpeed = this.sqrtSpeed;
-      // }
-
       const dist = Math.round( Math.hypot(deltaX,  deltaY));
 
       if(dist === 0) {
@@ -171,8 +157,8 @@ export class Agent {
          return;
       }
 
-      const moveX = this.mathFloor_100(deltaX /dist * Math.min(dist, moveSpeed));
-      const moveY = this.mathFloor_100(deltaY /dist * Math.min(dist, moveSpeed));
+      const moveX = this.mathFloor_100(deltaX /dist * Math.min(dist, this.moveSpeed));
+      const moveY = this.mathFloor_100(deltaY /dist * Math.min(dist, this.moveSpeed));
 
       this.position.x += moveX;
       this.position.y += moveY;

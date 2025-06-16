@@ -178,7 +178,7 @@ const TILES: string[] = [
 // =====================================================================
 export class Battle {
 
-   syncRate:         number = Math.floor(1000 / Number(process.env.FRAME_RATE));
+   syncRate:         number = Math.floor(1000 / Number(process.env.SERVER_FRAME_RATE));
 
    private Room:     Server;
    id:               string;
@@ -217,8 +217,10 @@ export class Battle {
    // initPack ==> (Sent to each client)
    initPack() {
       return {
+         
          UNIT_STATS,
 
+         frameRate:  Number(process.env.CLIENT_FRAME_RATE),
          cellSize:   this.cellSize,
          gridSize:   this.gridSize,
          halfGrid:   this.halfGrid,
@@ -249,16 +251,16 @@ export class Battle {
          if(agent.hasUpdated) continue; // skip if already sent
          agent.hasUpdated = true; // update with new key
 
-         const path         = agent.Pathfinder.path;
-         const nextCellID_1 = path[0] ? path[0].id : null;
-         const nextCellID_2 = path[1] ? path[1].id : null;
-         const nextCellID_3 = path[2] ? path[2].id : null;
+         const path     = agent.Pathfinder.path;
+         const cellID_1 = path[0] ? path[0].id : null;
+         const cellID_2 = path[1] ? path[1].id : null;
+         const cellID_3 = path[2] ? path[2].id : null;
 
-         const shortPathID = [ nextCellID_1, nextCellID_2, nextCellID_3 ];
+         const miniPathID = [ cellID_1, cellID_2, cellID_3 ];
 
          this.spread("agentMove", {
             id: agent.id,
-            shortPathID,
+            miniPathID,
          });
       }
    }

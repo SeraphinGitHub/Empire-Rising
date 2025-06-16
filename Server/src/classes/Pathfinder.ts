@@ -201,10 +201,9 @@ export class Pathfinder {
       
       this.presentCell!.isTargeted = false;
       this.path.reverse();
-      this.nextCell   = this.path[0];
+      this.nextCell  = this.path[0];
       
-      Agent.isMoving  = true;
-      // Agent.animState = 1;
+      Agent.isMoving = true;
    }
 
    // searchVacancy(cellsList: Map<string, Cell>) { // <== Tempory (Need Recast)
