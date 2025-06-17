@@ -75,8 +75,10 @@ export class Player {
 
       this.maxPop = battle.setPlayerMaxPop();
       
-      this.socket.emit("initBattle", battle.initPack());
-      this.socket.emit("initPlayer", this.initPack());
+      this.socket.emit("initBattle", {
+         battle_InitPack: battle.initPack(),
+         player_InitPack: this.initPack(),
+      });
 
       this.socket.on("recruitUnit",  (data: any) => this.recruitUnit(battle, data));
       this.socket.on("startAgentPF", (data: any) => battle.startAgentPF(data));

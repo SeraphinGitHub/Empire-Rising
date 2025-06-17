@@ -49,10 +49,15 @@
       }},
 
       mounted() {
-
-         this.initGManager   ();
-         this.preventCtxMenu ();
-         this.$nextTick(     () => this.loadCoordinates());
+         try {
+            this.initGManager   ();
+            this.preventCtxMenu ();
+            this.$nextTick(     () => this.loadCoordinates());
+         }
+         
+         catch(error) {
+            console.log({ Error: "Could not init GameManager in GamePage !"});
+         }
       },
 
       methods: {

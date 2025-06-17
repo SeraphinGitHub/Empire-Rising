@@ -253,10 +253,10 @@ export class Battle {
 
          const path     = agent.Pathfinder.path;
          const cellID_1 = path[0] ? path[0].id : null;
-         const cellID_2 = path[1] ? path[1].id : null;
-         const cellID_3 = path[2] ? path[2].id : null;
+         // const cellID_2 = path[1] ? path[1].id : null;
+         // const cellID_3 = path[2] ? path[2].id : null;
 
-         const miniPathID = [ cellID_1, cellID_2, cellID_3 ];
+         const miniPathID = [ cellID_1, null, null ];
 
          this.spread("agentMove", {
             id: agent.id,

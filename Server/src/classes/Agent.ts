@@ -83,7 +83,7 @@ export class Agent {
          teamID:        this.teamID,
          teamColor:     this.teamColor,
          popCost:       this.popCost,
-         curCell:       this.curCell,
+         curCellID:     this.curCell.id,
          position:      this.position,
          collider:      this.collider,
          health:        this.health,

@@ -29,21 +29,19 @@ import { Socket } from "socket.io-client";
 export class GameManager {
 
    UNIT_STATS:       any;
-   WALLS:            string[];
-   TILES:            string[];
+   WALLS:            string[]   = [];
+   TILES:            string[]   = [];
 
    Canvas:           ICanvas;
    Ctx:              ICtx;
    socket:           Socket;
 
-   frameRate:        number;
    lastUpdate:       number     = 0;
    interval:         number     = 0;
-
-   cellSize:         number;
-   gridSize:         number;
-   halfGrid:         number;
-   maxPop:           number;
+   cellSize:         number     = 0;
+   gridSize:         number     = 0;
+   halfGrid:         number     = 0;
+   maxPop:           number     = 0;
    curPop:           number     = 0;
 
    // Constants ==> Do not modify
@@ -106,57 +104,79 @@ export class GameManager {
       this.walls_Img.src = this.walls_Src;
       // ***************  Temp  ***************
       
-      this.Canvas        = Canvas;
-      this.Ctx           = Ctx;
-      this.socket        = socket;
-      
-      this.frameRate     = initPack.frameRate;
-      this.cellSize      = initPack.cellSize;
-      this.gridSize      = initPack.gridSize;
-      this.halfGrid      = initPack.halfGrid;
-      this.maxPop        = initPack.maxPop;
-      this.UNIT_STATS    = initPack.UNIT_STATS;
-      this.WALLS         = initPack.WALLS; // ==> Tempory
-      this.TILES         = initPack.TILES; // ==> Tempory
+      this.Canvas     = Canvas;
+      this.Ctx        = Ctx;
+      this.socket     = socket;
 
-      this.Viewport      = new Viewport  (this);
-      this.Grid          = new Grid      (this);
-      this.Cursor        = new Cursor    (this);
-      this.Collision     = new Collision ();
-
-      this.setInitUnits(initPack.unitsList);
-      // this.buildsList    = initPack.buildsList;
+      this.initPlayer (initPack.player_InitPack);
+      this.initGame   (initPack.battle_InitPack);
       
-      this.init();
+      this.Viewport   = new Viewport  (this);
+      this.Grid       = new Grid      (this);
+      this.Cursor     = new Cursor    (this);
+      this.Collision  = new Collision ();
+      
+      this.initUnits  (initPack.battle_InitPack);
+      // this.initBuilds ();
+      this.initMap    ();
+      this.watchGame  ();
    }
 
-   emit(channel: string, data: any) { // **************************
+   emit(channel: string, data: any) {
 
       this.socket.emit(channel, data);
    }
 
-   initPlayer(data: any) {
+   watchGame() {
 
-      const { name, teamID, teamColor } = data;
-
-      this.name      = name;
-      this.teamID    = teamID;
-      this.teamColor = teamColor;
+      this.socket.on("updatePop",     (data: any) => this.updatePop      (data));
+      this.socket.on("unitRecruited", (data: any) => this.createNewAgent (data));
+      this.socket.on("agentMove",     (data: any) => this.servAgentMove  (data));
    }
 
-   init() {
+   initPlayer(playerPack: any) {
 
-      this.interval = Math.floor(1000 / this.frameRate);
+      this.name       = playerPack.name;
+      this.teamID     = playerPack.teamID;
+      this.teamColor  = playerPack.teamColor;
+   }
+   
+   initGame(battlePack: any) {
 
+      this.interval = Math.floor(1000 / battlePack.frameRate);
+   
+      this.cellSize   = battlePack.cellSize;
+      this.gridSize   = battlePack.gridSize;
+      this.halfGrid   = battlePack.halfGrid;
+      this.maxPop     = battlePack.maxPop;
+      this.UNIT_STATS = battlePack.UNIT_STATS;
+      this.WALLS      = battlePack.WALLS; // ==> Tempory
+      this.TILES      = battlePack.TILES; // ==> Tempory
+   }
+
+   initUnits(battlePack: any) {
+
+      for(const unit of battlePack.unitsList) {
+         this.createNewAgent(unit);
+      }
+   }
+
+   initBuilds() {
+      // this.buildsList = battlePack.buildsList;
+   }
+
+   initMap() {
+      
       this.setCanvasSize    ();
       this.setViewAngle     ();
       this.setTerrainPos    ();
       this.setViewfieldPos  ();
+      
 
       // **********************************  Tempory  **********************************
       // this.TEST_SetWallsList();
       // this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
-
+      
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
       this.walls_Img.addEventListener("load", () => this.isWalls_Loaded = true);
@@ -168,17 +188,11 @@ export class GameManager {
          || !this.isWalls_Loaded) {
             return;
          }
-
+         
          this.drawTerrain();
          clearInterval(loadTerrain);
-
+         
       }, 50);
-
-      this.socket.on("initPlayer",    (data: any) => this.initPlayer     (data));
-      this.socket.on("updatePop",     (data: any) => this.updatePop      (data));
-      this.socket.on("unitRecruited", (data: any) => this.createNewAgent (data));
-      this.socket.on("agentMove",     (data: any) => this.servAgentMove  (data));
-
       // **********************************  Tempory  **********************************
 
       requestAnimationFrame((currentTime) => this.runAnimation(currentTime));
@@ -205,7 +219,6 @@ export class GameManager {
          this.Viewport .update   (this);
       }
 
-
       requestAnimationFrame((newTime) => this.runAnimation(newTime));
    }
 
@@ -222,13 +235,6 @@ export class GameManager {
          hoverCell: hoverCell ? hoverCell : { id: "null", x: 0, y: 0 },
          cartPos: curPos.cart,
          viewPort: { x, y },
-      }
-   }
-
-   setInitUnits(unitsList: any) {
-
-      for(const unit of unitsList) {
-         this.createNewAgent(unit);
       }
    }
 
@@ -494,35 +500,36 @@ export class GameManager {
       }
    }
 
-   createNewAgent(data: any) {
+   createNewAgent(unit: any) {
+
+      const curCell = this.getCell(unit.curCellID)!;
 
       const newAgent = new Agent({
-         id:               data.id,
-         playerID:         data.playerID,
-         teamID:           data.teamID,
-         teamColor:        data.teamColor,
-         position:         data.position,
-         curCell:          data.curCell,
+         id:               unit.id,
+         playerID:         unit.playerID,
+         teamID:           unit.teamID,
+         teamColor:        unit.teamColor,
+         position:         unit.position,
+         curCell,
 
          stats: {
-            popCost:       data.popCost,        
-            collider:      data.collider,
-            health:        data.health,
-            armor:         data.armor,
-            damages:       data.damages,
-            moveSpeed:     data.moveSpeed,
-            buildSpeed:    data.buildSpeed,
-            attackSpeed:   data.attackSpeed,
-            animDelay:     data.animDelay,
-            basePath:      data.basePath,
+            popCost:       unit.popCost,        
+            collider:      unit.collider,
+            health:        unit.health,
+            armor:         unit.armor,
+            damages:       unit.damages,
+            moveSpeed:     unit.moveSpeed,
+            buildSpeed:    unit.buildSpeed,
+            attackSpeed:   unit.attackSpeed,
+            animDelay:     unit.animDelay,
+            basePath:      unit.basePath,
          },
       });
 
-      const cell = this.getCell(data.curCell.id)!;
-      
-      cell.agentIDset.add(data.id);
-      this.Grid.addToOccupiedMap(cell);
-      this.unitsList.set(data.id, newAgent);
+
+      curCell.agentIDset.add(unit.id);
+      this.Grid.addToOccupiedMap(curCell);
+      this.unitsList.set(unit.id, newAgent);
    }
 
 

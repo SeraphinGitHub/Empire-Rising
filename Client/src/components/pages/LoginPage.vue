@@ -24,18 +24,6 @@
    export default {
       name: "LoginPage",
 
-      
-      // ************  Tempory  ************
-      mounted() {
-         this.createBattleBtn();
-
-         setTimeout(() => {
-            this.startBattleBtn();
-         }, 500);
-      },
-      // ************  Tempory  ************
-
-
       methods: {
 
          loginBtn() {

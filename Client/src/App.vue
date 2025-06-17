@@ -1,20 +1,13 @@
 
 <template>
    <section class="flex cover" id="root">
-      
-      <LoginPage v-if="isLogin" class="page disable_CSS"
+
+      <LoginPage v-if="isLogin" class="page"
          @userLogin    ="logUser"
          @createBattle ="easyLogin"
          @joinBattle   ="easyLogin"
          @loadBattle   ="easyLoadGame"
       />
-
-      <!-- <LoginPage v-if="isLogin" class="page"
-         @userLogin    ="logUser"
-         @createBattle ="easyLogin"
-         @joinBattle   ="easyLogin"
-         @loadBattle   ="easyLoadGame"
-      /> -->
 
       <MenuPage  v-if="isMenu"  class="page"
          @accessMulti ="toggleMulti"
@@ -59,14 +52,37 @@
       return {
          URL:       "http://localhost:3000",
 
-         isLogin:    true,
-         isMenu:     false,
-         isLobby:    false,
-         isGame:     false,
+         isLogin:  false,
+         // isLogin:  true,
 
-         socket:     null,
-         initPack:   null,
+         isMenu:   false,
+         isLobby:  false,
+         isGame:   false,
+
+         socket:   null,
+         initPack: null,
       }},
+
+
+      // ************  Tempory  ************
+
+      mounted() {
+         this.easyLogin({
+
+            channel:    "createBattle",
+            name:       "Séraphin",
+            teamID:      1,
+            teamColor:  "Blue",
+
+            mapSettings: {
+               maxPop:  "_200",
+               mapSize: "small",
+            },
+         });
+      },
+
+      // ************  Tempory  ************
+
 
       methods: {
 
@@ -81,14 +97,21 @@
             this.socket.on("connected", () => {
                this.socket.emit(params.channel, params);
             });
+
+
+            // ************  Disable on 2 player TEST  ************
+            this.socket.on("battleCreated", () => {
+               this.easyLoadGame({ battleID: "47" });
+            });
+            // ************  Disable on 2 player TEST  ************
          },
 
          easyLoadGame(params: any) {
 
             this.socket.emit("loadBattle", params);
 
-            this.socket.on("initBattle", (iniPack: any) => {
-               this.initPack = iniPack;
+            this.socket.on("initBattle", (initPack: any) => {
+               this.initPack = initPack;
                this.isLogin  = false;
                this.isGame   = true;
                console.log({ message: "Game is starting !" });
@@ -150,8 +173,8 @@
                this.socket.emit("initClient");
             });
 
-            this.socket.on("initBattle", (iniPack: any) => {
-               this.initPack = iniPack;
+            this.socket.on("initBattle", (initPack: any) => {
+               this.initPack = initPack;
                this.isLobby  = false;
                this.isGame   = true;
             }, console.log("Game is starting !"));
@@ -162,10 +185,6 @@
 
 
 <style lang="scss">
-
-   .disable_CSS {
-      display: none !important;
-   }
 
    html * {
       /* Reset */
