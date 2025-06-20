@@ -103,28 +103,31 @@ export class GameManager {
       this.highG_Img.src = this.highG_Src;
       this.walls_Img.src = this.walls_Src;
       // ***************  Temp  ***************
-      
+
       this.Canvas     = Canvas;
       this.Ctx        = Ctx;
       this.socket     = socket;
+      this.cellSize   = initPack.gridPack.cellSize;
+      this.gridSize   = initPack.gridPack.gridSize;
+      this.halfGrid   = this.gridSize *0.5;
 
-      this.initPlayer (initPack.player_InitPack);
-      this.initGame   (initPack.battle_InitPack);
-      
       this.Viewport   = new Viewport  (this);
       this.Grid       = new Grid      (this);
       this.Cursor     = new Cursor    (this);
       this.Collision  = new Collision ();
       
-      this.initUnits  (initPack.battle_InitPack);
-      // this.initBuilds ();
-      this.initMap    ();
-      this.watchGame  ();
+      this.init(initPack);
    }
 
-   emit(channel: string, data: any) {
+   init({ battlePack, playerPack }: any) {
 
-      this.socket.emit(channel, data);
+      this.initPlayer (playerPack);
+      this.initGame   (battlePack);
+      this.initUnits  (battlePack);
+      // this.initBuilds ();
+      this.initMap    ();
+
+      this.watchGame  ();
    }
 
    watchGame() {
@@ -143,11 +146,7 @@ export class GameManager {
    
    initGame(battlePack: any) {
 
-      this.interval = Math.floor(1000 / battlePack.frameRate);
-   
-      this.cellSize   = battlePack.cellSize;
-      this.gridSize   = battlePack.gridSize;
-      this.halfGrid   = battlePack.halfGrid;
+      this.interval   = Math.floor(1000 / battlePack.frameRate);
       this.maxPop     = battlePack.maxPop;
       this.UNIT_STATS = battlePack.UNIT_STATS;
       this.WALLS      = battlePack.WALLS; // ==> Tempory
@@ -538,15 +537,24 @@ export class GameManager {
    // *******************************************************
    servAgentMove(data: any) {
 
-      const { id, miniPathID }: any = data;
+      const { id, miniPathID, pathID }: any = data;
       
       const agent: Agent | undefined = this.unitsList.get(id);
       
-      if(!agent || agent.nextCell) return;
+      if(!agent) return;
 
-      agent.miniPath = this.setAgentMiniPath(miniPathID);
+      agent.pathID = pathID;
+      agent.setNextCell(this);
+
+      // agent.miniPath = this.setAgentMiniPath(miniPathID);
+
+      // const targetCell = this.getCell(pathID[0]);
+
+      // if(!targetCell) return;
       
-      if(!agent.nextCell) agent.nextCell = agent.miniPath[0];
+      // agent.nextCell = targetCell;
+      // pathID.shift();
+      
    }
    // *******************************************************
 
@@ -623,7 +631,7 @@ export class GameManager {
                const agent    = this.unitsList.get(agentID)!;
                const agentPos = this.gridPos_toScreenPos(agent.position);
          
-               agent.walkPath();
+               agent.walkPath(this);
                agent.updateAnimState(Frame);
             
                if(!this.isViewScope(agentPos)) continue;

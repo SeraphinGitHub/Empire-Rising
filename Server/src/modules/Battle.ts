@@ -215,19 +215,21 @@ export class Battle {
    }
 
    // initPack ==> (Sent to each client)
-   initPack() {
+   initPack_Grid() {
       return {
-         
-         UNIT_STATS,
-
-         frameRate:  Number(process.env.CLIENT_FRAME_RATE),
          cellSize:   this.cellSize,
          gridSize:   this.gridSize,
-         halfGrid:   this.halfGrid,
+      }
+   }
+
+   initPack_Battle() {
+      return {
+         frameRate:  Number(process.env.CLIENT_FRAME_RATE),
          maxPop:     this.setPlayerMaxPop(),
          unitsList:  this.setClient_UnitsList(),
          // buildsList: this.buildsList,
-
+         
+         UNIT_STATS,
          WALLS, // ==> Tempory
          TILES, // ==> Tempory
       }
@@ -244,23 +246,30 @@ export class Battle {
 
       for(const [, agent] of this.unitsList) {
             
+         if(agent.hasArrived) continue;
+         console.log({ msg: "2" }); // ******************************************************
+         
          agent.walkPath(this.Grid);
-
-         // if(!agent.hasArrived) continue;
 
          if(agent.hasUpdated) continue; // skip if already sent
          agent.hasUpdated = true; // update with new key
 
+         console.log({ msg: "3" }); // ******************************************************
+
          const path     = agent.Pathfinder.path;
-         const cellID_1 = path[0] ? path[0].id : null;
+         let pathID: string[] = [];
+         
+         path.forEach((cell: Cell) => pathID.push(cell.id));
+         
+         // const cellID_1 = path[0] ? path[0].id : null;
          // const cellID_2 = path[1] ? path[1].id : null;
          // const cellID_3 = path[2] ? path[2].id : null;
 
-         const miniPathID = [ cellID_1, null, null ];
-
+         // const miniPathID = [ cellID_1, null, null ];
+         // console.log(pathID); // ******************************************************
          this.spread("agentMove", {
             id: agent.id,
-            miniPathID,
+            pathID,
          });
       }
    }
@@ -324,7 +333,7 @@ export class Battle {
       let cl_UnitsList = [];
 
       for(const [, unit] of this.unitsList) {
-         cl_UnitsList.push(unit.initPack());
+         cl_UnitsList.push(unit.initPack_Agent());
       }
       
       return cl_UnitsList;
@@ -372,7 +381,12 @@ export class Battle {
       // Start all Agents search path
       for(const agent of sortedUnitList) {
          
-         agent.Pathfinder.searchPath(Grid.cellsList);
+         if(agent.Pathfinder.searchPath(Grid.cellsList)) {
+            
+            agent.hasArrived = false;
+            // agent.isMoving   = true;
+            console.log({ msg: "1" }); // ******************************************************
+         }
       }
    }
 

@@ -74,7 +74,7 @@ export class Pathfinder {
       this.path      = [];
    }
 
-   searchPath(cellsList: Map<string, Cell>) {
+   searchPath(cellsList: Map<string, Cell>): boolean {
       
       // ***************************
       // this.startDate_1 = Date.now();
@@ -90,19 +90,17 @@ export class Pathfinder {
          // If reached destination
          if(this.presentCell!.id === this.goalCell!.id) {
             
-            this.foundPath();
+            return this.foundPath();
             // this.searchVacancy(cellsList);
             
             // ***************************
             // this.startDate_2 = Date.now();
             // this.Debug_SearchTime();
             // ***************************
-
-            return;
          }
       }
 
-      this.Agent.isMoving = false;
+      return false;
    }
 
    calcHeuristic(
@@ -182,7 +180,7 @@ export class Pathfinder {
       this.closedSet.add(presentCell);
    }
 
-   foundPath() {
+   foundPath(): boolean {
 
       let goalCell = this.presentCell!;
       this.path.push(goalCell);
@@ -197,13 +195,11 @@ export class Pathfinder {
          goalCell = cameFromCell;
       }
 
-      const { Agent } = this;
-      
       this.presentCell!.isTargeted = false;
       this.path.reverse();
       this.nextCell  = this.path[0];
       
-      Agent.isMoving = true;
+      return true;
    }
 
    // searchVacancy(cellsList: Map<string, Cell>) { // <== Tempory (Need Recast)

@@ -34,27 +34,16 @@ export class Player {
       this.teamColor = params.teamColor;
       this.teamID    = params.teamID;
    }
-
-
-   initPack() {
-      return {
-         name:      this.name,
-         teamID:    this.teamID,
-         teamColor: this.teamColor,
-      }
-   }
-
-
    
    // ***************  Tempory  ***************
    TEST_Unit(battle: Battle) {
 
       if(this.teamID === 1) {
          this.recruitUnit(battle, { unitID: "_0101", cellID: "17-21" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-21" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-21" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-23" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-23" });
+         // this.recruitUnit(battle, { unitID: "_0101", cellID: "19-21" });
+         // this.recruitUnit(battle, { unitID: "_0101", cellID: "21-21" });
+         // this.recruitUnit(battle, { unitID: "_0101", cellID: "20-23" });
+         // this.recruitUnit(battle, { unitID: "_0101", cellID: "18-23" });
       }
 
       if(this.teamID === 2) {
@@ -69,20 +58,31 @@ export class Player {
    }
    // ***************  Tempory  ***************
 
+   initPack_Player() {
+      return {
+         name:      this.name,
+         teamID:    this.teamID,
+         teamColor: this.teamColor,
+      }
+   }
 
-   
-   watch(battle: Battle) {
+   start(battle: Battle) {
 
       this.maxPop = battle.setPlayerMaxPop();
-      
+   
       this.socket.emit("initBattle", {
-         battle_InitPack: battle.initPack(),
-         player_InitPack: this.initPack(),
+         gridPack:   battle.initPack_Grid  (),
+         battlePack: battle.initPack_Battle(),
+         playerPack: this  .initPack_Player(),
       });
 
+      this.watch(battle);
+   }
+   
+   watch(battle: Battle) {
+      
       this.socket.on("recruitUnit",  (data: any) => this.recruitUnit(battle, data));
       this.socket.on("startAgentPF", (data: any) => battle.startAgentPF(data));
-
 
       this.TEST_Unit(battle); // ==> Test ******************
    }
@@ -135,7 +135,7 @@ export class Player {
 
       this.socket.emit("updatePop", this.curPop);
 
-      return newAgent.initPack();
+      return newAgent.initPack_Agent();
    }
 
 }

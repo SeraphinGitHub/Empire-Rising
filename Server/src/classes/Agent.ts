@@ -30,6 +30,9 @@ export class Agent {
    health:      number;
    armor:       number;
    damages:     number;
+
+   baseMoveSpeed:   number;
+
    moveSpeed:   number;
    buildSpeed:  number;
    attackSpeed: number;
@@ -66,6 +69,9 @@ export class Agent {
       this.health      = stats.health;
       this.armor       = stats.armor;
       this.damages     = stats.damages;
+
+      this.baseMoveSpeed   = this.setMoveSpeed(stats.moveSpeed);
+
       this.moveSpeed   = this.setMoveSpeed(stats.moveSpeed);
       this.buildSpeed  = stats.buildSpeed;
       this.attackSpeed = stats.attackSpeed;
@@ -76,7 +82,7 @@ export class Agent {
    }
 
 
-   initPack() {
+   initPack_Agent() {
       return {
          id:            this.id,
          playerID:      this.playerID,
@@ -104,7 +110,7 @@ export class Agent {
 
       return moveSpeed * Math.floor( clientFPS / serverFPS );
    }
-
+   
    hasReached(cell: Cell): boolean {
       
       const { x: posX,  y: posY  } = this.position;
@@ -112,10 +118,11 @@ export class Agent {
   
       if(posX !== cellX
       || posY !== cellY) {
-         
+         console.log({ msg: "false" }); // ******************************************************
          return false;
       }
       
+      console.log({ msg: "true" }); // ******************************************************
       return true;
    }
 
@@ -158,31 +165,36 @@ export class Agent {
 
    walkPath(Grid: Grid) {
 
-      if(!this.isMoving) return;
+      // if(!this.isMoving) return;
       
-      const { path, nextCell, goalCell } = this.Pathfinder;
+      const { nextCell, goalCell } = this.Pathfinder;
       
       this.moveTo(nextCell!);
       this.hasArrived = false;
       
       if(!this.hasReached(nextCell!)) return;
          
-      this.hasUpdated = false; // **************************
+      // this.hasUpdated = false; // **************************
+
       this.hasArrived = true;
       this.oldCell    = this.curCell;
-      this.curCell    = path[0];
+      this.position
+      this.curCell    = this.Pathfinder.path[0];
       
       this.reloadSearchPath(Grid.cellsList); // instead ==> need to update if path became compromize
       
       this.Pathfinder.path.shift();
-      this.Pathfinder.nextCell = path[0];
+      this.Pathfinder.nextCell = this.Pathfinder.path[0] ?? null;
       this.oldCell.setVacant  (this.id, Grid);
       this.curCell.setOccupied(this.id, Grid);
 
-      if(nextCell!.id !== goalCell!.id) return;
+      if(!this.hasReached(goalCell!)) return;
+
+console.log({ msg: "4" }); // ******************************************************
 
       this.isMoving   = false;
-      this.hasArrived = true;
+      this.hasUpdated = false; // **************************
+
    }
 
    moveTo(nextCell: Cell) {
@@ -201,8 +213,8 @@ export class Agent {
          return;
       }
 
-      const moveX = this.mathFloor_100(deltaX /dist * Math.min(dist, this.moveSpeed));
-      const moveY = this.mathFloor_100(deltaY /dist * Math.min(dist, this.moveSpeed));
+      const moveX = this.mathFloor_100(deltaX /dist * Math.min(dist, this.baseMoveSpeed));
+      const moveY = this.mathFloor_100(deltaY /dist * Math.min(dist, this.baseMoveSpeed));
 
       this.position.x += moveX;
       this.position.y += moveY;

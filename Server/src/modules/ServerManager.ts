@@ -161,7 +161,7 @@ export class ServerManager {
 
       if(!battle || !player) return console.log({ error: "Could not load battle !" });
       
-      player.watch(battle);
+      player.start(battle);
    }
 
 }

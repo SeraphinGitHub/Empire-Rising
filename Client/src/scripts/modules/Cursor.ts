@@ -138,7 +138,7 @@ export class Cursor {
       }
       
       if(state === "Up") {
-         GM.emit("startAgentPF", { targetArea: this.targetArea, AgentsID_List: GM.setAgentsID_List() });
+         GM.socket.emit("startAgentPF", { targetArea: this.targetArea, AgentsID_List: GM.setAgentsID_List() });
          this.isTargeting = false;
       }
    }
@@ -279,23 +279,24 @@ export class Cursor {
    
    setTargetCell     (GM: GameManager) {
 
-      const { Grid, oldSelectList } = GM;
+      console.log("==> Feature disabled !"); // ******************************************************
+
+      // const { Grid, oldSelectList } = GM;
       
-      if(!GM.isMouseGridScope()) return;
+      // if(!GM.isMouseGridScope()) return;
       
-      const { hoverCell } = this;
-      const { cellsList } = Grid;
-      const targetCell    = hoverCell!;
+      // const { hoverCell } = this;
+      // const { cellsList } = Grid;
+      // const targetCell    = hoverCell!;
       
-      if(targetCell.isBlocked || !targetCell.isVacant) return;
+      // if(targetCell.isBlocked || !targetCell.isVacant) return;
       
-      const [ agent      ]  = oldSelectList;
-      const { Pathfinder }  = agent;
+      // const [ agent      ]  = oldSelectList;
       
-      targetCell.isTargeted = true;
-      Pathfinder.hasTarget  = true;
-      Pathfinder.goalCell   = targetCell;
-      Pathfinder.searchPath(cellsList);
+      // targetCell.isTargeted = true;
+      // agent.hasTarget  = true;
+      // agent.goalCell   = targetCell;
+      // agent.searchPath(cellsList);
    }
 
    setTargetArea     (GM: GameManager) {

@@ -1,8 +1,13 @@
 
+
 import {
    INumber,
    IPosition,
 } from "../utils/interfaces";
+
+import { 
+   GameManager,
+} from "../modules/_Export";
 
 import {
    Cell,
@@ -13,6 +18,12 @@ import {
 // Agent Class
 // =====================================================================
 export class Agent {
+
+
+   pathID: string[] = [];
+
+
+
 
    id:          number;
    teamID:      number;
@@ -106,10 +117,20 @@ export class Agent {
    }
 
 
+   setNextCell(GM: GameManager) {
+
+      const targetCell = GM.getCell(this.pathID[0]);
+
+      if(!targetCell) return;
+      
+      this.nextCell = targetCell;
+      this.pathID.shift();
+   }
+
    // =========================================================================================
    // Walk through path
    // =========================================================================================
-   walkPath() {
+   walkPath(GM: GameManager,) {
 
       if(!this.nextCell) return;
 
@@ -120,18 +141,16 @@ export class Agent {
       this.moveTo(this.nextCell);
 
       // Arrived at nextCell
-      if(this.curCell.id !== this.nextCell.id) return;
+      // if(this.curCell.id !== this.nextCell.id) return;
 
-      this.curCell = this.nextCell;
+      // this.curCell = this.nextCell;
       
-      this.miniPath.shift();
-
-      this.nextCell = this.miniPath[0] ?? null;
+      // this.setNextCell(GM);
       
-      if(this.nextCell) return;
+      // // if(this.nextCell) return;
 
-      this.isMoving  = false;
-      this.animState = 0;
+      // this.isMoving  = false;
+      // this.animState = 0;
          
    }
 
