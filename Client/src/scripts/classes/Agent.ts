@@ -5,10 +5,6 @@ import {
    IPosition,
 } from "../utils/interfaces";
 
-import { 
-   GameManager,
-} from "../modules/_Export";
-
 import {
    Cell,
 } from "./_Export";
@@ -45,9 +41,9 @@ export class Agent {
 
    position:    IPosition;
    collider:    INumber;   
-   nextCell:    Cell | null = null;   
    curCell:     Cell;
-   miniPath:    [Cell | null, Cell | null, Cell | null] = [null, null, null]
+   goalCell:    Cell;   
+   nextCell:    Cell | null = null;   
 
    isMoving:    boolean = false;
    isSelected:  boolean = false;
@@ -72,6 +68,7 @@ export class Agent {
       this.teamID      = params.teamID;
       this.position    = params.position;
       this.curCell     = params.curCell;
+      this.goalCell    = params.curCell;
       
       this.name        = stats.name;
       this.collider    = stats.collider;
@@ -111,26 +108,38 @@ export class Agent {
       this.img.src = `${basePath}${teamColor}.png`;
    }
 
-   mathFloor_100(value: number): number {
 
-      return Math.floor( value *100 ) /100;
-   }
+   setNextCell(getCell: Function) {
 
-
-   setNextCell(GM: GameManager) {
-
-      const targetCell = GM.getCell(this.pathID[0]);
-
-      if(!targetCell) return;
+      const targetCell: Cell | null = getCell(this.pathID[0]) ?? null;
       
       this.nextCell = targetCell;
       this.pathID.shift();
+   }
+   
+   setGoalCell(getCell: Function) {
+
+      const goalCell: Cell = getCell(this.pathID[ this.pathID.length -1 ]);
+      this.goalCell = goalCell;
+   }
+
+   hasReached(cell: Cell): boolean {
+      
+      const { x: posX,  y: posY  } = this.position;
+      const { x: cellX, y: cellY } = cell.center;
+  
+      if(posX !== cellX
+      || posY !== cellY) {
+         return false;
+      }
+      
+      return true;
    }
 
    // =========================================================================================
    // Walk through path
    // =========================================================================================
-   walkPath(GM: GameManager,) {
+   walkPath(getCell: Function) {
 
       if(!this.nextCell) return;
 
@@ -140,18 +149,25 @@ export class Agent {
       // Moving toward nextCell
       this.moveTo(this.nextCell);
 
+      // console.log({ curCell: this.curCell.id }); // ******************************************************
+      // console.log({ nextCell: this.nextCell.id }); // ******************************************************
+
       // Arrived at nextCell
-      // if(this.curCell.id !== this.nextCell.id) return;
+      if(!this.hasReached(this.nextCell)) return;
 
-      // this.curCell = this.nextCell;
+      this.curCell = this.nextCell;
+      this.setNextCell(getCell);
       
-      // this.setNextCell(GM);
       
-      // // if(this.nextCell) return;
+      if(!this.hasReached(this.goalCell)) return;
 
-      // this.isMoving  = false;
-      // this.animState = 0;
-         
+      // console.log({ curCell: this.curCell.id }); // ******************************************************
+      // console.log({ nextCell: this.nextCell }); // ******************************************************
+      // console.log({ goalCell: this.goalCell.id }); // ******************************************************
+      // console.log({ pathID: this.pathID }); // ******************************************************
+      
+      this.isMoving  = false;
+      this.animState = 0;
    }
 
    moveTo(nextCell: Cell) {
@@ -159,15 +175,15 @@ export class Agent {
       const { x: posX,  y: posY  } = this.position;
       const { x: nextX, y: nextY } = nextCell.center;
 
-      const deltaX = this.mathFloor_100(nextX -posX);
-      const deltaY = this.mathFloor_100(nextY -posY);
+      const deltaX = nextX -posX;
+      const deltaY = nextY -posY;
 
       const isLeft  = deltaX < 0;
       const isRight = deltaX > 0;
       const isUp    = deltaY < 0;
       const isDown  = deltaY > 0;
 
-      const dist = Math.round( Math.hypot(deltaX,  deltaY));
+      const dist = Math.hypot(deltaX,  deltaY);
 
       if(dist === 0) {
          this.position.x = nextX;
@@ -176,8 +192,8 @@ export class Agent {
          return;
       }
 
-      const moveX = this.mathFloor_100(deltaX /dist * Math.min(dist, this.moveSpeed));
-      const moveY = this.mathFloor_100(deltaY /dist * Math.min(dist, this.moveSpeed));
+      const moveX = deltaX /dist * Math.min(dist, this.moveSpeed);
+      const moveY = deltaY /dist * Math.min(dist, this.moveSpeed);
 
       this.position.x += moveX;
       this.position.y += moveY;

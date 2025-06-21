@@ -76,7 +76,7 @@
 
             mapSettings: {
                maxPop:  "_200",
-               mapSize: "small",
+               mapSize: "big",
             },
          });
       },

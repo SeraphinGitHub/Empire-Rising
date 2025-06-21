@@ -178,7 +178,8 @@ const TILES: string[] = [
 // =====================================================================
 export class Battle {
 
-   syncRate:         number = Math.floor(1000 / Number(process.env.SERVER_FRAME_RATE));
+   syncRate:         number = Math.floor( 1000 / Number(process.env.SERVER_FRAME_RATE));
+   lastUpdate:       number = Date.now();
 
    private Room:     Server;
    id:               string;
@@ -247,26 +248,20 @@ export class Battle {
       for(const [, agent] of this.unitsList) {
             
          if(agent.hasArrived) continue;
-         console.log({ msg: "2" }); // ******************************************************
          
          agent.walkPath(this.Grid);
 
          if(agent.hasUpdated) continue; // skip if already sent
          agent.hasUpdated = true; // update with new key
 
-         console.log({ msg: "3" }); // ******************************************************
 
          const path     = agent.Pathfinder.path;
          let pathID: string[] = [];
          
          path.forEach((cell: Cell) => pathID.push(cell.id));
          
-         // const cellID_1 = path[0] ? path[0].id : null;
-         // const cellID_2 = path[1] ? path[1].id : null;
-         // const cellID_3 = path[2] ? path[2].id : null;
+         console.log({ sendPack: true }); // ******************************************************
 
-         // const miniPathID = [ cellID_1, null, null ];
-         // console.log(pathID); // ******************************************************
          this.spread("agentMove", {
             id: agent.id,
             pathID,
@@ -275,10 +270,49 @@ export class Battle {
    }
 
    sync() {
-      setInterval(() => {  // temp ==> very bad perf, need something better
+      
+      setInterval(() => {
+
+         const now   = Date.now();
+         const delta = now -this.lastUpdate;
+
+         if(delta < this.syncRate) return;
+
+         // const aze = ( 1 + (delta / 1000) *3);
          
+         const drift = delta % this.syncRate;
+
+         // console.log({ drift }); // ******************************************************
+
+         /*
+                              v (moveSpeed = 18 ==> not base)
+            step = (drift * moveSpeed) / this.syncRate;
+
+            100 ms ==> +18
+             17 ms ==> +3.06
+              8 ms ==> +1.44
+             39 ms ==> +7.02
+             71 ms ==> +12.78
+         */
+         
+         this.lastUpdate = now -drift; // remove drift
+
          this.watchAgents();
          
+         for(const [, agent] of this.unitsList) {
+            if(agent.hasArrived) continue;
+            
+            agent.moveSpeed = 18 +(drift * 18) / this.syncRate;
+
+            console.log({ moveSpeed: agent.moveSpeed }); // ******************************************************
+
+            this.spread("checkServAgent", {
+               id: agent.id,
+               pos: agent.position,
+            });
+         }
+
+
       }, this.syncRate);
    }
 
@@ -384,8 +418,10 @@ export class Battle {
          if(agent.Pathfinder.searchPath(Grid.cellsList)) {
             
             agent.hasArrived = false;
+            agent.hasUpdated = false; // **************************
+
             // agent.isMoving   = true;
-            console.log({ msg: "1" }); // ******************************************************
+            // console.log({ msg: "1" }); // ******************************************************
          }
       }
    }

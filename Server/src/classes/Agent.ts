@@ -70,7 +70,7 @@ export class Agent {
       this.armor       = stats.armor;
       this.damages     = stats.damages;
 
-      this.baseMoveSpeed   = this.setMoveSpeed(stats.moveSpeed);
+      this.baseMoveSpeed   = stats.moveSpeed;
 
       this.moveSpeed   = this.setMoveSpeed(stats.moveSpeed);
       this.buildSpeed  = stats.buildSpeed;
@@ -95,7 +95,7 @@ export class Agent {
          health:        this.health,
          armor:         this.armor,
          damages:       this.damages,
-         moveSpeed:     this.moveSpeed,
+         moveSpeed:     this.baseMoveSpeed,
          buildSpeed:    this.buildSpeed,
          attackSpeed:   this.attackSpeed,
          animDelay:     this.animDelay,
@@ -109,6 +109,7 @@ export class Agent {
       const serverFPS: number = Number(process.env.SERVER_FRAME_RATE);
 
       return moveSpeed * Math.floor( clientFPS / serverFPS );
+      // return this.baseMoveSpeed;
    }
    
    hasReached(cell: Cell): boolean {
@@ -118,17 +119,10 @@ export class Agent {
   
       if(posX !== cellX
       || posY !== cellY) {
-         console.log({ msg: "false" }); // ******************************************************
          return false;
       }
       
-      console.log({ msg: "true" }); // ******************************************************
       return true;
-   }
-
-   mathFloor_100(value: number): number {
-
-      return Math.floor( value *100 ) /100;
    }
 
 
@@ -176,9 +170,8 @@ export class Agent {
          
       // this.hasUpdated = false; // **************************
 
-      this.hasArrived = true;
+      // this.hasArrived = true;
       this.oldCell    = this.curCell;
-      this.position
       this.curCell    = this.Pathfinder.path[0];
       
       this.reloadSearchPath(Grid.cellsList); // instead ==> need to update if path became compromize
@@ -190,10 +183,12 @@ export class Agent {
 
       if(!this.hasReached(goalCell!)) return;
 
-console.log({ msg: "4" }); // ******************************************************
-
+// console.log({ curCell: this.curCell.id }); // ******************************************************
+console.log({ message: "hasArrived" }); // ******************************************************
+      
+      this.hasArrived = true;
       this.isMoving   = false;
-      this.hasUpdated = false; // **************************
+      // this.hasUpdated = false; // **************************
 
    }
 
@@ -202,10 +197,10 @@ console.log({ msg: "4" }); // **************************************************
       const { x: posX,  y: posY  } = this.position;
       const { x: nextX, y: nextY } = nextCell.center;
       
-      const deltaX = this.mathFloor_100(nextX -posX);
-      const deltaY = this.mathFloor_100(nextY -posY);
+      const deltaX = nextX -posX;
+      const deltaY = nextY -posY;
 
-      const dist = Math.round( Math.hypot(deltaX,  deltaY));
+      const dist = Math.hypot(deltaX,  deltaY);
 
       if(dist === 0) {
          this.position.x = nextX;
@@ -213,9 +208,9 @@ console.log({ msg: "4" }); // **************************************************
          return;
       }
 
-      const moveX = this.mathFloor_100(deltaX /dist * Math.min(dist, this.baseMoveSpeed));
-      const moveY = this.mathFloor_100(deltaY /dist * Math.min(dist, this.baseMoveSpeed));
-
+      const moveX = deltaX /dist * Math.min(dist, this.moveSpeed);
+      const moveY = deltaY /dist * Math.min(dist, this.moveSpeed);
+      
       this.position.x += moveX;
       this.position.y += moveY;
    }

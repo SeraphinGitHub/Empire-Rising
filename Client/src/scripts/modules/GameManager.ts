@@ -22,6 +22,10 @@ import {
 
 import { Socket } from "socket.io-client";
 
+const data: any = {
+   pos: {x: 0, y: 0}
+};
+
 
 // =====================================================================
 // Game Manager Class
@@ -135,6 +139,11 @@ export class GameManager {
       this.socket.on("updatePop",     (data: any) => this.updatePop      (data));
       this.socket.on("unitRecruited", (data: any) => this.createNewAgent (data));
       this.socket.on("agentMove",     (data: any) => this.servAgentMove  (data));
+
+      this.socket.on("checkServAgent",     (aze: any) => {
+         data.pos.x = aze.pos.x;
+         data.pos.y = aze.pos.y;
+      });
    }
 
    initPlayer(playerPack: any) {
@@ -194,15 +203,15 @@ export class GameManager {
       }, 50);
       // **********************************  Tempory  **********************************
 
-      requestAnimationFrame((currentTime) => this.runAnimation(currentTime));
+      requestAnimationFrame((now) => this.runAnimation(now));
    }
 
-   runAnimation(currentTime: number) {
+   runAnimation(now: number) {
 
-      const delta = currentTime -this.lastUpdate;
+      const delta = now -this.lastUpdate;
 
       if(delta >= this.interval) {
-         this.lastUpdate = currentTime - (delta % this.interval); // remove drift
+         this.lastUpdate = now - (delta % this.interval); // remove drift
          
          this.Frame++;
       
@@ -212,6 +221,18 @@ export class GameManager {
          this.draw_UnitsAndBuild ();
          this.drawHoverUnit      ();
          this.drawSelectUnit     ();
+
+         // ******************************************************
+         this.Ctx.isometric.fillStyle = "red";
+         this.Ctx.isometric.beginPath();
+         this.Ctx.isometric.arc(
+            data.pos.x,
+            data.pos.y,
+            15, 0, Math.PI *2
+         );
+         this.Ctx.isometric.fill();
+         this.Ctx.isometric.closePath();
+         // ******************************************************
          
          this.Grid     .update   (this);
          this.Cursor   .update   (this);
@@ -406,17 +427,6 @@ export class GameManager {
       return agentsID_List;
    }
 
-   setAgentMiniPath(miniPathID: string[]): [ Cell | null, Cell | null, Cell | null ] {
-
-      const [ cellID_1, cellID_2, cellID_3 ] = miniPathID;
-
-      const cell_1 = this.Grid.cellsList.get( cellID_1 ) ?? null;
-      const cell_2 = this.Grid.cellsList.get( cellID_2 ) ?? null;
-      const cell_3 = this.Grid.cellsList.get( cellID_3 ) ?? null;
-
-      return [ cell_1, cell_2, cell_3 ];
-   }
-
    getCell           (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
@@ -537,14 +547,18 @@ export class GameManager {
    // *******************************************************
    servAgentMove(data: any) {
 
-      const { id, miniPathID, pathID }: any = data;
+      const { id, pathID }: any = data;
       
       const agent: Agent | undefined = this.unitsList.get(id);
       
       if(!agent) return;
+      
+
+console.log({ msg: "123" }); // ******************************************************
 
       agent.pathID = pathID;
-      agent.setNextCell(this);
+      agent.setNextCell(this.getCell.bind(this));
+      agent.setGoalCell(this.getCell.bind(this));
 
       // agent.miniPath = this.setAgentMiniPath(miniPathID);
 
@@ -631,7 +645,7 @@ export class GameManager {
                const agent    = this.unitsList.get(agentID)!;
                const agentPos = this.gridPos_toScreenPos(agent.position);
          
-               agent.walkPath(this);
+               agent.walkPath(this.getCell.bind(this));
                agent.updateAnimState(Frame);
             
                if(!this.isViewScope(agentPos)) continue;
@@ -641,7 +655,7 @@ export class GameManager {
                if(this.show_Grid) agent.drawPath(ctx_isometric);
             }
          }
-
+                  
          // Draw all buildings
          if(cell.isBlocked) {
             const cellPos = this.gridPos_toScreenPos(cell.center);
