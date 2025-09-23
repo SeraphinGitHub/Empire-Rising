@@ -18,7 +18,7 @@ dotenv.config();
 // Agent Class
 // =====================================================================
 export class Agent {
-
+   
    id:          number;
    playerID:    string;
    teamID:      number;
@@ -31,12 +31,12 @@ export class Agent {
    armor:       number;
    damages:     number;
 
-   baseMoveSpeed:   number;
-
+   baseSpeed:   number;
    moveSpeed:   number;
    buildSpeed:  number;
    attackSpeed: number;
    animDelay:   number;
+   lastUpdate:  number = Date.now();
 
    position:    IPosition;
    collider:    INumber;
@@ -69,9 +69,8 @@ export class Agent {
       this.health      = stats.health;
       this.armor       = stats.armor;
       this.damages     = stats.damages;
-
-      this.baseMoveSpeed   = stats.moveSpeed;
-
+      
+      this.baseSpeed   = stats.moveSpeed;
       this.moveSpeed   = this.setMoveSpeed(stats.moveSpeed);
       this.buildSpeed  = stats.buildSpeed;
       this.attackSpeed = stats.attackSpeed;
@@ -95,7 +94,7 @@ export class Agent {
          health:        this.health,
          armor:         this.armor,
          damages:       this.damages,
-         moveSpeed:     this.baseMoveSpeed,
+         moveSpeed:     this.baseSpeed,
          buildSpeed:    this.buildSpeed,
          attackSpeed:   this.attackSpeed,
          animDelay:     this.animDelay,
@@ -109,7 +108,6 @@ export class Agent {
       const serverFPS: number = Number(process.env.SERVER_FRAME_RATE);
 
       return moveSpeed * Math.floor( clientFPS / serverFPS );
-      // return this.baseMoveSpeed;
    }
    
    hasReached(cell: Cell): boolean {
@@ -158,24 +156,30 @@ export class Agent {
    }
 
    walkPath(Grid: Grid) {
-
-      // if(!this.isMoving) return;
       
-      const { nextCell, goalCell } = this.Pathfinder;
+      const { nextCell, goalCell, hasPath } = this.Pathfinder;
       
-      this.moveTo(nextCell!);
+      if(!nextCell || !goalCell) return;
+      
+      if(!hasPath) {
+         this.hasArrived = true;
+         this.isMoving   = false;
+         this.position.x = nextCell.center.x;
+         this.position.y = nextCell.center.y;
+         this.hasUpdated = false;
+         return;
+      };
+      
+      this.moveTo(nextCell);
       this.hasArrived = false;
       
-      if(!this.hasReached(nextCell!)) return;
-         
-      // this.hasUpdated = false; // **************************
-
-      // this.hasArrived = true;
+      if(!this.hasReached(nextCell)) return;
+      
       this.oldCell    = this.curCell;
       this.curCell    = this.Pathfinder.path[0];
-      
+
       this.reloadSearchPath(Grid.cellsList); // instead ==> need to update if path became compromize
-      
+
       this.Pathfinder.path.shift();
       this.Pathfinder.nextCell = this.Pathfinder.path[0] ?? null;
       this.oldCell.setVacant  (this.id, Grid);
@@ -183,24 +187,22 @@ export class Agent {
 
       if(!this.hasReached(goalCell!)) return;
 
-// console.log({ curCell: this.curCell.id }); // ******************************************************
-console.log({ message: "hasArrived" }); // ******************************************************
-      
       this.hasArrived = true;
       this.isMoving   = false;
-      // this.hasUpdated = false; // **************************
-
    }
 
    moveTo(nextCell: Cell) {
 
+      const now = Date.now();
+      const dt  = (now -this.lastUpdate) /1000;
+      this.lastUpdate = now;
+
       const { x: posX,  y: posY  } = this.position;
       const { x: nextX, y: nextY } = nextCell.center;
-      
-      const deltaX = nextX -posX;
-      const deltaY = nextY -posY;
 
-      const dist = Math.hypot(deltaX,  deltaY);
+      const deltaX = nextX - posX;
+      const deltaY = nextY - posY;
+      const dist   = Math.hypot(deltaX, deltaY);
 
       if(dist === 0) {
          this.position.x = nextX;
@@ -208,9 +210,10 @@ console.log({ message: "hasArrived" }); // *************************************
          return;
       }
 
-      const moveX = deltaX /dist * Math.min(dist, this.moveSpeed);
-      const moveY = deltaY /dist * Math.min(dist, this.moveSpeed);
-      
+      const step  = Math.round(this.moveSpeed + this.moveSpeed * dt);
+      const moveX = deltaX / dist * Math.min(dist, step);
+      const moveY = deltaY / dist * Math.min(dist, step);
+
       this.position.x += moveX;
       this.position.y += moveY;
    }

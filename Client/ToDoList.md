@@ -1,4 +1,14 @@
 
+
+   - WalkPath agent ==>
+      > server faster than client, with bigger steps
+      > send full path to client agent
+      > server waits for client pos
+      > use buffer for data transfer
+
+
+
+
    - Use server
    - Use mongoDB to save & load
    
@@ -45,8 +55,9 @@
 
    <!-- Lobby -->
    > create new battle
-   ==> send data at /host
-   ==> add battle to battlesList & enable joining
+   ==>  send data at /host
+   ==> a    > server waits for client pos
+   > use buffer for data transferttle to battlesList & enable joining
 
    /host, {
       hostID: 1,
@@ -64,15 +75,16 @@
    > startGame btn clicked
    ==> get all players: id, names, faction color
    ==> get battle params
-   ==> send data at /create
-
-<!-- SocketIO -->
+   ==>  send data at /create
+      > server waits for client pos
+      > use buffer for data transfer SocketIO -->
 
    > When received battle's specs and all players infos from /create
    ==> start socketIO for each player
    ==> create new battle instance
-   ==> send back all the battle infos to all players
-   ==> load GamePage in client after everyone been connected & all initialized
+   ==>  send back all the battle infos to all players
+   ==> l    > server waits for client pos
+   > use buffer for data transferamePage in client after everyone been connected & all initialized
 
    <!-- * Need to add var & data checks in server to verify client's infos -->
 

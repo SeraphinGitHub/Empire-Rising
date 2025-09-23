@@ -179,7 +179,6 @@ const TILES: string[] = [
 export class Battle {
 
    syncRate:         number = Math.floor( 1000 / Number(process.env.SERVER_FRAME_RATE));
-   lastUpdate:       number = Date.now();
 
    private Room:     Server;
    id:               string;
@@ -213,6 +212,19 @@ export class Battle {
    init() {
       this.setVacantIDsList();
       this.sync();
+
+
+      
+      WALLS.forEach(wallID => {
+
+         const blockedCell: Cell | undefined = this.getCell(wallID);
+         
+         if(!blockedCell) return;
+
+         blockedCell.isBlocked = true;
+      });
+
+
    }
 
    // initPack ==> (Sent to each client)
@@ -243,77 +255,35 @@ export class Battle {
       this.Room.emit(channel, data);
    }
 
-   watchAgents() {
-
-      for(const [, agent] of this.unitsList) {
-            
-         if(agent.hasArrived) continue;
-         
-         agent.walkPath(this.Grid);
-
-         if(agent.hasUpdated) continue; // skip if already sent
-         agent.hasUpdated = true; // update with new key
-
-
-         const path     = agent.Pathfinder.path;
-         let pathID: string[] = [];
-         
-         path.forEach((cell: Cell) => pathID.push(cell.id));
-         
-         console.log({ sendPack: true }); // ******************************************************
-
-         this.spread("agentMove", {
-            id: agent.id,
-            pathID,
-         });
-      }
-   }
-
    sync() {
-      
       setInterval(() => {
 
-         const now   = Date.now();
-         const delta = now -this.lastUpdate;
-
-         if(delta < this.syncRate) return;
-
-         // const aze = ( 1 + (delta / 1000) *3);
-         
-         const drift = delta % this.syncRate;
-
-         // console.log({ drift }); // ******************************************************
-
-         /*
-                              v (moveSpeed = 18 ==> not base)
-            step = (drift * moveSpeed) / this.syncRate;
-
-            100 ms ==> +18
-             17 ms ==> +3.06
-              8 ms ==> +1.44
-             39 ms ==> +7.02
-             71 ms ==> +12.78
-         */
-         
-         this.lastUpdate = now -drift; // remove drift
-
-         this.watchAgents();
-         
          for(const [, agent] of this.unitsList) {
+
+            // this.spread("getAgentPos", {
+            //    id:  agent.id,
+            //    pos: agent.position,
+            // });
+               
             if(agent.hasArrived) continue;
             
-            agent.moveSpeed = 18 +(drift * 18) / this.syncRate;
-
-            console.log({ moveSpeed: agent.moveSpeed }); // ******************************************************
-
-            this.spread("checkServAgent", {
-               id: agent.id,
-               pos: agent.position,
+            const path = agent.Pathfinder.path;
+            let pathID: string[] = [];
+            path.forEach((cell: Cell) => pathID.push(cell.id));
+            
+            agent.walkPath(this.Grid);
+            
+            if(agent.hasUpdated) continue; // skip if already sent
+            agent.hasUpdated = true; // update with new key
+   
+            this.spread("moveAgent", {
+               id:       agent.id,
+               pathID,
             });
          }
 
 
-      }, this.syncRate);
+      }, Math.floor( 1000/ Number(process.env.SERVER_FRAME_RATE) ));
    }
 
 
@@ -415,13 +385,12 @@ export class Battle {
       // Start all Agents search path
       for(const agent of sortedUnitList) {
          
-         if(agent.Pathfinder.searchPath(Grid.cellsList)) {
+         agent.Pathfinder.searchPath(Grid.cellsList);
+
+         if(agent.Pathfinder.hasPath) {
             
             agent.hasArrived = false;
-            agent.hasUpdated = false; // **************************
-
-            // agent.isMoving   = true;
-            // console.log({ msg: "1" }); // ******************************************************
+            agent.hasUpdated = false;
          }
       }
    }

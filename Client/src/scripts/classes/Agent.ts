@@ -16,7 +16,8 @@ import {
 export class Agent {
 
 
-   pathID: string[] = [];
+   pathID:  string[]  = [];
+   path:    Cell  []  = [];
 
 
 
@@ -40,11 +41,13 @@ export class Agent {
    animState:   number = 0;
 
    position:    IPosition;
+   servPos:     IPosition = { x:0, y:0 };
    collider:    INumber;   
    curCell:     Cell;
    goalCell:    Cell;   
    nextCell:    Cell | null = null;   
 
+   hasArrived:  boolean = false;
    isMoving:    boolean = false;
    isSelected:  boolean = false;
    isAttacking: boolean = false;
@@ -108,6 +111,18 @@ export class Agent {
       this.img.src = `${basePath}${teamColor}.png`;
    }
 
+   inMovement(state: boolean) {
+      
+      if(state) {
+         this.isMoving  = state;
+         this.animState = 1;
+         return;
+      }
+
+      this.isMoving  = state;
+      this.animState = 0;
+   }
+
 
    setNextCell(getCell: Function) {
 
@@ -143,31 +158,23 @@ export class Agent {
 
       if(!this.nextCell) return;
 
-      this.isMoving  = true;
-      this.animState = 1;
+      this.hasArrived = false;
+      this.inMovement(true);
 
       // Moving toward nextCell
       this.moveTo(this.nextCell);
 
-      // console.log({ curCell: this.curCell.id }); // ******************************************************
-      // console.log({ nextCell: this.nextCell.id }); // ******************************************************
-
       // Arrived at nextCell
       if(!this.hasReached(this.nextCell)) return;
 
-      this.curCell = this.nextCell;
+      this.hasArrived = true;
+      this.curCell    = this.nextCell;
       this.setNextCell(getCell);
       
       
       if(!this.hasReached(this.goalCell)) return;
 
-      // console.log({ curCell: this.curCell.id }); // ******************************************************
-      // console.log({ nextCell: this.nextCell }); // ******************************************************
-      // console.log({ goalCell: this.goalCell.id }); // ******************************************************
-      // console.log({ pathID: this.pathID }); // ******************************************************
-      
-      this.isMoving  = false;
-      this.animState = 0;
+      this.inMovement(false);
    }
 
    moveTo(nextCell: Cell) {
@@ -178,10 +185,7 @@ export class Agent {
       const deltaX = nextX -posX;
       const deltaY = nextY -posY;
 
-      const isLeft  = deltaX < 0;
-      const isRight = deltaX > 0;
-      const isUp    = deltaY < 0;
-      const isDown  = deltaY > 0;
+      this.setFacingSide(deltaX, deltaY);
 
       const dist = Math.hypot(deltaX,  deltaY);
 
@@ -197,6 +201,17 @@ export class Agent {
 
       this.position.x += moveX;
       this.position.y += moveY;
+   }
+
+   setFacingSide(
+      deltaX: number,
+      deltaY: number
+   ) {
+      
+      const isLeft  = deltaX < 0;
+      const isRight = deltaX > 0;
+      const isUp    = deltaY < 0;
+      const isDown  = deltaY > 0;
 
       if(isDown)  this.frameY = 11;
       if(isUp)    this.frameY = 8; // 9
@@ -217,27 +232,27 @@ export class Agent {
    // =========================================================================================
    drawPath(ctx: CanvasRenderingContext2D) {
       
-      // if(!this.Pathfinder.path.length) return;
+      if(!this.path.length) return;
 
-      // const { path } = this.Pathfinder;
+      const { path } = this;
 
-      // // Display path
-      // for(let i = 0; i < path.length; i++) {
-      //    const curCell = path[i];
+      // Display path
+      for(let i = 0; i < path.length; i++) {
+         const curCell = path[i];
          
-      //    if(i +1 < path.length) {
-      //       const nextCell = path[i +1];
-      //       this.drawPathLine(ctx, curCell, nextCell);
-      //    }
-      // }
+         if(i +1 < path.length) {
+            const nextCell = path[i +1];
+            this.drawPathLine(ctx, curCell, nextCell);
+         }
+      }
 
       // this.drawScanNebs(ctx);
    }
 
    drawScanNebs(ctx: CanvasRenderingContext2D) {
       
-      // Display scanned neighbors   
-      // this.Pathfinder.closedSet.forEach((cell: Cell) => {
+      // // Display scanned neighbors   
+      // this.Pathfnder.closedSet.forEach((cell: Cell) => {
       //    cell.drawColor(ctx, "rgba(255, 145, 0, 0.6)");
          
       //    // const costData = this.costMap.get(cell.id)!;
@@ -359,6 +374,21 @@ export class Agent {
 
       // Draw ID
       ctx.fillText(text, x, y -54,);
+   }
+
+   drawPos(
+      ctx: CanvasRenderingContext2D,
+   ) {
+
+      ctx.fillStyle = "red";
+      ctx.beginPath();
+      ctx.arc(
+         this.servPos.x,
+         this.servPos.y,
+         this.collider.radius, 0, Math.PI *2
+      );
+      ctx.fill();
+      ctx.closePath();
    }
 
 

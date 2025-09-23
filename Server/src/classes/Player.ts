@@ -34,29 +34,7 @@ export class Player {
       this.teamColor = params.teamColor;
       this.teamID    = params.teamID;
    }
-   
-   // ***************  Tempory  ***************
-   TEST_Unit(battle: Battle) {
 
-      if(this.teamID === 1) {
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-21" });
-         // this.recruitUnit(battle, { unitID: "_0101", cellID: "19-21" });
-         // this.recruitUnit(battle, { unitID: "_0101", cellID: "21-21" });
-         // this.recruitUnit(battle, { unitID: "_0101", cellID: "20-23" });
-         // this.recruitUnit(battle, { unitID: "_0101", cellID: "18-23" });
-      }
-
-      if(this.teamID === 2) {
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-27" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-27" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-27" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-29" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-29" });
-      }
-
-      this.socket.emit("updatePop",  this.curPop);
-   }
-   // ***************  Tempory  ***************
 
    initPack_Player() {
       return {
@@ -101,7 +79,7 @@ export class Player {
       const { unitID, cellID } = data;
       const newUnit = this.createNewAgent(battle, unitID, cellID);
 
-      battle.spread("unitRecruited", newUnit);
+      battle.spread("recruitUnit", newUnit);
    }
 
    createNewAgent(
@@ -136,6 +114,31 @@ export class Player {
       this.socket.emit("updatePop", this.curPop);
 
       return newAgent.initPack_Agent();
+   }
+
+
+   // =========================================================================================
+   // TEST
+   // =========================================================================================
+   TEST_Unit(battle: Battle) {
+
+      if(this.teamID === 1) {
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-21" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-21" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-21" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-23" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-23" });
+      }
+
+      if(this.teamID === 2) {
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-27" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-27" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-27" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-29" });
+         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-29" });
+      }
+
+      this.socket.emit("updatePop",  this.curPop);
    }
 
 }

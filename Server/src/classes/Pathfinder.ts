@@ -30,6 +30,7 @@ export class Pathfinder {
    path:        Cell[]             = [];
 
    hasTarget:   boolean            = false;
+   hasPath:     boolean            = false;
 
    emptyCost:   ICost = {
       hCost: 0,
@@ -74,7 +75,7 @@ export class Pathfinder {
       this.path      = [];
    }
 
-   searchPath(cellsList: Map<string, Cell>): boolean {
+   searchPath(cellsList: Map<string, Cell>) {
       
       // ***************************
       // this.startDate_1 = Date.now();
@@ -100,7 +101,7 @@ export class Pathfinder {
          }
       }
 
-      return false;
+      this.hasPath = false;
    }
 
    calcHeuristic(
@@ -180,7 +181,7 @@ export class Pathfinder {
       this.closedSet.add(presentCell);
    }
 
-   foundPath(): boolean {
+   foundPath() {
 
       let goalCell = this.presentCell!;
       this.path.push(goalCell);
@@ -199,7 +200,7 @@ export class Pathfinder {
       this.path.reverse();
       this.nextCell  = this.path[0];
       
-      return true;
+      this.hasPath = true;
    }
 
    // searchVacancy(cellsList: Map<string, Cell>) { // <== Tempory (Need Recast)

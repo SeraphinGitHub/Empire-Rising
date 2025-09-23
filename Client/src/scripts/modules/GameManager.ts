@@ -22,10 +22,6 @@ import {
 
 import { Socket } from "socket.io-client";
 
-const data: any = {
-   pos: {x: 0, y: 0}
-};
-
 
 // =====================================================================
 // Game Manager Class
@@ -136,14 +132,10 @@ export class GameManager {
 
    watchGame() {
 
-      this.socket.on("updatePop",     (data: any) => this.updatePop      (data));
-      this.socket.on("unitRecruited", (data: any) => this.createNewAgent (data));
-      this.socket.on("agentMove",     (data: any) => this.servAgentMove  (data));
-
-      this.socket.on("checkServAgent",     (aze: any) => {
-         data.pos.x = aze.pos.x;
-         data.pos.y = aze.pos.y;
-      });
+      this.socket.on("updatePop",   (data: any) => this.updatePop      (data));
+      this.socket.on("recruitUnit", (data: any) => this.createNewAgent (data));
+      this.socket.on("moveAgent",   (data: any) => this.setAgentTarget (data));
+      this.socket.on("getAgentPos", (data: any) => this.checkAgentPos  (data));
    }
 
    initPlayer(playerPack: any) {
@@ -182,8 +174,8 @@ export class GameManager {
       
 
       // **********************************  Tempory  **********************************
-      // this.TEST_SetWallsList();
-      // this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
+      this.TEST_SetWallsList();
+      this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
       
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
@@ -218,21 +210,9 @@ export class GameManager {
          this.clearCanvas("isometric");
          this.clearCanvas("assets"   );
          
-         this.draw_UnitsAndBuild ();
          this.drawHoverUnit      ();
          this.drawSelectUnit     ();
-
-         // ******************************************************
-         this.Ctx.isometric.fillStyle = "red";
-         this.Ctx.isometric.beginPath();
-         this.Ctx.isometric.arc(
-            data.pos.x,
-            data.pos.y,
-            15, 0, Math.PI *2
-         );
-         this.Ctx.isometric.fill();
-         this.Ctx.isometric.closePath();
-         // ******************************************************
+         this.draw_UnitsAndBuild ();
          
          this.Grid     .update   (this);
          this.Cursor   .update   (this);
@@ -541,38 +521,33 @@ export class GameManager {
       this.unitsList.set(unit.id, newAgent);
    }
 
+   setAgentTarget(data: any) {
 
-
-
-   // *******************************************************
-   servAgentMove(data: any) {
-
-      const { id, pathID }: any = data;
-      
+      const { id, pathID }: any      = data;
       const agent: Agent | undefined = this.unitsList.get(id);
       
       if(!agent) return;
-      
 
-console.log({ msg: "123" }); // ******************************************************
-
-      agent.pathID = pathID;
+      agent.pathID  = pathID;
+      agent.path    = [];
       agent.setNextCell(this.getCell.bind(this));
       agent.setGoalCell(this.getCell.bind(this));
 
-      // agent.miniPath = this.setAgentMiniPath(miniPathID);
+      if(pathID.length === 0) agent.inMovement(false);
 
-      // const targetCell = this.getCell(pathID[0]);
-
-      // if(!targetCell) return;
-      
-      // agent.nextCell = targetCell;
-      // pathID.shift();
-      
+      pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
    }
-   // *******************************************************
 
+   checkAgentPos(data: any) {
 
+      const { id, pos }: any         = data;
+      const agent: Agent | undefined = this.unitsList.get(id);
+      
+      if(!agent) return;
+
+      agent.servPos.x = pos.x;
+      agent.servPos.y = pos.y;
+   }
 
 
    // =========================================================================================
@@ -647,11 +622,13 @@ console.log({ msg: "123" }); // ************************************************
          
                agent.walkPath(this.getCell.bind(this));
                agent.updateAnimState(Frame);
-            
+               
                if(!this.isViewScope(agentPos)) continue;
-            
-               agent.drawSprite(ctx_assets, agentPos, Viewport);
-               // agent.drawCollider(ctx_assets, agentPos, Viewport);
+               
+               // agent.drawPos      (ctx_isometric);
+               agent.drawSprite   (ctx_assets, agentPos, Viewport);
+               // agent.drawCollider (ctx_assets, agentPos, Viewport);
+
                if(this.show_Grid) agent.drawPath(ctx_isometric);
             }
          }
