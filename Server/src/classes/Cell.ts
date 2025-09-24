@@ -1,7 +1,6 @@
 
 import {
    IPosition,
-   ICost,
    ICoordArray,
    INebList,
    ILineList,
@@ -31,7 +30,7 @@ export class Cell {
    
    agentIDset:     Set<number>   = new Set();
    collider:       ILineList     = {};
-   nebStatusList:  INebList      = {};
+   nebStatusList:  INebList      = {}; // { ... top: { id: "0-47", isDiagonal: false }, ... }
    nebCoordList:   ICoordArray   = {
       top:         [ 0, -1,  false], // isDiagonal ==> false
       topRight:    [ 1, -1,  true ], // isDiagonal ==> true
@@ -48,6 +47,7 @@ export class Cell {
    isTargeted:     boolean = false;
    isOverlaped:    boolean = false;
    isTransp:       boolean = false;
+   isNode:         boolean = false;
 
 
    constructor(

@@ -29,7 +29,7 @@ export class Cell {
 
    center:         IPosition     = {x:0, y:0};
    screenPos:      IPosition     = {x:0, y:0};
-   
+
    agentIDset:     Set<number>   = new Set();
    collider:       ILineList     = {};
    nebStatusList:  INebList      = {};
@@ -51,7 +51,8 @@ export class Cell {
    isTransp:       boolean = false;
 
    // ----------- Tempory -----------
-   isDiffTile:  boolean;
+   isDiffTile:     boolean = false;
+   isWall:         boolean = false;
    // ----------- Tempory -----------
 
    constructor(
@@ -72,11 +73,6 @@ export class Cell {
       this.cellPerSide = cellPerSide;
       
       this.init();
-
-
-      // ----------- Tempory -----------
-      this.isDiffTile    = false;
-      // ----------- Tempory -----------
    }
 
    init() {

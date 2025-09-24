@@ -7,6 +7,7 @@ import {
 import { Server, Socket } from "socket.io";
 import { Battle         } from "modules/Battle";
 import { UNIT_STATS     } from "../utils/unitStats";
+import { INumber } from "utils/interfaces";
 
 
 // =====================================================================
@@ -25,6 +26,17 @@ export class Player {
    maxPop:    number = 0;
    curPop:    number = 0;
 
+   ressources: INumber = {
+      food:    100,
+      stone:   50,
+      wood:    75,
+      coal:    200,
+      ironOre: 150,
+      ironBar: 0,
+      goldOre: 60,
+      goldBar: 20,
+   }
+
    constructor(params: any) {
       
       this.id        = params.id;
@@ -38,9 +50,10 @@ export class Player {
 
    initPack_Player() {
       return {
-         name:      this.name,
-         teamID:    this.teamID,
-         teamColor: this.teamColor,
+         name:       this.name,
+         teamID:     this.teamID,
+         teamColor:  this.teamColor,
+         ressources: this.ressources,
       }
    }
 

@@ -138,7 +138,12 @@ export class Cursor {
       }
       
       if(state === "Up") {
-         GM.socket.emit("startAgentPF", { targetArea: this.targetArea, AgentsID_List: GM.setAgentsID_List() });
+
+         GM.socket.emit("startAgentPF", {
+            targetArea:    this.targetArea,
+            AgentsID_List: GM.setAgentsID_List()
+         });
+
          this.isTargeting = false;
       }
    }

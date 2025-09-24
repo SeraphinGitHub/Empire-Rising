@@ -6,12 +6,14 @@ import {
    IPosition,
    ISize,
    ISquare,
+   INumber,
 } from "../utils/interfaces";
 
 import {
    Grid,
    Cell,
    Agent,
+   Node,
 } from "../classes/_Export"
 
 import {
@@ -29,13 +31,18 @@ import { Socket } from "socket.io-client";
 export class GameManager {
 
    UNIT_STATS:       any;
+
    WALLS:            string[]   = [];
    TILES:            string[]   = [];
+   COAL_ORE:         string[]   = [];
+   GOLD_ORE:         string[]   = [];
+   STONE:            string[]   = [];
+   IRON_ORE:         string[]   = [];
 
    Canvas:           ICanvas;
    Ctx:              ICtx;
    socket:           Socket;
-
+   
    lastUpdate:       number     = 0;
    interval:         number     = 0;
    cellSize:         number     = 0;
@@ -50,14 +57,16 @@ export class GameManager {
    COS_45:           number     = 0.707;
    COS_30:           number     = 0.866;
    
+   ressources:       INumber    = {};
    teamID:           number     = 0;
    teamColor:        string     = "";
    name:             string     = "";
 
 
-   unitsList:        Map<number, Agent> = new Map();
+   unitsList:        Map<number, Agent   > = new Map();
    // buildsList:       Map<number, Building> = new Map();
 
+   nodeList:         Set<Node>  = new Set();
    oldSelectList:    Set<Agent> = new Set();
    curSelectList:    Set<Agent> = new Set();
    
@@ -81,14 +90,17 @@ export class GameManager {
    flatG_Img: HTMLImageElement = new Image();
    highG_Img: HTMLImageElement = new Image();
    walls_Img: HTMLImageElement = new Image();
+   ores_Img:  HTMLImageElement = new Image();
 
    flatG_Src: string = "Terrain/Flat_Grass.png";
    highG_Src: string = "Terrain/High_Grass.png";
    walls_Src: string = "Buildings/wall.png";
+   ores_Src:  string = "Ressources/ores.png";
 
    isFlatG_Loaded: boolean = false;
    isHighG_Loaded: boolean = false;
    isWalls_Loaded: boolean = false;
+   isOres_Loaded:  boolean = false;
 
    
    constructor(
@@ -102,6 +114,7 @@ export class GameManager {
       this.flatG_Img.src = this.flatG_Src;
       this.highG_Img.src = this.highG_Src;
       this.walls_Img.src = this.walls_Src;
+      this.ores_Img.src  = this.ores_Src;
       // ***************  Temp  ***************
 
       this.Canvas     = Canvas;
@@ -143,6 +156,7 @@ export class GameManager {
       this.name       = playerPack.name;
       this.teamID     = playerPack.teamID;
       this.teamColor  = playerPack.teamColor;
+      this.ressources = playerPack.ressources;
    }
    
    initGame(battlePack: any) {
@@ -150,8 +164,12 @@ export class GameManager {
       this.interval   = Math.floor(1000 / battlePack.frameRate);
       this.maxPop     = battlePack.maxPop;
       this.UNIT_STATS = battlePack.UNIT_STATS;
-      this.WALLS      = battlePack.WALLS; // ==> Tempory
-      this.TILES      = battlePack.TILES; // ==> Tempory
+      this.WALLS      = battlePack.WALLS;       // ==> Tempory
+      this.TILES      = battlePack.TILES;       // ==> Tempory
+      this.COAL_ORE   = battlePack.COAL_ORE;    // ==> Tempory
+      this.GOLD_ORE   = battlePack.GOLD_ORE;    // ==> Tempory
+      this.STONE      = battlePack.STONE;       // ==> Tempory
+      this.IRON_ORE   = battlePack.IRON_ORE;    // ==> Tempory
    }
 
    initUnits(battlePack: any) {
@@ -174,18 +192,25 @@ export class GameManager {
       
 
       // **********************************  Tempory  **********************************
-      this.TEST_SetWallsList();
+      this.TEST_GenerateTiles(this.WALLS);
+      this.TEST_GenerateTiles(this.COAL_ORE, [ 1, "Coal ore", 15000 ]);
+      this.TEST_GenerateTiles(this.GOLD_ORE, [ 2, "Gold ore",  8000 ]);
+      this.TEST_GenerateTiles(this.IRON_ORE, [ 3, "Iron ore", 10000 ]);
+      this.TEST_GenerateTiles(this.STONE,    [ 4, "Stone",    12000 ]);
+
       this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
       
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
       this.walls_Img.addEventListener("load", () => this.isWalls_Loaded = true);
+      this.ores_Img. addEventListener("load", () => this.isOres_Loaded  = true);
       
       const loadTerrain = setInterval(() => {
          
          if(!this.isFlatG_Loaded
          || !this.isHighG_Loaded
-         || !this.isWalls_Loaded) {
+         || !this.isWalls_Loaded
+         || !this.isOres_Loaded) {
             return;
          }
          
@@ -226,7 +251,11 @@ export class GameManager {
 
       const { x, y                    } = this.Viewport;
       const { curPos, hoverCell       } = this.Cursor;
-      const { curPop, maxPop, gridPos } = this;
+      const {
+         curPop,
+         maxPop,
+         gridPos,
+      } = this;
       
       return {
          curPop,
@@ -608,7 +637,7 @@ export class GameManager {
          isometric: ctx_isometric,
       } = this.Ctx;
 
-      const { Viewport, Frame, walls_Img } = this;
+      const { Viewport, Frame, walls_Img, ores_Img } = this;
 
       for(const cell of this.Grid.occupiedCells) {
 
@@ -634,7 +663,7 @@ export class GameManager {
          }
                   
          // Draw all buildings
-         if(cell.isBlocked) {
+         if(cell.isWall) {
             const cellPos = this.gridPos_toScreenPos(cell.center);
 
             if(!this.isViewScope(cellPos)) continue;
@@ -648,9 +677,17 @@ export class GameManager {
                ctx_assets.restore();
                return;
             }
-
+            
             cell.drawWall(ctx_assets, cellPos, Viewport, walls_Img);
          }
+      }
+
+
+      // Draw all node ressources
+      for(const node of this.nodeList) {
+         const nodePos = this.gridPos_toScreenPos(node.cell.center);
+
+         node.draw(ctx_assets, nodePos, Viewport, ores_Img);
       }
    }
 
@@ -719,18 +756,41 @@ export class GameManager {
       // }
    }
 
-   TEST_SetWallsList () {
+   TEST_GenerateTiles(
+      tilesArray:    string[],
+      nodeValue?:    [number, string, number],
+   ) {
 
-      this.WALLS.forEach((cellID: string) => {
+      tilesArray.forEach((cellID: string) => {
          const cell:     Cell      = this.getCell(cellID)!;
          const { x, y }: IPosition = this.gridPos_toScreenPos(cell.center);
          
+         cell.isWall = true;
+
+         if(nodeValue) {
+
+            cell.isWall = false;
+            const [type, name, quantity] = nodeValue;
+            
+            const newNode = new Node({
+               id: this.nodeList.size,
+               cell,
+               name,
+               type,
+               quantity
+            });
+
+            this.nodeList.add(newNode);
+         }
+
          cell.isBlocked   = true;
          cell.screenPos.x = x;
          cell.screenPos.y = y;
    
          this.Grid.addToOccupiedMap(cell);
       });
+
+      console.log({ message: this.nodeList }); // ******************************************************
    }
    
    TEST_UnitMode     () {

@@ -17,6 +17,10 @@ export interface IAgent {
    [key: number]: Agent,
 }
 
+export interface ICell {
+   [key: string]: Cell,
+}
+
 
 // ==================================================================
 // Lists Interfaces

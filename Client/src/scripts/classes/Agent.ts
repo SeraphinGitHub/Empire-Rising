@@ -15,52 +15,55 @@ import {
 // =====================================================================
 export class Agent {
 
-
-   pathID:  string[]  = [];
-   path:    Cell  []  = [];
-
-
-
-
-   id:          number;
-   teamID:      number;
-   name:        string;
+   id:            number;
+   teamID:        number;
+   name:          string;
    
-   popCost:     number;   
-   health:      number;
-   armor:       number;
-   damages:     number;
-   moveSpeed:   number;
-   buildSpeed:  number;
-   attackSpeed: number;
-   animDelay:   number;
+   popCost:       number;   
+   health:        number;
+   armor:         number;
+   damages:       number;
+   moveSpeed:     number;
+   buildSpeed:    number;
+   attackSpeed:   number;
+   animDelay:     number;
 
-   frameX:      number = 0;
-   frameY:      number = 8;
-   lastFrameY:  number = 8;
-   animState:   number = 0;
+   frameX:        number = 0;
+   frameY:        number = 8;
+   lastFrameY:    number = 8;
+   animState:     number = 0;
+   spriteCount:   number = 4;
 
-   position:    IPosition;
-   servPos:     IPosition = { x:0, y:0 };
-   collider:    INumber;   
-   curCell:     Cell;
-   goalCell:    Cell;   
-   nextCell:    Cell | null = null;   
+   position:      IPosition;
+   servPos:       IPosition = { x:0, y:0 };
+   deltaPos:      IPosition = { x:0, y:0 };
 
-   hasArrived:  boolean = false;
-   isMoving:    boolean = false;
-   isSelected:  boolean = false;
-   isAttacking: boolean = false;
+   collider:      INumber;   
+   curCell:       Cell;
+   goalCell:      Cell;   
+   nextCell:      Cell | null = null;
+   pathID:        string[]  = [];
+   path:          Cell  []  = [];
 
-   img:         HTMLImageElement = new Image();
-   sprites:     INumber = { height: 64, width: 64, offsetY: 25 };
-   bigSprites:  INumber = { height: 64, width: 192 };
+   hasReachNext:  boolean = false;
+   hasArrived:    boolean = false;
+   isMoving:      boolean = false;
+   isSelected:    boolean = false;
+   isAttacking:   boolean = false;
+
+   isGatherable:  boolean = true; // ***************
+   isGathering:   boolean = false; // ***************
+
+   img:           HTMLImageElement = new Image();
+   sprites:       INumber = { height: 64, width: 64, offsetY: 25 };
+   bigSprites:    INumber = { height: 64, width: 192 };
 
    animSpecs = {
-      idle:    { index: 6, spritesNumber: 1  },
-      walk:    { index: 6, spritesNumber: 9  },
-      attack:  { index: 6, spritesNumber: 5  },
-      died:    { index: 1, spritesNumber: 10 },
+      walk:    { index: 6, spritesNumber: 9,  row: 2 },
+      attack:  { index: 6, spritesNumber: 5,  row: 0 }, // ==> Tempory (sprites size different)
+      gather:  { index: 6, spritesNumber: 8,  row: 1 },
+      died:    { index: 1, spritesNumber: 10, row: 5 },
+      idle:    { index: 6, spritesNumber: 1,  row: 2 },
    };
 
    
@@ -123,7 +126,6 @@ export class Agent {
       this.animState = 0;
    }
 
-
    setNextCell(getCell: Function) {
 
       const targetCell: Cell | null = getCell(this.pathID[0]) ?? null;
@@ -138,17 +140,26 @@ export class Agent {
       this.goalCell = goalCell;
    }
 
-   hasReached(cell: Cell): boolean {
+   checkReachedNext(cell: Cell) {
       
       const { x: posX,  y: posY  } = this.position;
       const { x: cellX, y: cellY } = cell.center;
   
       if(posX !== cellX
       || posY !== cellY) {
-         return false;
+         this.hasReachNext = false;
+         return;
       }
       
-      return true;
+      this.hasReachNext = true;
+   }
+
+   gatherRessource() {
+
+      if(!this.isGatherable || !this.isGathering) return;
+
+      this.animState = 3;
+      this.setFacingSide(this.animSpecs.gather.row);
    }
 
    // =========================================================================================
@@ -158,22 +169,27 @@ export class Agent {
 
       if(!this.nextCell) return;
 
-      this.hasArrived = false;
+      this.hasReachNext = false;
+      this.hasArrived   = false;
       this.inMovement(true);
 
       // Moving toward nextCell
       this.moveTo(this.nextCell);
+      this.checkReachedNext(this.nextCell);
 
       // Arrived at nextCell
-      if(!this.hasReached(this.nextCell)) return;
+      if(!this.hasReachNext) return;
 
-      this.hasArrived = true;
+      this.hasReachNext = true;
       this.curCell    = this.nextCell;
       this.setNextCell(getCell);
+      this.checkReachedNext(this.goalCell);
       
-      
-      if(!this.hasReached(this.goalCell)) return;
+      if(!this.hasReachNext) return;
 
+      this.hasArrived = true;
+
+      this.gatherRessource();
       this.inMovement(false);
    }
 
@@ -185,7 +201,12 @@ export class Agent {
       const deltaX = nextX -posX;
       const deltaY = nextY -posY;
 
-      this.setFacingSide(deltaX, deltaY);
+      this.deltaPos = {
+         x: deltaX,
+         y: deltaY,
+      }
+
+      this.setFacingSide(this.animSpecs.walk.row);
 
       const dist = Math.hypot(deltaX,  deltaY);
 
@@ -203,36 +224,13 @@ export class Agent {
       this.position.y += moveY;
    }
 
-   setFacingSide(
-      deltaX: number,
-      deltaY: number
-   ) {
-      
-      const isLeft  = deltaX < 0;
-      const isRight = deltaX > 0;
-      const isUp    = deltaY < 0;
-      const isDown  = deltaY > 0;
-
-      if(isDown)  this.frameY = 11;
-      if(isUp)    this.frameY = 8; // 9
-      if(isLeft)  this.frameY = 9;
-      if(isRight) this.frameY = 8; // 11
-
-      if(isDown && isLeft)  this.frameY = 10;
-      if(isDown && isRight) this.frameY = 11;
-      if(isUp   && isLeft ) this.frameY = 9;
-      if(isUp   && isRight) this.frameY = 8;
-    
-      this.lastFrameY = this.frameY;
-   }
-
 
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
    drawPath(ctx: CanvasRenderingContext2D) {
       
-      if(!this.path.length) return;
+      if(!this.path.length || this.hasArrived) return;
 
       const { path } = this;
 
@@ -314,7 +312,7 @@ export class Agent {
          this.img!,
 
          // Source
-        (this.frameX +this.animState) * width,
+         this.frameX * width,
          this.frameY * height,
          width,
          height,      
@@ -396,19 +394,28 @@ export class Agent {
    // Animation States
    // =========================================================================================
    updateAnimState(frame: number) {
-      const { walk, attack, died, idle } = this.animSpecs;
+
+      const { walk, attack, gather, died, idle } = this.animSpecs;
 
       switch(this.animState) {
 
+         // Walk
          case 1:  this.animation(frame, walk.index,   walk.spritesNumber  );
          break;
-
+         
+         // Attack
          case 2:  this.animation(frame, attack.index, attack.spritesNumber);
          break;
-      
-         case 3:  this.animation(frame, died.index,   died.spritesNumber  );
+         
+         // Gather
+         case 3:  this.animation(frame, gather.index, gather.spritesNumber);
          break;
-
+         
+         // Died
+         case 4:  this.animation(frame, died.index,   died.spritesNumber  );
+         break;
+         
+         // Idle
          default: this.animation(frame, idle.index,   idle.spritesNumber  );
          break;
       }
@@ -428,6 +435,30 @@ export class Agent {
             // if(!this.isAnimable) this.isAnimable = true;
          }
       }
+   }
+
+   setFacingSide(animRow: number) {
+
+      const { x: deltaX, y: deltaY } = this.deltaPos;
+      
+      const isLeft  = deltaX < 0;
+      const isRight = deltaX > 0;
+      const isUp    = deltaY < 0;
+      const isDown  = deltaY > 0;
+
+      const spriteRow = animRow* this.spriteCount;
+
+      if(isUp)    this.frameY = spriteRow +0;
+      if(isLeft)  this.frameY = spriteRow +1;
+      if(isDown)  this.frameY = spriteRow +3;
+      if(isRight) this.frameY = spriteRow +0;
+
+      if(isUp   && isLeft ) this.frameY = spriteRow +1;
+      if(isUp   && isRight) this.frameY = spriteRow +0;
+      if(isDown && isLeft)  this.frameY = spriteRow +2;
+      if(isDown && isRight) this.frameY = spriteRow +3;
+    
+      this.lastFrameY = this.frameY;
    }
    
 }

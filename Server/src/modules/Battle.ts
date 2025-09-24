@@ -9,6 +9,7 @@ import {
 import { Server, Socket } from "socket.io";
 import { UNIT_STATS     } from "../utils/unitStats";
 import dotenv             from "dotenv";
+import { ICell } from "utils/interfaces";
 dotenv.config();
 
 const WALLS: string[] = [
@@ -32,23 +33,23 @@ const WALLS: string[] = [
    "21-11",
    "21-10",
    "21-9",
-
-   "29-20",
-   "30-19",
-   "31-18",
-   "32-17",
+   
    "33-16",
    "34-17",
    "35-18",
    "36-19",
-   "37-20",
-   "36-21",
-   "35-22",
-   "34-23",
-   "33-24",
-   "32-23",
-   "31-22",
-   "30-21",
+   "34-15",
+   "35-14",
+   "36-13",
+   "37-12",
+   "38-13",
+   "39-14",
+   "40-15",
+   "40-15",
+   "39-16",
+   "38-17",
+   "37-18",
+   
 ];
 
 const TILES: string[] = [
@@ -172,6 +173,28 @@ const TILES: string[] = [
    "6-28",
 ];
 
+const COAL_ORE: string[] = [
+   "26-28",
+   "28-42",
+   "33-22",
+];
+
+const GOLD_ORE: string[] = [
+   "32-11",
+   "36-31",
+   "14-32",
+];
+
+const IRON_ORE: string[] = [
+   "24-15",
+   "21-36",
+];
+
+const STONE: string[] = [
+   "15-18",
+   "40-26",
+];
+
 
 // =====================================================================
 // Battle Class
@@ -213,18 +236,11 @@ export class Battle {
       this.setVacantIDsList();
       this.sync();
 
-
-      
-      WALLS.forEach(wallID => {
-
-         const blockedCell: Cell | undefined = this.getCell(wallID);
-         
-         if(!blockedCell) return;
-
-         blockedCell.isBlocked = true;
-      });
-
-
+      this.setCellState(WALLS,    false);
+      this.setCellState(COAL_ORE, true );
+      this.setCellState(GOLD_ORE, true );
+      this.setCellState(IRON_ORE, true );
+      this.setCellState(STONE,    true );
    }
 
    // initPack ==> (Sent to each client)
@@ -243,8 +259,12 @@ export class Battle {
          // buildsList: this.buildsList,
          
          UNIT_STATS,
-         WALLS, // ==> Tempory
-         TILES, // ==> Tempory
+         WALLS,    // ==> Tempory
+         TILES,    // ==> Tempory
+         COAL_ORE, // ==> Tempory
+         GOLD_ORE, // ==> Tempory
+         IRON_ORE, // ==> Tempory
+         STONE,    // ==> Tempory
       }
    }
 
@@ -363,8 +383,36 @@ export class Battle {
             const colID = this.getIndexID(x, width, c, cellSize);
             const cell  = this.getCell(`${colID}-${rowID}`);
 
-            if(!cell || cell.isTargeted || cell.isBlocked || !cell.isVacant) continue;
+            if(!cell
+            || !cell.isVacant
+            ||  cell.isTargeted
+            ||  cell.isBlocked && !cell.isNode) {
+               
+               continue;
+            }
             
+            if(cell.isNode) {
+
+               for(const neb of Object.values(cell.nebStatusList)) {
+                  
+                  const nodeNeb = this.getCell(neb.id)!;
+                  
+                  for(const id of AgentsID_List) {
+                     const agent = this.unitsList.get(id)!;
+                     const { Pathfinder } = agent;
+                     
+                     if(nodeNeb.isTargeted || Pathfinder.hasTarget) continue;
+                     
+                     nodeNeb.isTargeted      = true;
+                     Pathfinder.hasTarget = true;
+                     Pathfinder.goalCell  = nodeNeb;
+                     
+                     sortedUnitList.add(agent);
+                  }
+               }              
+
+               continue;
+            }
             
             // Set all Agents goalCells
             for(const id of AgentsID_List) {
@@ -393,6 +441,22 @@ export class Battle {
             agent.hasUpdated = false;
          }
       }
+   }
+
+   setCellState(
+      cellsArray: string[],
+      isNode:     boolean,   
+   ) {
+
+      cellsArray.forEach(cellID => {
+
+         const cell: Cell | undefined = this.getCell(cellID);
+         
+         if(!cell) return;
+         if(isNode) cell.isNode = true;
+
+         cell.isBlocked = true;
+      });
    }
 
 }

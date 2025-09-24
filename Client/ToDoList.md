@@ -1,15 +1,8 @@
 
 
    - WalkPath agent ==>
-      > server faster than client, with bigger steps
-      > send full path to client agent
-      > server waits for client pos
       > use buffer for data transfer
 
-
-
-
-   - Use server
    - Use mongoDB to save & load
    
    - pathfinder approx when can't reach (inside closed walls for ex.)

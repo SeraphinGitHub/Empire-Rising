@@ -19,36 +19,37 @@ dotenv.config();
 // =====================================================================
 export class Agent {
    
-   id:          number;
-   playerID:    string;
-   teamID:      number;
-   teamColor:   string;
-   name:        string;
-   basePath:    string;
+   id:            number;
+   playerID:      string;
+   teamID:        number;
+   teamColor:     string;
+   name:          string;
+   basePath:      string;
    
-   popCost:     number;
-   health:      number;
-   armor:       number;
-   damages:     number;
+   popCost:       number;
+   health:        number;
+   armor:         number;
+   damages:       number;
 
-   baseSpeed:   number;
-   moveSpeed:   number;
-   buildSpeed:  number;
-   attackSpeed: number;
-   animDelay:   number;
-   lastUpdate:  number = Date.now();
+   baseSpeed:     number;
+   moveSpeed:     number;
+   buildSpeed:    number;
+   attackSpeed:   number;
+   animDelay:     number;
+   lastUpdate:    number = Date.now();
 
-   position:    IPosition;
-   collider:    INumber;
-   oldCell:     Cell | null = null;
-   curCell:     Cell;
+   position:      IPosition;
+   collider:      INumber;
+   oldCell:       Cell | null = null;
+   curCell:       Cell;
    
-   hasUpdated:  boolean = false;
+   hasUpdated:    boolean = false;
 
-   hasArrived:  boolean = true;
-   isMoving:    boolean = false;
-   isSelected:  boolean = false;
-   isAttacking: boolean = false;
+   hasArrived:    boolean = true;
+   hasReachNext:  boolean = true;
+   isMoving:      boolean = false;
+   isSelected:    boolean = false;
+   isAttacking:   boolean = false;
 
    Pathfinder: Pathfinder;
 
@@ -162,16 +163,17 @@ export class Agent {
       if(!nextCell || !goalCell) return;
       
       if(!hasPath) {
-         this.hasArrived = true;
-         this.isMoving   = false;
-         this.position.x = nextCell.center.x;
-         this.position.y = nextCell.center.y;
-         this.hasUpdated = false;
+         this.hasReachNext = true;
+         this.hasArrived   = true;
+         this.isMoving     = false;
+         this.position.x   = nextCell.center.x;
+         this.position.y   = nextCell.center.y;
+         this.hasUpdated   = false;
          return;
       };
       
       this.moveTo(nextCell);
-      this.hasArrived = false;
+      this.hasReachNext = false;
       
       if(!this.hasReached(nextCell)) return;
       

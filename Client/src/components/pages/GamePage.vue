@@ -5,7 +5,7 @@
       <CartCanvas/>
       <IsoCanvas/>
       <Coordinates v-if="isLoaded" :htmlData ="htmlData"/>
-      <ButtonBar/>
+      <ButtonBar :ressources ="ressources"/>
 
    </section>
 </template>
@@ -46,6 +46,7 @@
          Ctx:      {},
          playerName: "",
          teamColor:  "",
+         ressources:  {},
       }},
 
       mounted() {
@@ -88,6 +89,7 @@
             setTimeout(() => {
                this.playerName = this.GManager.name;
                this.teamColor  = this.GManager.teamColor;
+               this.ressources = this.GManager.ressources;
             }, 100);
    
             setInterval(() => this.htmlData = this.GManager.setHtmlData(), 50);
