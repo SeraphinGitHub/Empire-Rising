@@ -326,10 +326,14 @@ export class Agent {
    }
 
    drawSelect(
-      ctx:   CanvasRenderingContext2D,
-      color: string,
+      ctx:      CanvasRenderingContext2D,
+      isSelect: boolean,
    ) {
-   
+      
+      let color = "yellow";
+
+      if(isSelect) color = "cyan";
+
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(

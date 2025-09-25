@@ -108,7 +108,9 @@ export class Cursor {
       }
       
       if(state === "Up") {
-         GM.unitDiselection();
+         GM.clearCanvas("selection");
+         GM.elemDeselection(GM.unitSelectList_old, GM.unitSelectList_cur);
+         GM.elemDeselection(GM.nodeSelectList_old, GM.nodeSelectList_cur);
       }
    }
 
@@ -182,7 +184,9 @@ export class Cursor {
       this.update_TargetArea     (GM);
       this.update_WallsList      (GM);
 
-      GM.unitSelection           ();
+      GM.elemSelection           (GM.unitsList, GM.unitSelectList_cur, true );
+      GM.elemSelection           (GM.nodesList, GM.nodeSelectList_cur, false);
+
       GM.Viewport.mouseScrollCam (GM);
       GM.Viewport.isScrollDetect = true;
    }
@@ -308,11 +312,11 @@ export class Cursor {
 
       const { targetArea, oldPos, areaOptions } = this;
       
-      const { separator               } = areaOptions.target;
-      const { cellSize, oldSelectList } = GM;
-      const { x: oldX,  y: oldY       } = GM.screenPos_toGridPos(oldPos.target.iso);
+      const { separator                    } = areaOptions.target;
+      const { cellSize, unitSelectList_old } = GM;
+      const { x: oldX,  y: oldY            } = GM.screenPos_toGridPos(oldPos.target.iso);
 
-      const unitCount   = oldSelectList.size;
+      const unitCount   = unitSelectList_old.size;
 
       const step        = Math.min (unitCount, separator);
       const range       = Math.ceil(unitCount /step);
@@ -331,14 +335,14 @@ export class Cursor {
 
       if(!this.isTargeting || this.isScollClick) return;
 
-      const { cellSize, gridPos, oldSelectList } = GM;
+      const { cellSize, gridPos, unitSelectList_old } = GM;
       
       const { targetArea, areaOptions } = this;
       const { resizeStep              } = areaOptions.target;
       const { y: oldY,  width, height } = targetArea;
       const { y: curY                 } = gridPos;
       
-      const unitCount   = oldSelectList.size;
+      const unitCount   = unitSelectList_old.size;
       const cellSize_2x = cellSize *2;
       const resizeDist  = curY -oldY;
       const isExpanding = resizeDist > 0;

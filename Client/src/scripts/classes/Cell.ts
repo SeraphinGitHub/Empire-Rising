@@ -28,7 +28,6 @@ export class Cell {
    cellPerSide:    number;
 
    center:         IPosition     = {x:0, y:0};
-   screenPos:      IPosition     = {x:0, y:0};
 
    agentIDset:     Set<number>   = new Set();
    collider:       ILineList     = {};

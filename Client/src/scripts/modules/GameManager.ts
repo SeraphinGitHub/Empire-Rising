@@ -30,77 +30,81 @@ import { Socket } from "socket.io-client";
 // =====================================================================
 export class GameManager {
 
-   UNIT_STATS:       any;
+   UNIT_STATS:             any;
 
-   WALLS:            string[]   = [];
-   TILES:            string[]   = [];
-   COAL_ORE:         string[]   = [];
-   GOLD_ORE:         string[]   = [];
-   STONE:            string[]   = [];
-   IRON_ORE:         string[]   = [];
+   WALLS:                  string[]   = [];
+   TILES:                  string[]   = [];
+   COAL_ORE:               string[]   = [];
+   GOLD_ORE:               string[]   = [];
+   STONE:                  string[]   = [];
+   IRON_ORE:               string[]   = [];
 
-   Canvas:           ICanvas;
-   Ctx:              ICtx;
-   socket:           Socket;
+   Canvas:                 ICanvas;
+   Ctx:                    ICtx;
+   socket:                 Socket;
    
-   lastUpdate:       number     = 0;
-   interval:         number     = 0;
-   cellSize:         number     = 0;
-   gridSize:         number     = 0;
-   halfGrid:         number     = 0;
-   maxPop:           number     = 0;
-   curPop:           number     = 0;
+   lastUpdate:             number     = 0;
+   interval:               number     = 0;
+   cellSize:               number     = 0;
+   gridSize:               number     = 0;
+   halfGrid:               number     = 0;
+   maxPop:                 number     = 0;
+   curPop:                 number     = 0;
 
    // Constants ==> Do not modify
-   Frame:            number     = 0;
-   ViewAngle:        number     = 0;
-   COS_45:           number     = 0.707;
-   COS_30:           number     = 0.866;
+   Frame:                  number     = 0;
+   ViewAngle:              number     = 0;
+   COS_45:                 number     = 0.707;
+   COS_30:                 number     = 0.866;
    
-   ressources:       INumber    = {};
-   teamID:           number     = 0;
-   teamColor:        string     = "";
-   name:             string     = "";
+   ressources:             INumber    = {};
+   teamID:                 number     = -1;
+   teamColor:              string     = "";
+   name:                   string     = "";
 
-
-   unitsList:        Map<number, Agent   > = new Map();
-   // buildsList:       Map<number, Building> = new Map();
-
-   nodeList:         Set<Node>  = new Set();
-   oldSelectList:    Set<Agent> = new Set();
-   curSelectList:    Set<Agent> = new Set();
+   unitsList:              Map<number, Agent>    = new Map();
+   unitSelectList_old:     Set<Agent>            = new Set();
+   unitSelectList_cur:     Set<Agent>            = new Set();
    
-   gridPos:          IPosition  = {x:0, y:0};
-   terrainPos:       IPosition  = {x:0, y:0};
-   viewfieldPos:     IPosition  = {x:0, y:0};
+   nodesList:              Map<number, Node>     = new Map();
+   nodeSelectList_old:     Set<Node>             = new Set();
+   nodeSelectList_cur:     Set<Node>             = new Set();
+   
+   // buildsList:             Map<number, Building> = new Map();
+   // buildSelectList_old:    Set<Building>         = new Set();
+   // buildSelectList_cur:    Set<Building>         = new Set();
+   
+   gridPos:                IPosition  = {x:0, y:0};
+   terrainPos:             IPosition  = {x:0, y:0};
+   viewfieldPos:           IPosition  = {x:0, y:0};
 
-   show_Grid:        boolean    = true;
-   show_VP:          boolean    = false;
-   isWallMode:       boolean    = false;
-   isUnitMode:       boolean    = false;
+   show_Grid:              boolean    = true;
+   show_VP:                boolean    = false;
+   isWallMode:             boolean    = false;
+   isUnitMode:             boolean    = false;
    
    // Classes instances
-   Grid:             Grid;
-   Cursor:           Cursor;
-   Viewport:         Viewport;
-   Collision:        Collision;
+   Grid:                   Grid;
+   Cursor:                 Cursor;
+   Viewport:               Viewport;
+   Collision:              Collision;
    
 
    // Images & Sources ==> Need to move in a dedicated class later 
-   flatG_Img: HTMLImageElement = new Image();
-   highG_Img: HTMLImageElement = new Image();
-   walls_Img: HTMLImageElement = new Image();
-   ores_Img:  HTMLImageElement = new Image();
+   flatG_Img:              HTMLImageElement = new Image();
+   highG_Img:              HTMLImageElement = new Image();
+   walls_Img:              HTMLImageElement = new Image();
+   ores_Img:               HTMLImageElement = new Image();
 
-   flatG_Src: string = "Terrain/Flat_Grass.png";
-   highG_Src: string = "Terrain/High_Grass.png";
-   walls_Src: string = "Buildings/wall.png";
-   ores_Src:  string = "Ressources/ores.png";
+   flatG_Src:              string = "Terrain/Flat_Grass.png";
+   highG_Src:              string = "Terrain/High_Grass.png";
+   walls_Src:              string = "Buildings/wall.png";
+   ores_Src:               string = "Ressources/ores.png";
 
-   isFlatG_Loaded: boolean = false;
-   isHighG_Loaded: boolean = false;
-   isWalls_Loaded: boolean = false;
-   isOres_Loaded:  boolean = false;
+   isFlatG_Loaded:         boolean = false;
+   isHighG_Loaded:         boolean = false;
+   isWalls_Loaded:         boolean = false;
+   isOres_Loaded:          boolean = false;
 
    
    constructor(
@@ -235,9 +239,11 @@ export class GameManager {
          this.clearCanvas("isometric");
          this.clearCanvas("assets"   );
          
-         this.drawHoverUnit      ();
-         this.drawSelectUnit     ();
          this.draw_UnitsAndBuild ();
+         this.drawHover          (this.unitSelectList_cur);
+         this.drawSelectElem     (this.unitSelectList_old);
+         this.drawHover          (this.nodeSelectList_cur);
+         this.drawSelectElem     (this.nodeSelectList_old);
          
          this.Grid     .update   (this);
          this.Cursor   .update   (this);
@@ -419,7 +425,7 @@ export class GameManager {
    // =========================================================================================
    // Methods
    // =========================================================================================
-   updatePop(data: any) {
+   updatePop       (data: any) {
       
       if(typeof(data) == "number") this.curPop = data;
    }
@@ -428,7 +434,7 @@ export class GameManager {
 
       let agentsID_List = [];
 
-      for(const agent of this.oldSelectList) {
+      for(const agent of this.unitSelectList_old) {
 
          agentsID_List.push( agent.id );
       }
@@ -436,89 +442,103 @@ export class GameManager {
       return agentsID_List;
    }
 
-   getCell           (id: string): Cell | undefined {
+   getCell         (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
 
-   setAgentCollider  (agent: Agent): ICircle {
+   setElemCollider (elem: Agent | Node): ICircle {
 
-      const { x: agentX, y: agentY  } = this.gridPos_toScreenPos(agent.position);
-      const { x: vpX,    y: vpY     } = this.Viewport;
-      const { radius,       offsetY } = agent.collider;
+      const { x: elemX, y: elemY } = this.gridPos_toScreenPos(elem.position);
+      const { x: vpX,   y: vpY   } = this.Viewport;
+      const { radius,   offsetY  } = elem.collider;
 
       return {
-         x: agentX -vpX,
-         y: agentY -vpY +offsetY,
+         x: elemX -vpX,
+         y: elemY -vpY +offsetY,
          radius,
       };
    }
 
-   unitSelection     () {
+   elemSelection   (
+      elemList:   Map<number, any>,
+      curList:    Set<any>,
+      isUnitType: boolean,
+   ) {
+
       const { isSelecting, selectArea, curPos } = this.Cursor;
 
-      // If collide with mouse or select area ==> Add agent to CurrentList
-      for(const [, agent] of this.unitsList) {
-         const agentCol = this.setAgentCollider(agent);
-         
-         if(isSelecting
-         && this.Collision.square_toCircle(selectArea,  agentCol) 
-         || this.Collision.point_toCircle (curPos.cart, agentCol)) {
-            
-            if(agent.teamID === this.teamID) this.curSelectList.add(agent);
+      // If collide with mouse or select area ==> Add elem to CurrentList
+      for(const [, elem] of elemList) {
+         const elemCol = this.setElemCollider(elem);
+
+         const isHovered =
+            this.Collision.point_toCircle(curPos.cart, elemCol)
+
+            ||(isUnitType
+            && isSelecting
+            && this.Collision.square_toCircle(selectArea, elemCol))
+         ;
+
+         if(isHovered && elem.teamID === this.teamID) {
+            curList.add(elem);
          }
-         else this.curSelectList.delete(agent);
+         else curList.delete(elem);
       }
    }
 
-   unitDiselection   () {
-
-      this.clearCanvas("selection");
+   elemDeselection (
+      oldList: Set<any>,
+      curList: Set<any>,
+   ) {
       
-      // If OldList === Empty ==> Set OldList
-      if(this.oldSelectList.size === 0) {
-         
-         for(const agent of this.curSelectList) {
-            agent.isSelected = true;
-            this.oldSelectList.add(agent);
+      // Case 1: if oldList is empty ==> transfer everything from curList
+      if(oldList.size === 0) {
+
+         for(const elem of curList) {
+            elem.isSelected = true;
+            oldList.add(elem);
          }
 
-         this.curSelectList.clear();
+         curList.clear();
+         return;
       }
 
 
-      // If OldList !== Empty && CurrentList !== Empty
-      else if(this.curSelectList.size !== 0) {
+      // Case 2: if curList is not empty ==> update differences
+      if(curList.size !== 0) {
 
-         // Remove old selected agents
-         for(const agent of this.oldSelectList) {
+         // Remove deselected elems
+         for(const elem of oldList) {
 
-            if(this.curSelectList.has(agent)) continue;
+            if(curList.has(elem)) continue;
 
-            agent.isSelected = false;
-            this.oldSelectList.delete(agent);
+            elem.isSelected = false;
+            oldList.delete(elem);
          }
 
-         // Add new selected agents
-         for(const agent of this.curSelectList) {
+         // Add new selected elems
+         for(const elem of curList) {
 
-            agent.isSelected = true;
-            this.oldSelectList.add(agent);
-            this.curSelectList.delete(agent);
+            elem.isSelected = true;
+            oldList.add(elem);
+            curList.delete(elem);
          }
+
+         return;
       }
 
 
-      // If OldList === Empty && CurrentList !== Empty
-      else for(const agent of this.oldSelectList) {
+      // Case 3: if oldList not empty, but curList is empty ==> clear all
+      for(const elem of oldList) {
          
-         if(!agent.isSelected) continue;
-
-         agent.isSelected = false;
-         this.oldSelectList.delete(agent);
+         if(!elem.isSelected) continue;
+         
+         elem.isSelected = false;
+         oldList.delete(elem);
       }
    }
 
-   createNewAgent(unit: any) {
+   createNewAgent  (unit: any) {
 
       const curCell = this.getCell(unit.curCellID)!;
 
@@ -550,7 +570,7 @@ export class GameManager {
       this.unitsList.set(unit.id, newAgent);
    }
 
-   setAgentTarget(data: any) {
+   setAgentTarget  (data: any) {
 
       const { id, pathID }: any      = data;
       const agent: Agent | undefined = this.unitsList.get(id);
@@ -567,7 +587,7 @@ export class GameManager {
       pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
    }
 
-   checkAgentPos(data: any) {
+   checkAgentPos   (data: any) {
 
       const { id, pos }: any         = data;
       const agent: Agent | undefined = this.unitsList.get(id);
@@ -582,38 +602,42 @@ export class GameManager {
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawSelectUnit    () { // ==> Recast later with good selected halo
+   drawSelectElem    (
+      oldList: Set<any>,
+   ) {
       
-      if(this.oldSelectList.size === 0 ) return;
+      if(oldList.size === 0 ) return;
 
-      for(const agent of this.oldSelectList) {
-         const agentPos = this.gridPos_toScreenPos(agent.position);
+      for(const elem of oldList) {
+         const elemPos = this.gridPos_toScreenPos(elem.position);
    
-         if(!this.isViewScope(agentPos)) return;
+         if(!this.isViewScope(elemPos)) return;
    
-         agent.drawSelect(this.Ctx.isometric, "yellow");
+         elem.drawSelect(this.Ctx.isometric, true);
       }
    }
-   
-   drawHoverUnit     () {  // ==> Recast later with some agent infos
 
-      if(this.curSelectList.size === 0 ) return;
+   drawHover(
+      selectList: Set<Agent> | Set<Node>,
+   ) {
+
+      if(selectList.size === 0 ) return;
 
       const {
          assets:    ctx_assets,
          isometric: ctx_isometric,
       } = this.Ctx;
 
-      for(const agent of this.curSelectList) {
-         const agentPos = this.gridPos_toScreenPos(agent.position);
+      for(const elem of selectList) {
+         const elemPos = this.gridPos_toScreenPos(elem.position);
          
-         if(!this.isViewScope(agentPos)) return;
+         if(!this.isViewScope(elemPos)) return;
          
-         agent.drawSelect(ctx_isometric, "blue");
-         agent.drawInfos (ctx_assets, agentPos, this.Viewport);
+         elem.drawSelect(ctx_isometric, false);
+         elem.drawInfos (ctx_assets, elemPos, this.Viewport);
       }
    }
-   
+
    drawTerrain       () {   // ==> Tempory until WFC terrain generation
 
       for(const [, cell] of this.Grid.cellsList) {
@@ -630,7 +654,7 @@ export class GameManager {
       }
    }
 
-   draw_UnitsAndBuild() {
+   draw_UnitsAndBuild() {  // ==> Tempory (need big recast later)
 
       const {
          assets:    ctx_assets,
@@ -684,7 +708,7 @@ export class GameManager {
 
 
       // Draw all node ressources
-      for(const node of this.nodeList) {
+      for(const [, node] of this.nodesList) {
          const nodePos = this.gridPos_toScreenPos(node.cell.center);
 
          node.draw(ctx_assets, nodePos, Viewport, ores_Img);
@@ -763,7 +787,6 @@ export class GameManager {
 
       tilesArray.forEach((cellID: string) => {
          const cell:     Cell      = this.getCell(cellID)!;
-         const { x, y }: IPosition = this.gridPos_toScreenPos(cell.center);
          
          cell.isWall = true;
 
@@ -773,24 +796,22 @@ export class GameManager {
             const [type, name, quantity] = nodeValue;
             
             const newNode = new Node({
-               id: this.nodeList.size,
+               id:       this.nodesList.size,
+               teamID:   this.teamID,
+               position: cell.center,
                cell,
                name,
                type,
                quantity
             });
 
-            this.nodeList.add(newNode);
+            this.nodesList.set(newNode.id, newNode);
          }
 
-         cell.isBlocked   = true;
-         cell.screenPos.x = x;
-         cell.screenPos.y = y;
+         cell.isBlocked = true;
    
          this.Grid.addToOccupiedMap(cell);
       });
-
-      console.log({ message: this.nodeList }); // ******************************************************
    }
    
    TEST_UnitMode     () {
