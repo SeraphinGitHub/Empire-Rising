@@ -82,14 +82,15 @@ export class Agent {
    }
 
 
-   initPack_Agent() {
+   initPack() {
       return {
          id:            this.id,
          playerID:      this.playerID,
          teamID:        this.teamID,
          teamColor:     this.teamColor,
          popCost:       this.popCost,
-         curCellID:     this.curCell.id,
+         cellID:        this.curCell.id,
+         name:          this.name,
          position:      this.position,
          collider:      this.collider,
          health:        this.health,

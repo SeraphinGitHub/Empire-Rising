@@ -68,7 +68,6 @@ export class Agent {
 
    
    constructor(params: any) {
-      const { stats } = params;
 
       this.id          = params.id;
       this.teamID      = params.teamID;
@@ -76,18 +75,18 @@ export class Agent {
       this.curCell     = params.curCell;
       this.goalCell    = params.curCell;
       
-      this.name        = stats.name;
-      this.collider    = stats.collider;
-      this.popCost     = stats.popCost;
-      this.health      = stats.health;
-      this.armor       = stats.armor;
-      this.damages     = stats.damages;
-      this.moveSpeed   = stats.moveSpeed;
-      this.buildSpeed  = stats.buildSpeed;
-      this.attackSpeed = stats.attackSpeed;
-      this.animDelay   = stats.animDelay;
+      this.name        = params.name;
+      this.collider    = params.collider;
+      this.popCost     = params.popCost;
+      this.health      = params.health;
+      this.armor       = params.armor;
+      this.damages     = params.damages;
+      this.moveSpeed   = params.moveSpeed;
+      this.buildSpeed  = params.buildSpeed;
+      this.attackSpeed = params.attackSpeed;
+      this.animDelay   = params.animDelay;
 
-      this.setImageSource(stats.basePath, params.teamColor);
+      this.setImageSource(params.basePath, params.teamColor);
    }
 
    initPack() {

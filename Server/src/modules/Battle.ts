@@ -1,199 +1,222 @@
 
 import {
-   Grid,
-   Cell,
-   Player,
    Agent,
+   Building,
+   Cell,
+   Grid,
+   Node,
+   Player,
 } from "../classes/_Export";
 
-import { Server, Socket } from "socket.io";
+import { BUILD_STATS    } from "../utils/buildStats";
 import { UNIT_STATS     } from "../utils/unitStats";
+import { NODE_STATS     } from "../utils/nodeStats";
+
+import { Server, Socket } from "socket.io";
 import dotenv             from "dotenv";
-import { ICell } from "utils/interfaces";
 dotenv.config();
 
-const WALLS: string[] = [
-   "9-21",
-   "9-23",
-   "9-25",
 
-   "21-8",
-   "22-8",
-   "23-8",
-   "24-8",
-   "25-8",
-   "25-9",
-   "25-10",
-   "25-11",
-   "25-12",
-   "24-12",
-   "23-12",
-   "22-12",
-   "21-12",
-   "21-11",
-   "21-10",
-   "21-9",
-   
-   "33-16",
-   "34-17",
-   "35-18",
-   "36-19",
-   "34-15",
-   "35-14",
-   "36-13",
-   "37-12",
-   "38-13",
-   "39-14",
-   "40-15",
-   "40-15",
-   "39-16",
-   "38-17",
-   "37-18",
-   
-];
+const TILES = {
+   highGrass: [
+      "6-9",
+      "6-10",
+      "7-9",
+      "7-8",
+      "6-8",
+      "5-9",
+      "5-8",
+      "5-10",
+      "7-10",
+      "8-9",
+      "8-8",
+      "9-8",
+      "9-7",
+      "10-7",
+      "8-7",
+      "9-6",
+      "5-11",
+      "4-11",
+      "4-10",
+      "3-10",
+      "4-9",
+      "6-7",
+      "7-11",
+      "8-10",
+      "4-12",
+      "3-11",
+      "13-13",
+      "13-14",
+      "12-13",
+      "11-12",
+      "12-11",
+      "8-23",
+      "9-24",
+      "10-24",
+      "11-24",
+      "13-26",
+      "13-27",
+      "14-27",
+      "14-28",
+      "15-28",
+      "16-27",
+      "17-26",
+      "19-13",
+      "19-14",
+      "19-15",
+      "18-13",
+      "23-7",
+      "24-8",
+      "25-9",
+      "26-10",
+      "26-11",
+      "24-8",
+      "22-7",
+      "17-4",
+      "18-4",
+      "18-5",
+      "17-5",
+      "16-3",
+      "17-3",
+      "16-4",
+      "15-3",
+      "16-2",
+      "31-4",
+      "32-4",
+      "33-4",
+      "33-4",
+      "33-5",
+      "32-5",
+      "33-6",
+      "33-3",
+      "34-4",
+      "25-23",
+      "26-24",
+      "27-25",
+      "28-26",
+      "28-27",
+      "28-29",
+      "27-30",
+      "26-30",
+      "26-31",
+      "25-31",
+      "24-31",
+      "27-26",
+      "28-25",
+      "29-26",
+      "29-26",
+      "29-28",
+      "29-27",
+      "29-29",
+      "25-23",
+      "25-23",
+      "25-24",
+      "26-25",
+      "27-24",
+      "29-25",
+      "28-30",
+      "27-30",
+      "27-31",
+      "30-27",
+      "22-27",
+      "21-28",
+      "21-29",
+      "20-30",
+      "19-30",
+      "20-29",
+      "20-29",
+      "19-31",
+      "20-31",
+      "18-29",
+      "18-30",
+      "22-29",
+      "4-28",
+      "5-28",
+      "5-29",
+      "6-29",
+      "7-29",
+      "6-30",
+      "6-28",
+   ],
+}
 
-const TILES: string[] = [
-   "6-9",
-   "6-10",
-   "7-9",
-   "7-8",
-   "6-8",
-   "5-9",
-   "5-8",
-   "5-10",
-   "7-10",
-   "8-9",
-   "8-8",
-   "9-8",
-   "9-7",
-   "10-7",
-   "8-7",
-   "9-6",
-   "5-11",
-   "4-11",
-   "4-10",
-   "3-10",
-   "4-9",
-   "6-7",
-   "7-11",
-   "8-10",
-   "4-12",
-   "3-11",
-   "13-13",
-   "13-14",
-   "12-13",
-   "11-12",
-   "12-11",
-   "8-23",
-   "9-24",
-   "10-24",
-   "11-24",
-   "13-26",
-   "13-27",
-   "14-27",
-   "14-28",
-   "15-28",
-   "16-27",
-   "17-26",
-   "19-13",
-   "19-14",
-   "19-15",
-   "18-13",
-   "23-7",
-   "24-8",
-   "25-9",
-   "26-10",
-   "26-11",
-   "24-8",
-   "22-7",
-   "17-4",
-   "18-4",
-   "18-5",
-   "17-5",
-   "16-3",
-   "17-3",
-   "16-4",
-   "15-3",
-   "16-2",
-   "31-4",
-   "32-4",
-   "33-4",
-   "33-4",
-   "33-5",
-   "32-5",
-   "33-6",
-   "33-3",
-   "34-4",
-   "25-23",
-   "26-24",
-   "27-25",
-   "28-26",
-   "28-27",
-   "28-29",
-   "27-30",
-   "26-30",
-   "26-31",
-   "25-31",
-   "24-31",
-   "27-26",
-   "28-25",
-   "29-26",
-   "29-26",
-   "29-28",
-   "29-27",
-   "29-29",
-   "25-23",
-   "25-23",
-   "25-24",
-   "26-25",
-   "27-24",
-   "29-25",
-   "28-30",
-   "27-30",
-   "27-31",
-   "30-27",
-   "22-27",
-   "21-28",
-   "21-29",
-   "20-30",
-   "19-30",
-   "20-29",
-   "20-29",
-   "19-31",
-   "20-31",
-   "18-29",
-   "18-30",
-   "22-29",
-   "4-28",
-   "5-28",
-   "5-29",
-   "6-29",
-   "7-29",
-   "6-30",
-   "6-28",
-];
+const BUILDINGS = {
+   wall: [
+      "9-21",
+      "9-23",
+      "9-25",
 
-const COAL_ORE: string[] = [
-   "26-28",
-   "28-42",
-   "33-22",
-];
+      "21-8",
+      "22-8",
+      "23-8",
+      "24-8",
+      "25-8",
+      "25-9",
+      "25-10",
+      "25-11",
+      "25-12",
+      "24-12",
+      "23-12",
+      "22-12",
+      "21-12",
+      "21-11",
+      "21-10",
+      "21-9",
+      
+      "33-16",
+      "34-17",
+      "35-18",
+      "36-19",
+      "34-15",
+      "35-14",
+      "36-13",
+      "37-12",
+      "38-13",
+      "39-14",
+      "40-15",
+      "40-15",
+      "39-16",
+      "38-17",
+      "37-18",
+   ],
+}
 
-const GOLD_ORE: string[] = [
-   "32-11",
-   "36-31",
-   "14-32",
-];
+const NODES = {
+   coal: [
+      "26-28",
+      "28-42",
+      "33-22",
+   ],
 
-const IRON_ORE: string[] = [
-   "24-15",
-   "21-36",
-];
+   gold: [
+      "32-11",
+      "36-31",
+      "14-32",
+   ],
 
-const STONE: string[] = [
-   "15-18",
-   "40-26",
-];
+   iron: [
+      "24-15",
+      "21-36",
+   ],
+
+   stone: [
+      "15-18",
+      "40-26",
+   ],
+
+   tree: [
+      "14-10",
+      "11-11",
+      "12-12",
+      "13-11",
+      "13-12",
+      "14-12",
+      "14-13",
+      "08-16",
+      "08-18",
+      "06-18",
+   ]
+}
 
 
 // =====================================================================
@@ -206,13 +229,11 @@ export class Battle {
    private Room:     Server;
    id:               string;
 
-   playersID_Set:    Set<string> = new Set();
+   playersID_Set:    Set<string>           = new Set();
    unitsList:        Map<number, Agent   > = new Map();
-   // buildsList:       Map<number, Building> = new Map();
+   nodesList:        Map<number, Node    > = new Map();
+   buildsList:       Map<number, Building> = new Map();
 
-   cellSize:         number   = 40;
-   gridSize:         number;
-   halfGrid:         number;
    battleMaxPop:     number;
    curPop:           number   = 0;
    vacantIDsList:    number[] = [];
@@ -223,48 +244,36 @@ export class Battle {
       
       this.Room         = params.ServerIO.to(params.id);
       this.id           = params.id;
-      this.gridSize     = params.gridSize;
       this.battleMaxPop = params.maxPop;
-      this.halfGrid     = this.gridSize *0.5;
 
-      this.Grid         = new Grid(this);
+      this.Grid         = new Grid(params);
 
       this.init();
    }
 
    init() {
       this.setVacantIDsList();
+      this.setServerList(this.nodesList,  NODE_STATS,  NODES,     "node"    );
+      this.setServerList(this.buildsList, BUILD_STATS, BUILDINGS, "building");
+      
       this.sync();
-
-      this.setCellState(WALLS,    false);
-      this.setCellState(COAL_ORE, true );
-      this.setCellState(GOLD_ORE, true );
-      this.setCellState(IRON_ORE, true );
-      this.setCellState(STONE,    true );
    }
-
+   
    // initPack ==> (Sent to each client)
-   initPack_Grid() {
-      return {
-         cellSize:   this.cellSize,
-         gridSize:   this.gridSize,
-      }
-   }
-
-   initPack_Battle() {
+   initPack() {
       return {
          frameRate:  Number(process.env.CLIENT_FRAME_RATE),
          maxPop:     this.setPlayerMaxPop(),
-         unitsList:  this.setClient_UnitsList(),
-         // buildsList: this.buildsList,
+
+         // unitsList:  this.setClientList(this.unitsList),
+         nodesList:  this.setClientList(this.nodesList),
+         buildsList: this.setClientList(this.buildsList),
          
+         BUILD_STATS,
          UNIT_STATS,
-         WALLS,    // ==> Tempory
+         NODE_STATS,
+
          TILES,    // ==> Tempory
-         COAL_ORE, // ==> Tempory
-         GOLD_ORE, // ==> Tempory
-         IRON_ORE, // ==> Tempory
-         STONE,    // ==> Tempory
       }
    }
 
@@ -353,19 +362,76 @@ export class Battle {
       }
    }
 
-   setClient_UnitsList() {
-      let cl_UnitsList = [];
+   setClientList(elemList: Map<number, any>) {
+      let tempList: any = [];
 
-      for(const [, unit] of this.unitsList) {
-         cl_UnitsList.push(unit.initPack_Agent());
+      for(const [, elem] of elemList) {
+
+         tempList.push( elem.initPack() );
       }
       
-      return cl_UnitsList;
+      return tempList;
+   }
+
+   setServerList(
+      elemList:   Map<number, any>,
+      ELEM_STATS: {[key: string]: any},
+      ELEM:       {[key: string]: any},
+      type:       string,
+   ) {
+
+      for(const [elemName, elemStats] of Object.entries(ELEM_STATS) ) {
+         for(const [keyName, cellID_Array] of Object.entries(ELEM) ) {
+         
+            if(elemName !== keyName) continue;
+
+            for(const cellID of cellID_Array) {
+               
+               const elemCell = this.getCell(cellID);
+
+               if(!elemCell) continue;
+
+               let newElem;
+
+               if(type === "node") {
+                  newElem = new Node({
+                     id:         elemList.size,
+                     position:   elemCell.center,
+                     cellID:     elemCell.id,
+                     ...elemStats,
+                     baseAmount: elemStats.amount,
+                  });
+                  
+                  elemCell.isNode = true;
+               }
+               
+               if(type === "building") {
+                  newElem = new Building({
+                     id:         elemList.size,
+                     position:   elemCell.center,
+                     cellID:     elemCell.id,
+                     teamID:     1,
+                     ...elemStats,
+                     baseHealth: elemStats.health,
+                  });
+
+                  elemCell.isBuilding = true;
+               }
+
+               if(!newElem) continue;
+
+               elemList.set(newElem.id, newElem);
+               
+               elemCell.isVacant  = false;
+               elemCell.isBlocked = true;
+            }
+         }
+      }
    }
 
    startAgentPF(data: any) {
 
-      const { Grid, cellSize            } = this;
+      const { cellSize, cellsList       } = this.Grid;
       const { targetArea, AgentsID_List } = data;
       const { x, y, width, height       } = targetArea;
 
@@ -391,6 +457,11 @@ export class Battle {
                continue;
             }
             
+
+
+            // ********************************************************************
+            // ********************************************************************
+
             if(cell.isNode) {
 
                for(const neb of Object.values(cell.nebStatusList)) {
@@ -413,6 +484,12 @@ export class Battle {
 
                continue;
             }
+
+            // ********************************************************************
+            // ********************************************************************
+
+
+
             
             // Set all Agents goalCells
             for(const id of AgentsID_List) {
@@ -433,7 +510,7 @@ export class Battle {
       // Start all Agents search path
       for(const agent of sortedUnitList) {
          
-         agent.Pathfinder.searchPath(Grid.cellsList);
+         agent.Pathfinder.searchPath(cellsList);
 
          if(agent.Pathfinder.hasPath) {
             
@@ -441,22 +518,6 @@ export class Battle {
             agent.hasUpdated = false;
          }
       }
-   }
-
-   setCellState(
-      cellsArray: string[],
-      isNode:     boolean,   
-   ) {
-
-      cellsArray.forEach(cellID => {
-
-         const cell: Cell | undefined = this.getCell(cellID);
-         
-         if(!cell) return;
-         if(isNode) cell.isNode = true;
-
-         cell.isBlocked = true;
-      });
    }
 
 }

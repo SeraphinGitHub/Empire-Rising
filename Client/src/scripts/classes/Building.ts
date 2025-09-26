@@ -6,34 +6,40 @@ import {
 
 
 // =====================================================================
-// Node Class
+// Building Class
 // =====================================================================
-export class Node {
+export class Building {
 
-   id:          number;
-   teamID:      number;
-   position:    IPosition;
-   
-   name:        string;
-   type:        number;
-   amount:      number;
-   
-   collider:    INumber;
+   id:            number;
+   name:          string;
+   position:      IPosition;
 
-   isSelected:  boolean = false;
+   collider:      INumber;
+   
+   type:          number;
+   teamID:        number;
+   buildTime:     number;
+   health:        number;
+   baseHealth:    number;
+
+   color:         string;
+
+   isSelected:    boolean = false;
 
 
    constructor(params: any) {
-      
-      this.id        = params.id;
-      this.teamID    = params.teamID;
-      this.position  = params.position;
-      this.name      = params.name;
-      this.type      = params.type;
-      this.amount    = params.amount;
-      this.collider  = params.collider;
-   }
 
+      this.id           = params.id;
+      this.name         = params.name;
+      this.position     = params.position;
+      this.collider     = params.collider;
+      this.type         = params.type;
+      this.teamID       = params.teamID;
+      this.buildTime    = params.buildTime;
+      this.health       = params.health;
+      this.baseHealth   = params.baseHealth;
+      this.color        = params.color;
+   }
 
    draw(
       ctx:   CanvasRenderingContext2D,
@@ -101,12 +107,13 @@ export class Node {
       ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
       ctx.fillRect(x -50, y -90, 100, 45);
 
-      ctx.fillStyle = "yellow";
+      ctx.fillStyle = "cyan";
       ctx.font      = "400 18px Verdana";
       ctx.textAlign = "center";
 
       // Draw ID
       ctx.fillText(`${this.name  }`, x, y -70,);
-      ctx.fillText(`${this.amount}`, x, y -50,);
+      ctx.fillText(`${this.health}`, x, y -50,);
    }
+
 }

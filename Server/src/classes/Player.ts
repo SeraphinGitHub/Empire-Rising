@@ -48,7 +48,7 @@ export class Player {
    }
 
 
-   initPack_Player() {
+   initPack() {
       return {
          name:       this.name,
          teamID:     this.teamID,
@@ -62,9 +62,9 @@ export class Player {
       this.maxPop = battle.setPlayerMaxPop();
    
       this.socket.emit("initBattle", {
-         gridPack:   battle.initPack_Grid  (),
-         battlePack: battle.initPack_Battle(),
-         playerPack: this  .initPack_Player(),
+         gridPack:   battle.Grid.initPack(),
+         battlePack: battle.initPack(),
+         playerPack: this.initPack(),
       });
 
       this.watch(battle);
@@ -126,7 +126,7 @@ export class Player {
 
       this.socket.emit("updatePop", this.curPop);
 
-      return newAgent.initPack_Agent();
+      return newAgent.initPack();
    }
 
 

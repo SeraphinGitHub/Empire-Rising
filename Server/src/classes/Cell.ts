@@ -48,6 +48,7 @@ export class Cell {
    isOverlaped:    boolean = false;
    isTransp:       boolean = false;
    isNode:         boolean = false;
+   isBuilding:     boolean = false;
 
 
    constructor(

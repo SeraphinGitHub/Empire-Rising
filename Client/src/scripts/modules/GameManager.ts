@@ -10,9 +10,10 @@ import {
 } from "../utils/interfaces";
 
 import {
-   Grid,
-   Cell,
    Agent,
+   Building,
+   Cell,
+   Grid,
    Node,
 } from "../classes/_Export"
 
@@ -30,14 +31,11 @@ import { Socket } from "socket.io-client";
 // =====================================================================
 export class GameManager {
 
+   BUILD_STATS:            any;
    UNIT_STATS:             any;
+   NODE_STATS:             any;
 
-   WALLS:                  string[]   = [];
-   TILES:                  string[]   = [];
-   COAL_ORE:               string[]   = [];
-   GOLD_ORE:               string[]   = [];
-   STONE:                  string[]   = [];
-   IRON_ORE:               string[]   = [];
+   TILES:                  any; // ==> Tempory
 
    Canvas:                 ICanvas;
    Ctx:                    ICtx;
@@ -70,9 +68,9 @@ export class GameManager {
    nodeSelectList_old:     Set<Node>             = new Set();
    nodeSelectList_cur:     Set<Node>             = new Set();
    
-   // buildsList:             Map<number, Building> = new Map();
-   // buildSelectList_old:    Set<Building>         = new Set();
-   // buildSelectList_cur:    Set<Building>         = new Set();
+   buildsList:             Map<number, Building> = new Map();
+   buildSelectList_old:    Set<Building>         = new Set();
+   buildSelectList_cur:    Set<Building>         = new Set();
    
    gridPos:                IPosition  = {x:0, y:0};
    terrainPos:             IPosition  = {x:0, y:0};
@@ -90,6 +88,7 @@ export class GameManager {
    Collision:              Collision;
    
 
+   // ***************  Temp  ***************
    // Images & Sources ==> Need to move in a dedicated class later 
    flatG_Img:              HTMLImageElement = new Image();
    highG_Img:              HTMLImageElement = new Image();
@@ -105,6 +104,8 @@ export class GameManager {
    isHighG_Loaded:         boolean = false;
    isWalls_Loaded:         boolean = false;
    isOres_Loaded:          boolean = false;
+   // ***************  Temp  ***************
+
 
    
    constructor(
@@ -138,19 +139,20 @@ export class GameManager {
 
    init({ battlePack, playerPack }: any) {
 
-      this.initPlayer (playerPack);
-      this.initGame   (battlePack);
-      this.initUnits  (battlePack);
-      // this.initBuilds ();
-      this.initMap    ();
+      this.initPlayer    (playerPack);
+      this.initGame      (battlePack);
+      // this.generateList  (battlePack.unitsList,  this.unitsList,  "unit"    );
+      this.generateList  (battlePack.buildsList, this.buildsList, "building");
+      this.generateList  (battlePack.nodesList,  this.nodesList,  "node"    );
+      this.initMap       ();
 
-      this.watchGame  ();
+      this.watchGame     ();
    }
 
    watchGame() {
 
       this.socket.on("updatePop",   (data: any) => this.updatePop      (data));
-      this.socket.on("recruitUnit", (data: any) => this.createNewAgent (data));
+      this.socket.on("recruitUnit", (data: any) => this.createNewElem  (data, this.unitsList, "unit"));
       this.socket.on("moveAgent",   (data: any) => this.setAgentTarget (data));
       this.socket.on("getAgentPos", (data: any) => this.checkAgentPos  (data));
    }
@@ -165,26 +167,12 @@ export class GameManager {
    
    initGame(battlePack: any) {
 
-      this.interval   = Math.floor(1000 / battlePack.frameRate);
-      this.maxPop     = battlePack.maxPop;
-      this.UNIT_STATS = battlePack.UNIT_STATS;
-      this.WALLS      = battlePack.WALLS;       // ==> Tempory
-      this.TILES      = battlePack.TILES;       // ==> Tempory
-      this.COAL_ORE   = battlePack.COAL_ORE;    // ==> Tempory
-      this.GOLD_ORE   = battlePack.GOLD_ORE;    // ==> Tempory
-      this.STONE      = battlePack.STONE;       // ==> Tempory
-      this.IRON_ORE   = battlePack.IRON_ORE;    // ==> Tempory
-   }
-
-   initUnits(battlePack: any) {
-
-      for(const unit of battlePack.unitsList) {
-         this.createNewAgent(unit);
-      }
-   }
-
-   initBuilds() {
-      // this.buildsList = battlePack.buildsList;
+      this.interval     = Math.floor(1000 / battlePack.frameRate);
+      this.maxPop       = battlePack.maxPop;
+      this.BUILD_STATS  = battlePack.BUILD_STATS;
+      this.UNIT_STATS   = battlePack.UNIT_STATS;
+      this.NODE_STATS   = battlePack.NODE_STATS;
+      this.TILES        = battlePack.TILES;       // ==> Tempory
    }
 
    initMap() {
@@ -196,13 +184,7 @@ export class GameManager {
       
 
       // **********************************  Tempory  **********************************
-      this.TEST_GenerateTiles(this.WALLS);
-      this.TEST_GenerateTiles(this.COAL_ORE, [ 1, "Coal ore", 15000 ]);
-      this.TEST_GenerateTiles(this.GOLD_ORE, [ 2, "Gold ore",  8000 ]);
-      this.TEST_GenerateTiles(this.IRON_ORE, [ 3, "Iron ore", 10000 ]);
-      this.TEST_GenerateTiles(this.STONE,    [ 4, "Stone",    12000 ]);
-
-      this.TILES.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
+      this.TILES.highGrass.forEach((ID: string) => this.getCell(ID)!.isDiffTile = true);
       
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
@@ -240,10 +222,13 @@ export class GameManager {
          this.clearCanvas("assets"   );
          
          this.draw_UnitsAndBuild ();
+
          this.drawHover          (this.unitSelectList_cur);
          this.drawSelectElem     (this.unitSelectList_old);
          this.drawHover          (this.nodeSelectList_cur);
          this.drawSelectElem     (this.nodeSelectList_old);
+         this.drawHover          (this.buildSelectList_cur);
+         this.drawSelectElem     (this.buildSelectList_old);
          
          this.Grid     .update   (this);
          this.Cursor   .update   (this);
@@ -459,10 +444,22 @@ export class GameManager {
       };
    }
 
-   elemSelection   (
-      elemList:   Map<number, any>,
-      curList:    Set<any>,
-      isUnitType: boolean,
+   generateList(
+      serverList: {[key: string]: any}[],
+      clientList: Map<number, any>,
+      type:       string,
+   ) {
+
+      for(const initPack of serverList) {
+
+         this.createNewElem(initPack, clientList, type);
+      }
+   }
+
+   elemSelection     (
+      elemList: Map<number, any>,
+      curList:  Set<any>,
+      isPlayer: boolean,
    ) {
 
       const { isSelecting, selectArea, curPos } = this.Cursor;
@@ -474,7 +471,7 @@ export class GameManager {
          const isHovered =
             this.Collision.point_toCircle(curPos.cart, elemCol)
 
-            ||(isUnitType
+            ||(isPlayer
             && isSelecting
             && this.Collision.square_toCircle(selectArea, elemCol))
          ;
@@ -486,7 +483,7 @@ export class GameManager {
       }
    }
 
-   elemDeselection (
+   elemDeselection   (
       oldList: Set<any>,
       curList: Set<any>,
    ) {
@@ -538,39 +535,54 @@ export class GameManager {
       }
    }
 
-   createNewAgent  (unit: any) {
+   createNewElem     (
+      initPack:   any,
+      clientList: Map<number, any>,
+      type:       string,
+   ) {
 
-      const curCell = this.getCell(unit.curCellID)!;
+      const elemCell: Cell | undefined = this.getCell(initPack.cellID);
 
-      const newAgent = new Agent({
-         id:               unit.id,
-         playerID:         unit.playerID,
-         teamID:           unit.teamID,
-         teamColor:        unit.teamColor,
-         position:         unit.position,
-         curCell,
+      if(!elemCell) return;
 
-         stats: {
-            popCost:       unit.popCost,        
-            collider:      unit.collider,
-            health:        unit.health,
-            armor:         unit.armor,
-            damages:       unit.damages,
-            moveSpeed:     unit.moveSpeed,
-            buildSpeed:    unit.buildSpeed,
-            attackSpeed:   unit.attackSpeed,
-            animDelay:     unit.animDelay,
-            basePath:      unit.basePath,
-         },
-      });
+      let newElem;
+      
+      if(type === "unit") {
+         newElem = new Agent({
+            ...initPack,
+            elemCell,
+         });
+         elemCell.agentIDset.add(initPack.id);
+      }
+      
 
+      if(type === "node") {
+         newElem = new Node({
+            ...initPack,
+            teamID: this.teamID,
+         });
 
-      curCell.agentIDset.add(unit.id);
-      this.Grid.addToOccupiedMap(curCell);
-      this.unitsList.set(unit.id, newAgent);
+         elemCell.isBlocked = true;
+      }
+
+      if(type === "building") {
+         newElem = new Building({
+            ...initPack,
+            teamID: this.teamID,
+         });
+
+         elemCell.isWall = true;
+         elemCell.isBlocked = true;
+      }
+
+      if(!newElem) return;
+
+      clientList.set(newElem.id, newElem);
+      
+      this.Grid.addToOccupiedMap(elemCell);
    }
 
-   setAgentTarget  (data: any) {
+   setAgentTarget    (data: any) {
 
       const { id, pathID }: any      = data;
       const agent: Agent | undefined = this.unitsList.get(id);
@@ -587,7 +599,7 @@ export class GameManager {
       pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
    }
 
-   checkAgentPos   (data: any) {
+   checkAgentPos     (data: any) {
 
       const { id, pos }: any         = data;
       const agent: Agent | undefined = this.unitsList.get(id);
@@ -618,7 +630,7 @@ export class GameManager {
    }
 
    drawHover(
-      selectList: Set<Agent> | Set<Node>,
+      selectList: Set<Agent> | Set<Node> | Set<Building>,
    ) {
 
       if(selectList.size === 0 ) return;
@@ -709,10 +721,16 @@ export class GameManager {
 
       // Draw all node ressources
       for(const [, node] of this.nodesList) {
-         const nodePos = this.gridPos_toScreenPos(node.cell.center);
+         const nodePos = this.gridPos_toScreenPos(node.position);
 
          node.draw(ctx_assets, nodePos, Viewport, ores_Img);
       }
+
+      // for(const [, building] of this.buildsList) {
+      //    const buildingPos = this.gridPos_toScreenPos(building.position);
+
+      //    building.draw(ctx_assets, buildingPos, Viewport, walls_Img);
+      // }
    }
 
 
@@ -778,40 +796,6 @@ export class GameManager {
          
       //    else continue;
       // }
-   }
-
-   TEST_GenerateTiles(
-      tilesArray:    string[],
-      nodeValue?:    [number, string, number],
-   ) {
-
-      tilesArray.forEach((cellID: string) => {
-         const cell:     Cell      = this.getCell(cellID)!;
-         
-         cell.isWall = true;
-
-         if(nodeValue) {
-
-            cell.isWall = false;
-            const [type, name, quantity] = nodeValue;
-            
-            const newNode = new Node({
-               id:       this.nodesList.size,
-               teamID:   this.teamID,
-               position: cell.center,
-               cell,
-               name,
-               type,
-               quantity
-            });
-
-            this.nodesList.set(newNode.id, newNode);
-         }
-
-         cell.isBlocked = true;
-   
-         this.Grid.addToOccupiedMap(cell);
-      });
    }
    
    TEST_UnitMode     () {

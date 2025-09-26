@@ -1,6 +1,7 @@
 
-import { Battle } from "../modules/_Export";
-import { Cell   } from "./_Export";
+import {
+   Cell,
+} from "./_Export";
 
 
 // =====================================================================
@@ -8,13 +9,17 @@ import { Cell   } from "./_Export";
 // =====================================================================
 export class Grid {
 
-   private battle: Battle;
+   cellSize:         number = 40;
+   gridSize:         number;
+   halfGrid:         number;
 
    cellsList:        Map<string, Cell> = new Map();
    occupiedCells:    Set<Cell>         = new Set();
 
-   constructor(battle: Battle) {
-      this.battle = battle;
+   constructor(params: any) {
+      
+      this.gridSize = params.gridSize;
+      this.halfGrid = params.gridSize *0.5;
 
       this.setCellsList();
       this.setNeighbors();
@@ -23,9 +28,7 @@ export class Grid {
    setCellsList() {
       let zIndex = 0;
 
-      const { gridSize, cellSize } = this.battle;
-
-      const cellPerSide = Math.floor(gridSize / cellSize);
+      const cellPerSide = Math.floor(this.gridSize / this.cellSize);
       
       for(let i = 0; i < cellPerSide; i++) {     // Collums
          for(let j = 0; j < cellPerSide; j++) {  // Cells
@@ -33,7 +36,7 @@ export class Grid {
             const cell: Cell = new Cell(
                zIndex,
                cellPerSide,
-               cellSize,
+               this.cellSize,
                cellPerSide -i -1,
                j
             );
@@ -59,5 +62,12 @@ export class Grid {
       tempArray.sort((cell: any, nextCell: any) => cell.zIndex -nextCell.zIndex);
 
       this.occupiedCells = new Set(tempArray);
+   }
+
+   initPack() {
+      return {
+         cellSize: this.cellSize,
+         gridSize: this.gridSize,
+      }
    }
 }

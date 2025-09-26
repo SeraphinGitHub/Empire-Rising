@@ -109,8 +109,10 @@ export class Cursor {
       
       if(state === "Up") {
          GM.clearCanvas("selection");
-         GM.elemDeselection(GM.unitSelectList_old, GM.unitSelectList_cur);
-         GM.elemDeselection(GM.nodeSelectList_old, GM.nodeSelectList_cur);
+
+         GM.elemDeselection(GM.unitSelectList_old,  GM.unitSelectList_cur );
+         GM.elemDeselection(GM.nodeSelectList_old,  GM.nodeSelectList_cur );
+         GM.elemDeselection(GM.buildSelectList_old, GM.buildSelectList_cur);
       }
    }
 
@@ -184,8 +186,9 @@ export class Cursor {
       this.update_TargetArea     (GM);
       this.update_WallsList      (GM);
 
-      GM.elemSelection           (GM.unitsList, GM.unitSelectList_cur, true );
-      GM.elemSelection           (GM.nodesList, GM.nodeSelectList_cur, false);
+      GM.elemSelection           (GM.unitsList,  GM.unitSelectList_cur,  true );
+      GM.elemSelection           (GM.nodesList,  GM.nodeSelectList_cur,  false);
+      GM.elemSelection           (GM.buildsList, GM.buildSelectList_cur, true );
 
       GM.Viewport.mouseScrollCam (GM);
       GM.Viewport.isScrollDetect = true;
