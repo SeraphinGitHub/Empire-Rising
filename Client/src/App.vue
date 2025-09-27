@@ -68,11 +68,14 @@
 
       mounted() {
          this.easyLogin({
-
+            
             channel:    "createBattle",
-            name:       "Séraphin",
-            teamID:      1,
-            teamColor:  "Blue",
+            
+            playerProps: {
+               name:       "Séraphin",
+               teamID:      1,
+               teamColor:  "Blue",
+            },
 
             mapSettings: {
                maxPop:  "_200",

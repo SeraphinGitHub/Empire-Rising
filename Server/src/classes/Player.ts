@@ -39,7 +39,7 @@ export class Player {
 
    constructor(params: any) {
       
-      this.id        = params.id;
+      this.id        = params.socket.id;
       this.socket    = params.socket;
       this.battleID  = params.battleID;
       this.name      = params.name;
@@ -57,100 +57,43 @@ export class Player {
       }
    }
 
-   start(battle: Battle) {
-
-      this.maxPop = battle.setPlayerMaxPop();
-   
-      this.socket.emit("initBattle", {
-         gridPack:   battle.Grid.initPack(),
-         battlePack: battle.initPack(),
-         playerPack: this.initPack(),
-      });
-
-      this.watch(battle);
-   }
-   
    watch(battle: Battle) {
       
-      this.socket.on("recruitUnit",  (data: any) => this.recruitUnit(battle, data));
-      this.socket.on("startAgentPF", (data: any) => battle.startAgentPF(data));
-
-      this.TEST_Unit(battle); // ==> Test ******************
+      this.socket.on("recruitUnit",  (data: any) => this.recruitUnit    (data, battle));
+      this.socket.on("startAgentPF", (data: any) => battle.startAgentPF (data));
    }
-
-
+   
    // =========================================================================================
    // Methods
    // =========================================================================================
-   recruitUnit(
-      battle: Battle,
-      data:   any,
+   initBattle(
+      gridPack:   any,
+      battlePack: any,
    ) {
       
-      // Add "create unit timer" here ==> Later on !
-
-      const { unitID, cellID } = data;
-      const newUnit = this.createNewAgent(battle, unitID, cellID);
-
-      battle.spread("recruitUnit", newUnit);
-   }
-
-   createNewAgent(
-      battle: Battle,
-      unitID: string,
-      cellID: string,
-   ) {
-      const agentStats: any    = UNIT_STATS[unitID],      { popCost            } = agentStats;      
-      const startCell:  Cell   = battle.getCell(cellID)!, { x: cellX, y: cellY } = startCell.center;
-      const vacantID:   number = battle.vacantIDsList[0];
-
-      startCell.agentIDset.add(vacantID);
-      startCell.isVacant = false;
-      
-      battle.vacantIDsList.splice(0, popCost);
-      battle.curPop += popCost;
-      this.curPop   += popCost;
-
-      const newAgent = new Agent({
-         id:         vacantID,
-         playerID:   this.id,
-         teamID:     this.teamID,
-         teamColor:  this.teamColor,
-         stats:      agentStats,
-         position: { x: cellX, y: cellY }, // ==> Tempory until create rally point !
-         curCell:    startCell,            // ==> Tempory until create BuildingsClass with spawn position
+      this.socket.emit("initBattle", {
+         gridPack,
+         battlePack,
+         playerPack: this.initPack(),
       });
-      
-      battle.unitsList.set(vacantID, newAgent);
-
-      this.socket.emit("updatePop", this.curPop);
-
-      return newAgent.initPack();
    }
 
+   updatePop(popCost: number) {
+      
+      this.curPop += popCost;
+      this.socket.emit("updatePop", this.curPop);
+   }
 
-   // =========================================================================================
-   // TEST
-   // =========================================================================================
-   TEST_Unit(battle: Battle) {
+   recruitUnit(
+      data:   any,
+      battle: Battle,
+   ) {
 
-      if(this.teamID === 1) {
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-21" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-21" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-21" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-23" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-23" });
-      }
+      const { popCost, initPack } = battle.createNewAgent(data);
 
-      if(this.teamID === 2) {
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "17-27" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "19-27" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "21-27" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "20-29" });
-         this.recruitUnit(battle, { unitID: "_0101", cellID: "18-29" });
-      }
+      this.updatePop(popCost);
 
-      this.socket.emit("updatePop",  this.curPop);
+      battle.spread("recruitUnit", initPack);
    }
 
 }

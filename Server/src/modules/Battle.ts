@@ -229,7 +229,7 @@ export class Battle {
    private Room:     Server;
    id:               string;
 
-   playersID_Set:    Set<string>           = new Set();
+   playersList:      Map<string, Player  > = new Map();
    unitsList:        Map<number, Agent   > = new Map();
    nodesList:        Map<number, Node    > = new Map();
    buildsList:       Map<number, Building> = new Map();
@@ -247,6 +247,8 @@ export class Battle {
       this.battleMaxPop = params.maxPop;
 
       this.Grid         = new Grid(params);
+      
+      this.createNewPlayer(params.playerProps);
 
       this.init();
    }
@@ -284,6 +286,32 @@ export class Battle {
       data:    any,
    ) {
       this.Room.emit(channel, data);
+   }
+
+   start() {
+      for(const [, player] of this.playersList) {
+
+         player.maxPop = this.setPlayerMaxPop();
+
+         player.initBattle(
+            this.Grid.initPack(),
+            this.initPack()
+         );
+
+         player.watch(this);
+
+         // **************************************************************
+         let cellID_Array: any = [];
+         if(player.teamID === 1) cellID_Array = ["17-21", "19-21", "21-21", "20-23", "18-23"];
+         if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "20-29", "18-29"];
+         
+         cellID_Array.forEach((cellID: any) => {
+            player.recruitUnit({
+               cellID, unitID: "_0101", teamID: player.teamID, teamColor: player.teamColor,
+            }, this);
+         });
+         // **************************************************************
+      }
    }
 
    sync() {
@@ -332,33 +360,16 @@ export class Battle {
    // =========================================================================================
    // Methods
    // =========================================================================================
-   createNewPlayer(
-      socket: Socket,
-      props:  any,
-   ): Player {
-      
-      const newPlayer = new Player({
-         id:       socket.id,
-         socket:   socket,
-         battleID: this.id,
-         ...props
-      }), { id: playerID} = newPlayer;
-
-      this.playersID_Set.add(playerID);
-
-      return newPlayer;
-   }
-   
-   getCell(id: string): Cell | undefined {
+   getCell              (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
 
-   setPlayerMaxPop(): number {
-      const { battleMaxPop, playersID_Set } = this;
-      return Math.floor(battleMaxPop /playersID_Set.size);
+   setPlayerMaxPop      (): number {
+      const { battleMaxPop, playersList } = this;
+      return Math.floor(battleMaxPop /playersList.size);
    }
 
-   getIndexID(
+   getIndexID           (
       coord:    number,
       value:    number,
       index:    number,
@@ -368,14 +379,58 @@ export class Battle {
       return ( coord +value - (cellSize * (index +1)) ) /cellSize;
    }
 
-   setVacantIDsList() {
+   setVacantIDsList     () {
 
       for(let i = 1; i < this.battleMaxPop; i++) {
          this.vacantIDsList.push(i);
       }
    }
 
-   setClientList(elemList: Map<number, any>) {
+   createNewPlayer      (props:  any) {
+
+      const newPlayer = new Player({
+         battleID: this.id,
+         ...props
+      }), { id: playerID} = newPlayer;
+      
+      this.playersList.set(playerID, newPlayer);
+   }
+
+   createNewAgent       (data: any): {[key: string]: any} {
+
+      const { unitID, cellID, teamID, teamColor } = data;
+
+      // Add "create unit timer" here ==> Later on !
+
+      const agentStats: any    = UNIT_STATS[unitID],    { popCost            } = agentStats;      
+      const startCell:  Cell   = this.getCell(cellID)!, { x: cellX, y: cellY } = startCell.center;
+      const vacantID:   number = this.vacantIDsList[0];
+
+      startCell.agentIDset.add(vacantID);
+      startCell.isVacant = false;
+      
+      this.vacantIDsList.splice(0, popCost);
+      this.curPop   += popCost;
+
+      const newAgent = new Agent({
+         id:         vacantID,
+         playerID:   this.id,
+         teamID:     teamID,
+         teamColor:  teamColor,
+         stats:      agentStats,
+         position: { x: cellX, y: cellY }, // ==> Tempory until create rally point !
+         curCell:    startCell,            // ==> Tempory until create BuildingsClass with spawn position
+      });
+      
+      this.unitsList.set(vacantID, newAgent);
+
+      return {
+         popCost,
+         initPack: newAgent.initPack(),
+      }
+   }
+
+   setClientList        (elemList: Map<number, any>) {
       let tempList: any = [];
 
       for(const [, elem] of elemList) {
@@ -386,7 +441,7 @@ export class Battle {
       return tempList;
    }
 
-   setServerList(
+   setServerList        (
       elemList:   Map<number, any>,
       ELEM_STATS: {[key: string]: any},
       ELEM:       {[key: string]: any},
@@ -431,7 +486,7 @@ export class Battle {
       }
    }
 
-   startAgentPF(data: any) {
+   startAgentPF         (data: any) {
 
       const { cellSize, cellsList       } = this.Grid;
       const { targetArea, AgentsID_List } = data;

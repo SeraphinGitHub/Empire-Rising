@@ -35,10 +35,11 @@
          createBattleBtn() {
             this.$emit("createBattle", {
 
-               channel:    "createBattle",
-               name:       "Illidan",
-               teamID:      1,
-               teamColor:  "Orange",
+               playerProps: {
+                  name:       "Illidan",
+                  teamID:      1,
+                  teamColor:  "Orange",
+               },
 
                mapSettings: {
                   maxPop:  "_200",
@@ -50,10 +51,11 @@
          joinBattleBtn() {
             this.$emit("joinBattle", {
 
-               channel:   "joinBattle",
-               name:      "Malfurion",
-               teamID:     2,
-               teamColor: "Purple",
+               playerProps: {
+                  name:      "Malfurion",
+                  teamID:     2,
+                  teamColor: "Purple",
+               },
 
                battleID: "47",
             });

@@ -64,7 +64,7 @@ export class GameManager {
    terrainPos:             IPosition  = {x:0, y:0};
    viewfieldPos:           IPosition  = {x:0, y:0};
    
-   show_Grid:              boolean    = false; //********************* */
+   show_Grid:              boolean    = true;
    show_VP:                boolean    = false;
    isWallMode:             boolean    = false;
    isUnitMode:             boolean    = false;
@@ -461,7 +461,7 @@ export class GameManager {
       clientList: Map<number, any>,
       classType:  new (...args: any[]) => Agent | Node | Building,
    ) {
-
+      
       const elemCell: Cell | undefined = this.getCell(initPack.cellID);
 
       if(!elemCell) return;
@@ -527,6 +527,24 @@ export class GameManager {
       }
    }
 
+   setRenderList(
+      elemList:   any,
+      renderList: any[],
+      callback?:  Function,
+   ) {
+
+      for(const [, elem] of elemList) {
+         const elemPos = this.gridPos_toScreenPos(elem.position);
+
+         if(callback) callback(elem);
+
+         if(!this.isViewScope(elemPos)) continue;
+         
+         elem.screenPos = elemPos;
+         renderList.push(elem);
+      }
+   }
+
 
    // =========================================================================================
    // Draw Methods
@@ -588,58 +606,30 @@ export class GameManager {
 
       const { Viewport, Frame, walls_Img, ores_Img } = this;
 
-     let renderList = [];
+      let renderList: any = [];
 
-      // Draw all viewport units
-      for(const [, unit] of this.unitsList) {
-         const unitPos = this.gridPos_toScreenPos(unit.position);
+      this.setRenderList(this.nodesList,  renderList);
+      this.setRenderList(this.buildsList, renderList);
+      this.setRenderList(this.unitsList,  renderList, (unit: any) => {
 
          unit.walkPath(this.getCell.bind(this));
          unit.updateAnimState(Frame);
-
-         if(!this.isViewScope(unitPos)) continue;
-         
-         unit.screenPos = unitPos;
-         renderList.push(unit);
-      }
-
-      
-      // Draw all viewport nodes
-      for(const [, node] of this.nodesList) {
-         const nodePos = this.gridPos_toScreenPos(node.position);
-
-         if(!this.isViewScope(nodePos)) continue;
-         
-         node.screenPos = nodePos;
-         renderList.push(node);
-      }
-
-      
-      // Draw all viewport buildings
-      for(const [, building] of this.buildsList) {
-         const buildingPos = this.gridPos_toScreenPos(building.position);
-
-         if(!this.isViewScope(buildingPos)) continue;
-         
-         building.screenPos = buildingPos;
-         renderList.push(building);
-      }
-
-      
-      // Top-right to Bottom-left
-      renderList.sort((a, b) => {
-
-         const zIndexA = a.position.x -a.position.y;
-         const zIndexB = b.position.x -b.position.y;
-     
-         return zIndexB -zIndexA
       });
 
+      // Top-right to Bottom-left
+      renderList.sort((a: any, b: any) => {
+         const zIndexA = a.position.x -a.position.y;
+         const zIndexB = b.position.x -b.position.y;
+         return zIndexB -zIndexA
+      });
 
       renderList.forEach((elem: any) => {
          const { screenPos } = elem;
 
-         if(elem instanceof Agent) {
+         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport, ores_Img );
+         if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport, walls_Img);
+         if(elem instanceof Agent   ) {
+
             elem.drawSprite   (ctx_assets, screenPos, Viewport);
             // elem.drawCollider (ctx_assets, screenPos, Viewport);
 
@@ -649,15 +639,6 @@ export class GameManager {
                // elem.curCell.drawVacancy (ctx_isometric);
             }
          }
-
-         if(elem instanceof Node) {
-            elem.drawSprite(ctx_assets, screenPos, Viewport, ores_Img);
-         }
-
-         if(elem instanceof Building) {
-            elem.drawSprite(ctx_assets, screenPos, Viewport, walls_Img);
-         }
-
       });
    }
 
@@ -731,8 +712,10 @@ export class GameManager {
       if(!this.isUnitMode) return;
       
       this.socket.emit("recruitUnit", {
-         unitID: "_0101",
-         cellID:  this.Cursor.hoverCell!.id,
+         unitID:   "_0101",
+         cellID:    this.Cursor.hoverCell!.id,
+         teamID:    this.teamID,
+         teamColor: this.teamColor,
       });
    }
 

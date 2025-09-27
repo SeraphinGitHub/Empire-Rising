@@ -1,7 +1,7 @@
 
 import {
    // IAuthSocket,
-   INumber,
+   INumber, IString,
 } from "../utils/interfaces";
 
 import {
@@ -20,8 +20,8 @@ export class ServerManager {
    ServerIO:    Server;
 
    socketsList: Map<string, Socket> = new Map();
-   playersList: Map<string, Player> = new Map();
    battlesList: Map<string, Battle> = new Map();
+   playBatList: Map<string, string> = new Map();
 
    maxPopSpec:   INumber = {
       _200:      200,
@@ -69,7 +69,7 @@ export class ServerManager {
 
          socket.on("createBattle", (data: any) => this.createBattle(socket, data));
          socket.on("joinBattle",   (data: any) => this.joinBattle  (socket, data));
-         socket.on("loadBattle",   (data: any) => this.loadBattle  (socket, data));
+         socket.on("loadBattle",   (data: any) => this.loadBattle  (data));
       });
    }
 
@@ -77,91 +77,85 @@ export class ServerManager {
    // =====================================================================
    // Methods
    // =====================================================================
-   connect(socket: Socket) {
+   connect           (socket: Socket) {
 
       this.socketsList.set(socket.id, socket);
       socket.emit("connected");
       console.log({ message: "--SocketIO-- Player Connected !" });
    }
 
-   disconnect(socket: Socket) {
+   disconnect        (socket: Socket) {
 
-      const { socketsList, playersList, battlesList } = this;
-      const userID = socket.id;
+      const { socketsList, battlesList, playBatList } = this;
+      
+      const playerID = socket.id;
+      const battleID = playerID ? playBatList.get(playerID)        : null;
+      const battle   = battleID ? battlesList.get(battleID)        : null;
+      const player   = battle   ? battle.playersList.get(playerID) : null;
 
-      const player =          playersList.get(userID);
-      const battle = player ? battlesList.get(player.id) : null;
+      if(!battle || !player) return;
 
-      if(!player
-      || !battle
-      || !playersList.has(userID)) {
-
-         return;
-      }
-
-      playersList.delete(userID);
-      battlesList.delete(userID);
-      socketsList.delete(userID);
+      socketsList       .delete(playerID);
+      battlesList       .delete(playerID);
+      playBatList       .delete(playerID);
+      battle.playersList.delete(playerID);
       
       console.log({ message: "--SocketIO-- Player disconnected" });
    }
 
-   generateBattleID(): string { // ==> Need to add logic
+   generateBattleID  (): string { // ==> Need to add logic
       
       return "47";
    }
 
-   createBattle(
+   createBattle      (
       socket: Socket,
       data:   any,
    ) {
 
-      const { mapSettings, ...playerProps } = data;
+      const { playerProps, mapSettings } = data;
+      playerProps["socket"] = socket;
 
       const newBattle      = new Battle({
          ServerIO: this.ServerIO,
          id:       this.generateBattleID(),
          maxPop:   this.maxPopSpec [mapSettings.maxPop ],
          gridSize: this.mapSizeSpec[mapSettings.mapSize],
+         playerProps,
       }), { id: battleID } = newBattle;
 
-      const newPlayer = newBattle.createNewPlayer(socket, playerProps), { id: playerID } = newPlayer;
-
-      this.playersList.set(playerID, newPlayer);
       this.battlesList.set(battleID, newBattle);
-
+      this.playBatList.set(socket.id, battleID);
       
       socket.join(battleID);
       socket.emit("battleCreated", battleID); // Need to add Client logic
    }
 
-   joinBattle  (
+   joinBattle        (
       socket: Socket,
       data:   any,
    ) {
 
-      const { battleID, ...playerProps } = data;
+      const { battleID, playerProps } = data;
+      playerProps["socket"] = socket;
+
       const battle = this.battlesList.get(battleID);
 
       if(!battle) return console.log({ error: "No battle found !" });
 
-      const newPlayer = battle.createNewPlayer(socket, playerProps), { id: playerID } = newPlayer;
+      battle.createNewPlayer(playerProps);
+      this.playBatList.set(socket.id, battleID);
 
-      this.playersList.set(playerID, newPlayer);
       socket.join(battleID);
    }
 
-   loadBattle  (
-      socket: Socket,
-      data:   any,
-   ) {
+   loadBattle        (data:   any) {
       const { battleID } = data;
       const battle = this.battlesList.get(battleID);
-      const player = this.playersList.get(socket.id);
 
-      if(!battle || !player) return console.log({ error: "Could not load battle !" });
+      if(!battle) return console.log({ error: "Could not load battle !" });
       
-      player.start(battle);
+      battle.start();
    }
 
 }
