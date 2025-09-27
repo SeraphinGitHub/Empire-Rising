@@ -163,46 +163,19 @@ export class Cell {
       return isBlocked_TopLeft || isBlocked_TopRight || isBlocked_BottomLeft || isBlocked_BottomRight;
    }
 
-   setVacant(
-      agentID: number,
-      Grid:    Grid,
-   ) {
+   setVacant(agentID: number) {
+      
       this.agentIDset.delete(agentID);
       
       if(this.agentIDset.size === 0) {
-         Grid.occupiedCells.delete(this);
          this.isVacant = true;
       }
    }
 
-   setOccupied(
-      agentID: number,
-      Grid:    Grid,
-   ) {
+   setOccupied(agentID: number) {
+      
       this.agentIDset.add(agentID);
       this.isVacant = false;
-      
-      Grid.addToOccupiedMap(this);
-   }
-
-   setTransparency(cellsList: Map<string, Cell>) {
-   
-      if(!this.isBlocked) return;
-
-      const {
-         top,
-         topRight,
-         right,
-      } = this.getNeighbors(cellsList);
-      
-      if(!top.isVacant
-      || !topRight.isVacant
-      || !right.isVacant) {
-         
-         return this.isTransp = true;
-      }
-
-      this.isTransp = false;
    }
 
 

@@ -54,16 +54,6 @@ export class Grid {
       }
    }
 
-   addToOccupiedMap(cell: Cell) {
-
-      let tempArray: Cell[] = [...this.occupiedCells];
-      
-      tempArray.push(cell);
-      tempArray.sort((cell: any, nextCell: any) => cell.zIndex -nextCell.zIndex);
-
-      this.occupiedCells = new Set(tempArray);
-   }
-
    initPack() {
       return {
          cellSize: this.cellSize,

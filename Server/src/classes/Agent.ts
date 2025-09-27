@@ -185,8 +185,8 @@ export class Agent {
 
       this.Pathfinder.path.shift();
       this.Pathfinder.nextCell = this.Pathfinder.path[0] ?? null;
-      this.oldCell.setVacant  (this.id, Grid);
-      this.curCell.setOccupied(this.id, Grid);
+      this.oldCell.setVacant  (this.id);
+      this.curCell.setOccupied(this.id);
 
       if(!this.hasReached(goalCell!)) return;
 

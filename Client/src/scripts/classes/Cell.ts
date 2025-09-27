@@ -47,11 +47,9 @@ export class Cell {
    isBlocked:      boolean = false;
    isTargeted:     boolean = false;
    isOverlaped:    boolean = false;
-   isTransp:       boolean = false;
 
    // ----------- Tempory -----------
    isDiffTile:     boolean = false;
-   isWall:         boolean = false;
    // ----------- Tempory -----------
 
    constructor(
@@ -184,48 +182,6 @@ export class Cell {
       return isBlocked_TopLeft || isBlocked_TopRight || isBlocked_BottomLeft || isBlocked_BottomRight;
    }
 
-   setVacant(
-      agentID: number,
-      Grid:    Grid,
-   ) {
-      this.agentIDset.delete(agentID);
-      
-      if(this.agentIDset.size === 0) {
-         Grid.occupiedCells.delete(this);
-         this.isVacant = true;
-      }
-   }
-
-   setOccupied(
-      agentID: number,
-      Grid:    Grid,
-   ) {
-      this.agentIDset.add(agentID);
-      this.isVacant = false;
-      
-      Grid.addToOccupiedMap(this);
-   }
-
-   setTransparency(cellsList: Map<string, Cell>) {
-   
-      if(!this.isBlocked) return;
-
-      const {
-         top,
-         topRight,
-         right,
-      } = this.getNeighbors(cellsList);
-      
-      if(!top.isVacant
-      || !topRight.isVacant
-      || !right.isVacant) {
-         
-         return this.isTransp = true;
-      }
-
-      this.isTransp = false;
-   }
-
 
    // =========================================================================================
    // Draw Methods
@@ -234,7 +190,7 @@ export class Cell {
          
       this.drawFrame(ctx);
       this.drawBlocked(ctx);
-      this.drawVacancy(ctx);
+      // this.drawVacancy(ctx);
       // this.drawID(ctx);
       // this.drawCenter(ctx);
       // this.drawCollider(ctx);
@@ -313,8 +269,8 @@ export class Cell {
    drawVacancy (ctx: CanvasRenderingContext2D) {
 
       if(this.isVacant) return;
-      
-      this.drawColor(ctx, "rgba(0, 255, 255, 0.7)")
+
+      this.drawColor(ctx, "rgba(0, 0, 255, 0.6)")
    }
 
    drawColor   (ctx: CanvasRenderingContext2D, color: string) {
@@ -357,35 +313,6 @@ export class Cell {
          VPpos.x -offsetX,
          VPpos.y -offsetY,
          destSize,
-         destSize,
-      );
-   }
-
-   drawWall(
-      ctx:   CanvasRenderingContext2D,
-      pos:   IPosition,
-      VPpos: IPosition,
-      img:   HTMLImageElement,
-   ) {
-
-      const srcSize  = 280;
-      const destSize = 90;
-      const offsetX  = 48;
-      const offsetY  = 75;
-   
-      ctx.drawImage(
-         img,
-
-         // Source
-         0,
-         0,
-         srcSize,
-         srcSize,
-         
-         // Destination
-         pos.x -offsetX -VPpos.x,
-         pos.y -offsetY -VPpos.y,
-         destSize +10,
          destSize,
       );
    }

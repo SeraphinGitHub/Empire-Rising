@@ -60,6 +60,15 @@ export class GameManager {
    teamColor:              string     = "";
    name:                   string     = "";
 
+   gridPos:                IPosition  = {x:0, y:0};
+   terrainPos:             IPosition  = {x:0, y:0};
+   viewfieldPos:           IPosition  = {x:0, y:0};
+   
+   show_Grid:              boolean    = false; //********************* */
+   show_VP:                boolean    = false;
+   isWallMode:             boolean    = false;
+   isUnitMode:             boolean    = false;
+   
    unitsList:              Map<number, Agent>    = new Map();
    unitSelectList_old:     Set<Agent>            = new Set();
    unitSelectList_cur:     Set<Agent>            = new Set();
@@ -71,15 +80,6 @@ export class GameManager {
    buildsList:             Map<number, Building> = new Map();
    buildSelectList_old:    Set<Building>         = new Set();
    buildSelectList_cur:    Set<Building>         = new Set();
-   
-   gridPos:                IPosition  = {x:0, y:0};
-   terrainPos:             IPosition  = {x:0, y:0};
-   viewfieldPos:           IPosition  = {x:0, y:0};
-
-   show_Grid:              boolean    = true;
-   show_VP:                boolean    = false;
-   isWallMode:             boolean    = false;
-   isUnitMode:             boolean    = false;
    
    // Classes instances
    Grid:                   Grid;
@@ -141,9 +141,9 @@ export class GameManager {
 
       this.initPlayer    (playerPack);
       this.initGame      (battlePack);
-      // this.generateList  (battlePack.unitsList,  this.unitsList,  "unit"    );
-      this.generateList  (battlePack.buildsList, this.buildsList, "building");
-      this.generateList  (battlePack.nodesList,  this.nodesList,  "node"    );
+      // this.generateList  (battlePack.unitsList,  this.unitsList,  Agent    );
+      this.generateList  (battlePack.buildsList, this.buildsList, Building);
+      this.generateList  (battlePack.nodesList,  this.nodesList,  Node    );
       this.initMap       ();
 
       this.watchGame     ();
@@ -152,9 +152,9 @@ export class GameManager {
    watchGame() {
 
       this.socket.on("updatePop",   (data: any) => this.updatePop      (data));
-      this.socket.on("recruitUnit", (data: any) => this.createNewElem  (data, this.unitsList, "unit"));
-      this.socket.on("moveAgent",   (data: any) => this.setAgentTarget (data));
-      this.socket.on("getAgentPos", (data: any) => this.checkAgentPos  (data));
+      this.socket.on("recruitUnit", (data: any) => this.createNewElem  (data, this.unitsList, Agent));
+      this.socket.on("agentState",  (data: any) => this.setAgentState  (data));
+      this.socket.on("agentMove",   (data: any) => this.setAgentTarget (data));
    }
 
    initPlayer(playerPack: any) {
@@ -221,7 +221,7 @@ export class GameManager {
          this.clearCanvas("isometric");
          this.clearCanvas("assets"   );
          
-         this.draw_UnitsAndBuild ();
+         this.drawViewportElem   ();
 
          this.drawHover          (this.unitSelectList_cur);
          this.drawSelectElem     (this.unitSelectList_old);
@@ -410,12 +410,12 @@ export class GameManager {
    // =========================================================================================
    // Methods
    // =========================================================================================
-   updatePop       (data: any) {
+   updatePop         (data: any) {
       
       if(typeof(data) == "number") this.curPop = data;
    }
 
-   setAgentsID_List() {
+   setAgentsID_List  () {
 
       let agentsID_List = [];
 
@@ -427,11 +427,11 @@ export class GameManager {
       return agentsID_List;
    }
 
-   getCell         (id: string): Cell | undefined {
+   getCell           (id: string): Cell | undefined {
       return this.Grid.cellsList.get(id);
    }
 
-   setElemCollider (elem: Agent | Node): ICircle {
+   setElemCollider   (elem: Agent | Node): ICircle {
 
       const { x: elemX, y: elemY } = this.gridPos_toScreenPos(elem.position);
       const { x: vpX,   y: vpY   } = this.Viewport;
@@ -444,179 +444,94 @@ export class GameManager {
       };
    }
 
-   generateList(
+   generateList      (
       serverList: {[key: string]: any}[],
       clientList: Map<number, any>,
-      type:       string,
+      classType:  new (...args: any[]) => Agent | Node | Building,
    ) {
 
       for(const initPack of serverList) {
 
-         this.createNewElem(initPack, clientList, type);
-      }
-   }
-
-   elemSelection     (
-      elemList: Map<number, any>,
-      curList:  Set<any>,
-      isPlayer: boolean,
-   ) {
-
-      const { isSelecting, selectArea, curPos } = this.Cursor;
-
-      // If collide with mouse or select area ==> Add elem to CurrentList
-      for(const [, elem] of elemList) {
-         const elemCol = this.setElemCollider(elem);
-
-         const isHovered =
-            this.Collision.point_toCircle(curPos.cart, elemCol)
-
-            ||(isPlayer
-            && isSelecting
-            && this.Collision.square_toCircle(selectArea, elemCol))
-         ;
-
-         if(isHovered && elem.teamID === this.teamID) {
-            curList.add(elem);
-         }
-         else curList.delete(elem);
-      }
-   }
-
-   elemDeselection   (
-      oldList: Set<any>,
-      curList: Set<any>,
-   ) {
-      
-      // Case 1: if oldList is empty ==> transfer everything from curList
-      if(oldList.size === 0) {
-
-         for(const elem of curList) {
-            elem.isSelected = true;
-            oldList.add(elem);
-         }
-
-         curList.clear();
-         return;
-      }
-
-
-      // Case 2: if curList is not empty ==> update differences
-      if(curList.size !== 0) {
-
-         // Remove deselected elems
-         for(const elem of oldList) {
-
-            if(curList.has(elem)) continue;
-
-            elem.isSelected = false;
-            oldList.delete(elem);
-         }
-
-         // Add new selected elems
-         for(const elem of curList) {
-
-            elem.isSelected = true;
-            oldList.add(elem);
-            curList.delete(elem);
-         }
-
-         return;
-      }
-
-
-      // Case 3: if oldList not empty, but curList is empty ==> clear all
-      for(const elem of oldList) {
-         
-         if(!elem.isSelected) continue;
-         
-         elem.isSelected = false;
-         oldList.delete(elem);
+         this.createNewElem(initPack, clientList, classType);
       }
    }
 
    createNewElem     (
       initPack:   any,
       clientList: Map<number, any>,
-      type:       string,
+      classType:  new (...args: any[]) => Agent | Node | Building,
    ) {
 
       const elemCell: Cell | undefined = this.getCell(initPack.cellID);
 
       if(!elemCell) return;
 
-      let newElem;
+      const params: any = {
+         ...initPack,
+         teamID: this.teamID,
+      };
+
       
-      if(type === "unit") {
-         newElem = new Agent({
-            ...initPack,
-            elemCell,
-         });
+      if(classType === Agent) {
+         params["curCell"]  = elemCell;
+         elemCell.isVacant  = false;
+         elemCell.isBlocked = false;
          elemCell.agentIDset.add(initPack.id);
       }
+      else elemCell.isBlocked = true;
       
 
-      if(type === "node") {
-         newElem = new Node({
-            ...initPack,
-            teamID: this.teamID,
-         });
-
-         elemCell.isBlocked = true;
-      }
-
-      if(type === "building") {
-         newElem = new Building({
-            ...initPack,
-            teamID: this.teamID,
-         });
-
-         elemCell.isWall = true;
-         elemCell.isBlocked = true;
-      }
-
-      if(!newElem) return;
-
+      const newElem = new classType(params);
       clientList.set(newElem.id, newElem);
-      
-      this.Grid.addToOccupiedMap(elemCell);
    }
 
    setAgentTarget    (data: any) {
 
-      const { id, pathID }: any      = data;
-      const agent: Agent | undefined = this.unitsList.get(id);
-      
-      if(!agent) return;
+      for(const agentData of data) {
+         const { id, pathID }: any = agentData;
 
-      agent.pathID  = pathID;
-      agent.path    = [];
-      agent.setNextCell(this.getCell.bind(this));
-      agent.setGoalCell(this.getCell.bind(this));
+         const agent: Agent | undefined = this.unitsList.get(id);
+         
+         if(!agent) return;
 
-      if(pathID.length === 0) agent.inMovement(false);
+         agent.pathID           = pathID;
+         agent.path             = [];
 
-      pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
+         agent.setNextCell(this.getCell.bind(this));
+         agent.setGoalCell(this.getCell.bind(this));
+
+         if(pathID.length === 0) agent.inMovement(false);
+
+         pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
+      }
    }
 
-   checkAgentPos     (data: any) {
+   setAgentState     (data: any) {
 
-      const { id, pos }: any         = data;
-      const agent: Agent | undefined = this.unitsList.get(id);
-      
-      if(!agent) return;
-
-      agent.servPos.x = pos.x;
-      agent.servPos.y = pos.y;
+      for(const agentData of data) {
+         const { id, position, cellID, isVacant }: any = agentData;
+         
+         const agent: Agent | undefined = this.unitsList.get(id);
+         
+         if(!agent) return;
+         
+         const cell: Cell | undefined = this.getCell(cellID);
+         
+         if(!cell) return;
+   
+         cell.isVacant   = isVacant;
+         
+         agent.servPos.x = position.x;
+         agent.servPos.y = position.y;
+         agent.curCell   = cell;
+      }
    }
 
 
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawSelectElem    (
-      oldList: Set<any>,
-   ) {
+   drawSelectElem    (oldList: Set<any>) {
       
       if(oldList.size === 0 ) return;
 
@@ -629,9 +544,7 @@ export class GameManager {
       }
    }
 
-   drawHover(
-      selectList: Set<Agent> | Set<Node> | Set<Building>,
-   ) {
+   drawHover         (selectList: Set<Agent> | Set<Node> | Set<Building>) {
 
       if(selectList.size === 0 ) return;
 
@@ -666,7 +579,7 @@ export class GameManager {
       }
    }
 
-   draw_UnitsAndBuild() {  // ==> Tempory (need big recast later)
+   drawViewportElem  () {
 
       const {
          assets:    ctx_assets,
@@ -675,62 +588,77 @@ export class GameManager {
 
       const { Viewport, Frame, walls_Img, ores_Img } = this;
 
-      for(const cell of this.Grid.occupiedCells) {
+     let renderList = [];
 
-         // Draw all units
-         if(cell.agentIDset.size > 0) {
-            
-            for(const agentID of cell.agentIDset) {
+      // Draw all viewport units
+      for(const [, unit] of this.unitsList) {
+         const unitPos = this.gridPos_toScreenPos(unit.position);
 
-               const agent    = this.unitsList.get(agentID)!;
-               const agentPos = this.gridPos_toScreenPos(agent.position);
+         unit.walkPath(this.getCell.bind(this));
+         unit.updateAnimState(Frame);
+
+         if(!this.isViewScope(unitPos)) continue;
          
-               agent.walkPath(this.getCell.bind(this));
-               agent.updateAnimState(Frame);
-               
-               if(!this.isViewScope(agentPos)) continue;
-               
-               // agent.drawPos      (ctx_isometric);
-               agent.drawSprite   (ctx_assets, agentPos, Viewport);
-               // agent.drawCollider (ctx_assets, agentPos, Viewport);
-
-               if(this.show_Grid) agent.drawPath(ctx_isometric);
-            }
-         }
-                  
-         // Draw all buildings
-         if(cell.isWall) {
-            const cellPos = this.gridPos_toScreenPos(cell.center);
-
-            if(!this.isViewScope(cellPos)) continue;
-
-            if(cell.isTransp) {
-               ctx_assets.save();
-               ctx_assets.globalAlpha = 0.5;
-               
-               cell.drawWall(ctx_assets, cellPos, Viewport, walls_Img);
-
-               ctx_assets.restore();
-               return;
-            }
-            
-            cell.drawWall(ctx_assets, cellPos, Viewport, walls_Img);
-         }
+         unit.screenPos = unitPos;
+         renderList.push(unit);
       }
 
-
-      // Draw all node ressources
+      
+      // Draw all viewport nodes
       for(const [, node] of this.nodesList) {
          const nodePos = this.gridPos_toScreenPos(node.position);
 
-         node.draw(ctx_assets, nodePos, Viewport, ores_Img);
+         if(!this.isViewScope(nodePos)) continue;
+         
+         node.screenPos = nodePos;
+         renderList.push(node);
       }
 
-      // for(const [, building] of this.buildsList) {
-      //    const buildingPos = this.gridPos_toScreenPos(building.position);
+      
+      // Draw all viewport buildings
+      for(const [, building] of this.buildsList) {
+         const buildingPos = this.gridPos_toScreenPos(building.position);
 
-      //    building.draw(ctx_assets, buildingPos, Viewport, walls_Img);
-      // }
+         if(!this.isViewScope(buildingPos)) continue;
+         
+         building.screenPos = buildingPos;
+         renderList.push(building);
+      }
+
+      
+      // Top-right to Bottom-left
+      renderList.sort((a, b) => {
+
+         const zIndexA = a.position.x -a.position.y;
+         const zIndexB = b.position.x -b.position.y;
+     
+         return zIndexB -zIndexA
+      });
+
+
+      renderList.forEach((elem: any) => {
+         const { screenPos } = elem;
+
+         if(elem instanceof Agent) {
+            elem.drawSprite   (ctx_assets, screenPos, Viewport);
+            // elem.drawCollider (ctx_assets, screenPos, Viewport);
+
+            if(this.show_Grid) {
+               elem.drawPath            (ctx_isometric);
+               // elem.drawServerPos       (ctx_isometric);
+               // elem.curCell.drawVacancy (ctx_isometric);
+            }
+         }
+
+         if(elem instanceof Node) {
+            elem.drawSprite(ctx_assets, screenPos, Viewport, ores_Img);
+         }
+
+         if(elem instanceof Building) {
+            elem.drawSprite(ctx_assets, screenPos, Viewport, walls_Img);
+         }
+
+      });
    }
 
 

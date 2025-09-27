@@ -253,8 +253,10 @@ export class Battle {
 
    init() {
       this.setVacantIDsList();
-      this.setServerList(this.nodesList,  NODE_STATS,  NODES,     "node"    );
-      this.setServerList(this.buildsList, BUILD_STATS, BUILDINGS, "building");
+
+      // this.setServerList(this.unitsList,  UNIT_STATS,  UNITS,     Agent   );
+      this.setServerList(this.nodesList,  NODE_STATS,  NODES,     Node    );
+      this.setServerList(this.buildsList, BUILD_STATS, BUILDINGS, Building);
       
       this.sync();
    }
@@ -287,30 +289,41 @@ export class Battle {
    sync() {
       setInterval(() => {
 
+         let stateList = [];
+         let moveList  = [];
+
          for(const [, agent] of this.unitsList) {
 
-            // this.spread("getAgentPos", {
-            //    id:  agent.id,
-            //    pos: agent.position,
-            // });
-               
-            if(agent.hasArrived) continue;
+            const { id, position, curCell, hasArrived, Pathfinder } = agent;
+
+            // Send agent state (Every tick)
+            stateList.push({
+               id,
+               position,
+               cellID:   curCell.id,
+               isVacant: curCell.isVacant,
+            });
+
+            if(hasArrived) continue;
             
-            const path = agent.Pathfinder.path;
+            const path = Pathfinder.path;
             let pathID: string[] = [];
             path.forEach((cell: Cell) => pathID.push(cell.id));
             
             agent.walkPath(this.Grid);
             
-            if(agent.hasUpdated) continue; // skip if already sent
-            agent.hasUpdated = true; // update with new key
-   
-            this.spread("moveAgent", {
-               id:       agent.id,
+            // Skip sending pathID pack if already sent once (Not every tick)
+            if(agent.hasUpdated) continue;
+            agent.hasUpdated = true;
+            
+            moveList.push({
+               id,
                pathID,
             });
          }
-
+         
+         this.spread("agentState", stateList);
+         this.spread("agentMove",  moveList );
 
       }, Math.floor( 1000/ Number(process.env.SERVER_FRAME_RATE) ));
    }
@@ -377,7 +390,7 @@ export class Battle {
       elemList:   Map<number, any>,
       ELEM_STATS: {[key: string]: any},
       ELEM:       {[key: string]: any},
-      type:       string,
+      classType:  new (...args: any[]) => Agent | Node | Building,
    ) {
 
       for(const [elemName, elemStats] of Object.entries(ELEM_STATS) ) {
@@ -386,44 +399,33 @@ export class Battle {
             if(elemName !== keyName) continue;
 
             for(const cellID of cellID_Array) {
-               
                const elemCell = this.getCell(cellID);
 
                if(!elemCell) continue;
 
-               let newElem;
+               const params: any = {
+                  ...elemStats,
+                  id:       elemList.size,
+                  position: elemCell.center,
+                  cellID:   elemCell.id,
+               };
 
-               if(type === "node") {
-                  newElem = new Node({
-                     id:         elemList.size,
-                     position:   elemCell.center,
-                     cellID:     elemCell.id,
-                     ...elemStats,
-                     baseAmount: elemStats.amount,
-                  });
-                  
-                  elemCell.isNode = true;
+               if(classType === Node) {
+                  params["baseAmount"] = elemStats.amount;                  
+                  elemCell.isNode      = true;
                }
                
-               if(type === "building") {
-                  newElem = new Building({
-                     id:         elemList.size,
-                     position:   elemCell.center,
-                     cellID:     elemCell.id,
-                     teamID:     1,
-                     ...elemStats,
-                     baseHealth: elemStats.health,
-                  });
-
-                  elemCell.isBuilding = true;
+               if(classType === Building) {
+                  params["teamID"    ] = 1;
+                  params["baseHealth"] = elemStats.health;
+                  elemCell.isBuilding  = true;
                }
-
-               if(!newElem) continue;
-
-               elemList.set(newElem.id, newElem);
                
                elemCell.isVacant  = false;
                elemCell.isBlocked = true;
+
+               const newElem = new classType(params);
+               elemList.set(newElem.id, newElem);
             }
          }
       }

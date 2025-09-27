@@ -37,6 +37,7 @@ export class Agent {
    position:      IPosition;
    servPos:       IPosition = { x:0, y:0 };
    deltaPos:      IPosition = { x:0, y:0 };
+   screenPos:     IPosition = { x:0, y:0 };
 
    collider:      INumber;   
    curCell:       Cell;
@@ -45,6 +46,7 @@ export class Agent {
    pathID:        string[]  = [];
    path:          Cell  []  = [];
 
+   isUnit:        boolean = true;
    hasReachNext:  boolean = false;
    hasArrived:    boolean = false;
    isMoving:      boolean = false;
@@ -140,6 +142,8 @@ export class Agent {
    }
 
    checkReachedNext(cell: Cell) {
+
+      if(!cell) return;
       
       const { x: posX,  y: posY  } = this.position;
       const { x: cellX, y: cellY } = cell.center;
@@ -377,7 +381,7 @@ export class Agent {
       ctx.fillText(text, x, y -54,);
    }
 
-   drawPos(
+   drawServerPos(
       ctx: CanvasRenderingContext2D,
    ) {
 

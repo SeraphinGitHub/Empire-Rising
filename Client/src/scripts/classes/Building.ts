@@ -12,7 +12,9 @@ export class Building {
 
    id:            number;
    name:          string;
+
    position:      IPosition;
+   screenPos:     IPosition = { x:0, y:0 };
 
    collider:      INumber;
    
@@ -25,6 +27,7 @@ export class Building {
    color:         string;
 
    isSelected:    boolean = false;
+   isTransp:      boolean = false;
 
 
    constructor(params: any) {
@@ -41,33 +44,76 @@ export class Building {
       this.color        = params.color;
    }
 
-   draw(
-      ctx:   CanvasRenderingContext2D,
-      pos:   IPosition,
-      VPpos: IPosition,
-      img:   HTMLImageElement,
-   ) {
 
-      const srcSize  = 400;
-      const destSize = 65;
-      const offsetX  = 32;
-      const offsetY  = 40;
+   // =========================================================================================
+   // Methods
+   // =========================================================================================
+   setTransparency() {
    
-      ctx.drawImage(
-         img,
+      // if(!this.isBlocked) return;
 
-         // Source
-         srcSize * (this.type -1),
-         0,
-         srcSize,
-         srcSize,
+      // const {
+      //    top,
+      //    topRight,
+      //    right,
+      // } = this.getNeighbors(cellsList);
+      
+      // if(!top.isVacant
+      // || !topRight.isVacant
+      // || !right.isVacant) {
          
-         // Destination
-         pos.x -offsetX -VPpos.x,
-         pos.y -offsetY -VPpos.y,
-         destSize +10,
-         destSize,
-      );
+      //    return this.isTransp = true;
+      // }
+
+      // this.isTransp = false;
+   }
+
+
+   // =========================================================================================
+   // Draw Methods
+   // =========================================================================================
+   drawSprite(
+      ctx:      CanvasRenderingContext2D,
+      pos:      IPosition,
+      VPpos:    IPosition,
+      img:      HTMLImageElement,
+   ) {
+      
+      const srcSize  = 280;
+      const destSize = 90;
+      const offsetX  = 48;
+      const offsetY  = 75;
+
+      const drawImg = () => {
+         ctx.drawImage(
+            img,
+
+            // Source
+            srcSize * (this.type -1),
+            0,
+            srcSize,
+            srcSize,
+            
+            // Destination
+            pos.x -offsetX -VPpos.x,
+            pos.y -offsetY -VPpos.y,
+            destSize +10,
+            destSize,
+         );
+      }
+
+
+      if(this.isTransp) {
+         ctx.save();
+         ctx.globalAlpha = 0.5;
+
+         drawImg();
+         
+         ctx.restore();
+         return;
+      };
+
+      drawImg();
    }
 
    drawSelect(

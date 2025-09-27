@@ -12,7 +12,9 @@ export class Node {
 
    id:          number;
    teamID:      number;
+   
    position:    IPosition;
+   screenPos:   IPosition = { x:0, y:0 };
    
    name:        string;
    type:        number;
@@ -35,7 +37,7 @@ export class Node {
    }
 
 
-   draw(
+   drawSprite(
       ctx:   CanvasRenderingContext2D,
       pos:   IPosition,
       VPpos: IPosition,

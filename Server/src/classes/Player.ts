@@ -106,8 +106,7 @@ export class Player {
 
       startCell.agentIDset.add(vacantID);
       startCell.isVacant = false;
-
-      battle.Grid.addToOccupiedMap(startCell);
+      
       battle.vacantIDsList.splice(0, popCost);
       battle.curPop += popCost;
       this.curPop   += popCost;

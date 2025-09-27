@@ -109,10 +109,7 @@ export class Cursor {
       
       if(state === "Up") {
          GM.clearCanvas("selection");
-
-         GM.elemDeselection(GM.unitSelectList_old,  GM.unitSelectList_cur );
-         GM.elemDeselection(GM.nodeSelectList_old,  GM.nodeSelectList_cur );
-         GM.elemDeselection(GM.buildSelectList_old, GM.buildSelectList_cur);
+         this.setSelectMode(GM, false);
       }
    }
 
@@ -182,13 +179,11 @@ export class Cursor {
 
       this.setPosition           (GM, event, false);
       this.setHoverCell          (GM);
+      this.setSelectMode         (GM, true);
+
       this.update_SelectArea     (GM);
       this.update_TargetArea     (GM);
       this.update_WallsList      (GM);
-
-      GM.elemSelection           (GM.unitsList,  GM.unitSelectList_cur,  true );
-      GM.elemSelection           (GM.nodesList,  GM.nodeSelectList_cur,  false);
-      GM.elemSelection           (GM.buildsList, GM.buildSelectList_cur, true );
 
       GM.Viewport.mouseScrollCam (GM);
       GM.Viewport.isScrollDetect = true;
@@ -198,6 +193,108 @@ export class Cursor {
    // =========================================================================================
    // Methods
    // =========================================================================================
+   setSelectMode(
+      GM:       GameManager,
+      isSelect: boolean,
+   ) {
+
+      const {
+         unitsList,  unitSelectList_cur,  unitSelectList_old,
+         nodesList,  nodeSelectList_cur,  nodeSelectList_old,
+         buildsList, buildSelectList_cur, buildSelectList_old,
+      } = GM;
+
+      this.handleSelectMode(GM, isSelect, unitsList,  unitSelectList_old,  unitSelectList_cur );
+      this.handleSelectMode(GM, isSelect, nodesList,  nodeSelectList_old,  nodeSelectList_cur );
+      this.handleSelectMode(GM, isSelect, buildsList, buildSelectList_old, buildSelectList_cur);
+   }
+
+   handleSelectMode     (
+      GM:       GameManager,
+      isSelect: boolean,
+      elemList: Map<number, any>,
+      oldList:  Set<any>,
+      curList:  Set<any>,
+   ) {
+
+      // =====================================
+      // Selection
+      // =====================================
+      if(isSelect) {
+         const { isSelecting, selectArea, curPos } = this;
+
+         // If collide with mouse or select area ==> Add elem to CurrentList
+         for(const [, elem] of elemList) {
+            const elemCol = GM.setElemCollider(elem);
+
+            const isHovered =
+            GM.Collision.point_toCircle(curPos.cart, elemCol)
+
+               ||(elem.isUnit
+               && isSelecting
+               && GM.Collision.square_toCircle(selectArea, elemCol))
+            ;
+
+            if(isHovered && elem.teamID === GM.teamID) {
+               curList.add(elem);
+            }
+            else curList.delete(elem);
+         }
+         
+         return;
+      }
+      
+      
+      // =====================================
+      // Deselection
+      // =====================================
+      // Case 1: if oldList is empty ==> transfer everything from curList
+      if(oldList.size === 0) {
+
+         for(const elem of curList) {
+            elem.isSelected = true;
+            oldList.add(elem);
+         }
+
+         curList.clear();
+         return;
+      }
+
+
+      // Case 2: if curList is not empty ==> update differences
+      if(curList.size !== 0) {
+
+         // Remove deselected elems
+         for(const elem of oldList) {
+
+            if(curList.has(elem)) continue;
+
+            elem.isSelected = false;
+            oldList.delete(elem);
+         }
+
+         // Add new selected elems
+         for(const elem of curList) {
+
+            elem.isSelected = true;
+            oldList.add(elem);
+            curList.delete(elem);
+         }
+
+         return;
+      }
+
+
+      // Case 3: if oldList not empty, but curList is empty ==> clear all
+      for(const elem of oldList) {
+         
+         if(!elem.isSelected) continue;
+         
+         elem.isSelected = false;
+         oldList.delete(elem);
+      }
+   }
+   
    getCellCoord(
       coord:    number,
       cellSize: number,
@@ -427,7 +524,6 @@ export class Cursor {
          }
 
          cell.isBlocked = true;
-         GM.Grid.addToOccupiedMap(cell);
       }
 
       this.wallsList.clear();
