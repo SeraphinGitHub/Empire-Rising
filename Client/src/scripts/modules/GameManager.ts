@@ -93,12 +93,12 @@ export class GameManager {
    flatG_Img:              HTMLImageElement = new Image();
    highG_Img:              HTMLImageElement = new Image();
    walls_Img:              HTMLImageElement = new Image();
-   ores_Img:               HTMLImageElement = new Image();
+   nodes_Img:              HTMLImageElement = new Image();
 
    flatG_Src:              string = "Terrain/Flat_Grass.png";
    highG_Src:              string = "Terrain/High_Grass.png";
    walls_Src:              string = "Buildings/wall.png";
-   ores_Src:               string = "Ressources/ores.png";
+   nodes_Src:              string = "Ressources/nodes.png";
 
    isFlatG_Loaded:         boolean = false;
    isHighG_Loaded:         boolean = false;
@@ -119,7 +119,7 @@ export class GameManager {
       this.flatG_Img.src = this.flatG_Src;
       this.highG_Img.src = this.highG_Src;
       this.walls_Img.src = this.walls_Src;
-      this.ores_Img.src  = this.ores_Src;
+      this.nodes_Img.src = this.nodes_Src;
       // ***************  Temp  ***************
 
       this.Canvas     = Canvas;
@@ -155,6 +155,7 @@ export class GameManager {
       this.socket.on("recruitUnit", (data: any) => this.createNewElem  (data, this.unitsList, Agent));
       this.socket.on("agentState",  (data: any) => this.setAgentState  (data));
       this.socket.on("agentMove",   (data: any) => this.setAgentTarget (data));
+      this.socket.on("agentGather", (data: any) => this.setAgentGather (data));
    }
 
    initPlayer(playerPack: any) {
@@ -189,7 +190,7 @@ export class GameManager {
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
       this.walls_Img.addEventListener("load", () => this.isWalls_Loaded = true);
-      this.ores_Img. addEventListener("load", () => this.isOres_Loaded  = true);
+      this.nodes_Img.addEventListener("load", () => this.isOres_Loaded  = true);
       
       const loadTerrain = setInterval(() => {
          
@@ -471,15 +472,19 @@ export class GameManager {
          teamID: this.teamID,
       };
 
-      
       if(classType === Agent) {
          params["curCell"]  = elemCell;
          elemCell.isVacant  = false;
          elemCell.isBlocked = false;
          elemCell.agentIDset.add(initPack.id);
       }
-      else elemCell.isBlocked = true;
       
+      else {
+         if(classType === Node    ) elemCell.isNode     = true;
+         if(classType === Building) elemCell.isBuilding = true;
+
+         elemCell.isBlocked = true;
+      }
 
       const newElem = new classType(params);
       clientList.set(newElem.id, newElem);
@@ -545,6 +550,19 @@ export class GameManager {
       }
    }
 
+   setAgentGather    (data: any) {
+
+      for(const agentData of data) {
+         const { id, nodeNebName }: any = agentData;
+         
+         const agent: Agent | undefined = this.unitsList.get(id);
+         
+         if(!agent) return;
+
+         agent.gatherRessource();
+      }
+   }
+
 
    // =========================================================================================
    // Draw Methods
@@ -604,7 +622,7 @@ export class GameManager {
          isometric: ctx_isometric,
       } = this.Ctx;
 
-      const { Viewport, Frame, walls_Img, ores_Img } = this;
+      const { Viewport, Frame, walls_Img, nodes_Img } = this;
 
       let renderList: any = [];
 
@@ -626,7 +644,7 @@ export class GameManager {
       renderList.forEach((elem: any) => {
          const { screenPos } = elem;
 
-         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport, ores_Img );
+         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport, nodes_Img );
          if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport, walls_Img);
          if(elem instanceof Agent   ) {
 

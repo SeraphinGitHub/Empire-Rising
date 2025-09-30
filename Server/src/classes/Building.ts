@@ -15,7 +15,7 @@ export class Building {
    cellID:        string;
    position:      IPosition;
 
-   collider:      INumber = { offsetY: 0, radius: 30 };
+   collider:      INumber;
    
    type:          number;
    teamID:        number;
@@ -31,6 +31,7 @@ export class Building {
       this.name         = params.name;
       this.cellID       = params.cellID;
       this.position     = params.position;
+      this.collider     = params.collider;
       this.type         = params.type;
       this.teamID       = params.teamID;
       this.buildTime    = params.buildTime;

@@ -9,7 +9,6 @@ import {
 
 import {
    Cell,
-   Agent,
 } from "../classes/_Export"
 
 import {
@@ -34,7 +33,7 @@ export class Cursor {
       },
 
       target: {
-         separator:     10,
+         separator:     10, // unit number per row
          resizeStep:    4,
          color:        "blue",
       },
@@ -52,6 +51,7 @@ export class Cursor {
    
    raycast:        ILine | null = null;
    hoverCell:      Cell  | null = null;
+   targetCell:     Cell  | null = null;
    selectCell:     Cell  | null = null;
 
    wallsList:      Set<Cell>    = new Set();
@@ -62,6 +62,7 @@ export class Cursor {
 
    isTriggered:    boolean      = false;
    hasCreateWall:  boolean      = false;
+   isAreaDisable:  boolean      = false;
 
 
    constructor(GManager: GameManager) {
@@ -132,20 +133,21 @@ export class Cursor {
       
       if(state === "Down") {
          this.isTargeting = true;
-         
+
          this.resetWallsList ();
+         this.setTargetCell  ();
          this.setTargetArea  (GM);
          this.resetSelectArea(GM);
       }
       
       if(state === "Up") {
+         this.isTargeting = false;
 
          GM.socket.emit("startAgentPF", {
+            targetCell:    this.targetCell,
             targetArea:    this.targetArea,
             AgentsID_List: GM.setAgentsID_List()
          });
-
-         this.isTargeting = false;
       }
    }
 
@@ -228,8 +230,7 @@ export class Cursor {
             const elemCol = GM.setElemCollider(elem);
 
             const isHovered =
-            GM.Collision.point_toCircle(curPos.cart, elemCol)
-
+               GM.Collision.point_toCircle(curPos.cart, elemCol)
                ||(elem.isUnit
                && isSelecting
                && GM.Collision.square_toCircle(selectArea, elemCol))
@@ -346,6 +347,13 @@ export class Cursor {
       const rowID = this.getCellCoord(gridPos.y, cellSize) /cellSize;
    
       this.hoverCell = GM.getCell(`${colID}-${rowID}`)!;
+
+      if(this.hoverCell.isNode) {
+         this.isAreaDisable = true;
+         return;
+      }
+      
+      this.isAreaDisable = false;
    }
 
    setSelectArea     (GM: GameManager) {
@@ -386,29 +394,16 @@ export class Cursor {
       this.drawSelectArea(GM);
    }
    
-   setTargetCell     (GM: GameManager) {
+   setTargetCell     () {
 
-      console.log("==> Feature disabled !"); // ******************************************************
+      if(!this.isAreaDisable) return this.targetCell = null;
 
-      // const { Grid, oldSelectList } = GM;
-      
-      // if(!GM.isMouseGridScope()) return;
-      
-      // const { hoverCell } = this;
-      // const { cellsList } = Grid;
-      // const targetCell    = hoverCell!;
-      
-      // if(targetCell.isBlocked || !targetCell.isVacant) return;
-      
-      // const [ agent      ]  = oldSelectList;
-      
-      // targetCell.isTargeted = true;
-      // agent.hasTarget  = true;
-      // agent.goalCell   = targetCell;
-      // agent.searchPath(cellsList);
+      this.targetCell = this.hoverCell;
    }
 
    setTargetArea     (GM: GameManager) {
+
+      if(this.isAreaDisable) return;
 
       const { targetArea, oldPos, areaOptions } = this;
       
@@ -573,7 +568,7 @@ export class Cursor {
    
    drawTargetArea    (GM: GameManager) {
 
-      if(!this.isTargeting) return;
+      if(!this.isTargeting || this.isAreaDisable) return;
 
       const { targetArea, areaOptions } = this;
       const { x, y, width, height     } = targetArea;

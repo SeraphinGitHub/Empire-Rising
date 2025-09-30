@@ -10,8 +10,6 @@ export class Grid {
    private GM:       GameManager;
 
    cellsList:        Map<string, Cell> = new Map();
-   blockedCells:     Set<Cell>         = new Set();
-   occupiedCells:    Set<Cell>         = new Set();
 
    constructor(GManager: GameManager) {
 

@@ -159,7 +159,8 @@ export class Agent {
 
    gatherRessource() {
 
-      if(!this.isGatherable || !this.isGathering) return;
+      // if(!this.isGatherable || !this.isGathering) return;
+      if(!this.isGatherable) return;
 
       this.animState = 3;
       this.setFacingSide(this.animSpecs.gather.row);
@@ -192,7 +193,7 @@ export class Agent {
 
       this.hasArrived = true;
 
-      this.gatherRessource();
+      // this.gatherRessource();
       this.inMovement(false);
    }
 

@@ -14,7 +14,6 @@ export class Grid {
    halfGrid:         number;
 
    cellsList:        Map<string, Cell> = new Map();
-   occupiedCells:    Set<Cell>         = new Set();
 
    constructor(params: any) {
       

@@ -45,9 +45,16 @@ export class Node {
    ) {
 
       const srcSize  = 400;
-      const destSize = 65;
-      const offsetX  = 32;
-      const offsetY  = 40;
+
+      let destSize = 65;
+      let offsetX  = 32;
+      let offsetY  = 40;
+
+      if(this.type > 4) {
+         destSize = 120;
+         offsetX  = 65;
+         offsetY  = 105;
+      }
    
       ctx.drawImage(
          img,

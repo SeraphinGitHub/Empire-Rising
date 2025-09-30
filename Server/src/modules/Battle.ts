@@ -204,18 +204,40 @@ const NODES = {
       "40-26",
    ],
 
-   tree: [
-      "14-10",
-      "11-11",
-      "12-12",
-      "13-11",
-      "13-12",
-      "14-12",
-      "14-13",
-      "08-16",
-      "08-18",
-      "06-18",
-   ]
+   tree_1: [
+      "11-17",
+      "31-8",
+   ],
+   
+   tree_2: [
+      "34-27",
+      "34-25",
+      "36-27",
+      "28-35",
+      "30-7",
+   ],
+
+   tree_3: [
+      "35-27",
+      "35-26",
+      "31-9",
+   ],
+
+   tree_4: [
+      "29-35",
+   ],
+   
+   tree_5: [
+      "35-25",
+      "30-8",
+   ],
+   
+   tree_6: [
+      "36-26",
+      "32-8",
+   ],
+
+
 }
 
 
@@ -302,8 +324,8 @@ export class Battle {
 
          // **************************************************************
          let cellID_Array: any = [];
-         if(player.teamID === 1) cellID_Array = ["17-21", "19-21", "21-21", "20-23", "18-23"];
-         if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "20-29", "18-29"];
+         if(player.teamID === 1) cellID_Array = ["17-21", "19-21", "21-21", "19-19", "17-19", "17-23", "19-23", "21-23", "21-19"];
+         if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "19-25", "17-25", "17-29", "19-29", "21-29", "21-25"];
          
          cellID_Array.forEach((cellID: any) => {
             player.recruitUnit({
@@ -317,12 +339,22 @@ export class Battle {
    sync() {
       setInterval(() => {
 
-         let stateList = [];
-         let moveList  = [];
+         let stateList  = [];
+         let moveList   = [];
+         let gatherList = [];
 
          for(const [, agent] of this.unitsList) {
 
-            const { id, position, curCell, hasArrived, Pathfinder } = agent;
+            const {
+               id,
+               position,
+               curCell,
+               hasArrived,
+               Pathfinder,
+               nodeNebName,
+               hasStartGather,
+               isGathering,
+            } = agent;
 
             // Send agent state (Every tick)
             stateList.push({
@@ -339,7 +371,17 @@ export class Battle {
             path.forEach((cell: Cell) => pathID.push(cell.id));
             
             agent.walkPath(this.Grid);
-            
+
+            if(agent.isGathering) {
+               agent.isGathering = false; // ****************
+               gatherList.push({
+                  id,
+                  hasStartGather,
+                  isGathering,
+                  nodeNebName,
+               })
+            }
+
             // Skip sending pathID pack if already sent once (Not every tick)
             if(agent.hasUpdated) continue;
             agent.hasUpdated = true;
@@ -350,8 +392,11 @@ export class Battle {
             });
          }
          
-         this.spread("agentState", stateList);
-         this.spread("agentMove",  moveList );
+         this.spread("agentState",  stateList );
+         this.spread("agentMove",   moveList  );
+         this.spread("agentGather", gatherList);
+
+         console.log({ message: gatherList}); // ******************************************************
 
       }, Math.floor( 1000/ Number(process.env.SERVER_FRAME_RATE) ));
    }
@@ -486,17 +531,83 @@ export class Battle {
       }
    }
 
+   setSortedUnitList(
+      AgentsID_List:  any,
+      sortedUnitList: Set<Agent>,
+      cell?:          Cell,
+      nebName?:       string,
+   ) {
+
+      for(const id of AgentsID_List) {
+         const agent = this.unitsList.get(id)!;
+         const { Pathfinder } = agent;
+
+         if(!cell
+         || !cell.isVacant
+         ||  cell.isTargeted
+         ||  cell.isBlocked
+         ||  Pathfinder.hasTarget) {
+            
+            continue;
+         }
+         
+         cell.isTargeted      = true;
+         Pathfinder.hasTarget = true;
+         Pathfinder.goalCell  = cell;
+
+         if(nebName) agent.nodeNebName = nebName;
+         
+         sortedUnitList.add(agent);
+      }
+   }
+
+   unitSearchPath(
+      sortedUnitList: Set<Agent>,
+   ) {
+      const { cellsList } =  this.Grid;
+      
+      for(const agent of sortedUnitList) {
+         
+         agent.Pathfinder.searchPath(cellsList);
+
+         if(!agent.Pathfinder.hasPath) continue;
+            
+         agent.hasArrived = false;
+         agent.hasUpdated = false;
+      }
+   }
+
    startAgentPF         (data: any) {
 
-      const { cellSize, cellsList       } = this.Grid;
-      const { targetArea, AgentsID_List } = data;
-      const { x, y, width, height       } = targetArea;
+      const { targetCell, targetArea, AgentsID_List } = data;
+      
+      // ===========================================
+      // Search path for node gathering position
+      // ===========================================
+      let sortedUnitList = new Set<Agent>();
+      const focusCell = this.getCell(targetCell?.id);
+      
+      if(focusCell && focusCell.isNode) {
+         
+         for(const [nebName, neb] of Object.entries(focusCell.nebStatusList)) {
+            const nodeNeb = this.getCell(neb.id);
+            
+            this.setSortedUnitList(AgentsID_List, sortedUnitList, nodeNeb, nebName);
+         }
 
+         this.unitSearchPath(sortedUnitList);
+         return;
+      }
+
+
+      // ===========================================
+      // Search path for normal position
+      // ===========================================      
       // Search cells IDs from area
+      const { cellSize,           } = this.Grid;
+      const { x, y, width, height } = targetArea;
       const colNum = width  /cellSize;
       const rowNum = height /cellSize;
-      
-      let sortedUnitList = new Set<Agent>();
       
       // Get all cells IDs
       for(let r = 0; r < rowNum; r++) {
@@ -506,75 +617,11 @@ export class Battle {
             const colID = this.getIndexID(x, width, c, cellSize);
             const cell  = this.getCell(`${colID}-${rowID}`);
 
-            if(!cell
-            || !cell.isVacant
-            ||  cell.isTargeted
-            ||  cell.isBlocked && !cell.isNode) {
-               
-               continue;
-            }
-            
-
-
-            // ********************************************************************
-            // ********************************************************************
-
-            if(cell.isNode) {
-
-               for(const neb of Object.values(cell.nebStatusList)) {
-                  
-                  const nodeNeb = this.getCell(neb.id)!;
-                  
-                  for(const id of AgentsID_List) {
-                     const agent = this.unitsList.get(id)!;
-                     const { Pathfinder } = agent;
-                     
-                     if(nodeNeb.isTargeted || Pathfinder.hasTarget) continue;
-                     
-                     nodeNeb.isTargeted      = true;
-                     Pathfinder.hasTarget = true;
-                     Pathfinder.goalCell  = nodeNeb;
-                     
-                     sortedUnitList.add(agent);
-                  }
-               }              
-
-               continue;
-            }
-
-            // ********************************************************************
-            // ********************************************************************
-
-
-
-            
-            // Set all Agents goalCells
-            for(const id of AgentsID_List) {
-               const agent = this.unitsList.get(id)!;
-               const { Pathfinder } = agent;
-               
-               if(cell.isTargeted || Pathfinder.hasTarget) continue;
-               
-               cell.isTargeted      = true;
-               Pathfinder.hasTarget = true;
-               Pathfinder.goalCell  = cell;
-               
-               sortedUnitList.add(agent);
-            }
+            this.setSortedUnitList(AgentsID_List, sortedUnitList, cell);
          }
       }
 
-      // Start all Agents search path
-      for(const agent of sortedUnitList) {
-         
-         agent.Pathfinder.searchPath(cellsList);
-
-         if(agent.Pathfinder.hasPath) {
-            
-            agent.hasArrived = false;
-            agent.hasUpdated = false;
-         }
-      }
+      this.unitSearchPath(sortedUnitList);
    }
 
 }

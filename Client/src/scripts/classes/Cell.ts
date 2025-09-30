@@ -7,10 +7,6 @@ import {
    ILineList,
 } from "../utils/interfaces";
 
-import {
-   Grid,
-} from "./_Export";
-
 
 // =====================================================================
 // Cell Class
@@ -45,8 +41,9 @@ export class Cell {
    
    isVacant:       boolean = true;
    isBlocked:      boolean = false;
-   isTargeted:     boolean = false;
    isOverlaped:    boolean = false;
+   isNode:         boolean = false;
+   isBuilding:     boolean = false;
 
    // ----------- Tempory -----------
    isDiffTile:     boolean = false;

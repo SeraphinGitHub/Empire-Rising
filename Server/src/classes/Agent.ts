@@ -24,7 +24,8 @@ export class Agent {
    teamID:        number;
    teamColor:     string;
    name:          string;
-   basePath:      string;
+   basePath:      string; // for sprite img folder  
+   nodeNebName:   string = "";
    
    popCost:       number;
    health:        number;
@@ -51,7 +52,11 @@ export class Agent {
    isSelected:    boolean = false;
    isAttacking:   boolean = false;
 
-   Pathfinder: Pathfinder;
+   isGatherable:  boolean = true;
+   hasStartGather:   boolean = false;
+   isGathering:   boolean = false;
+
+   Pathfinder:    Pathfinder;
 
    
    constructor(params: any) {
@@ -157,6 +162,14 @@ export class Agent {
       }
    }
 
+   gatherRessource() {
+
+      if(!this.isGatherable || this.isGathering) return;
+
+      this.isGathering = true;
+      this.hasStartGather = true; // *********************
+   }
+
    walkPath(Grid: Grid) {
       
       const { nextCell, goalCell, hasPath } = this.Pathfinder;
@@ -189,6 +202,8 @@ export class Agent {
       this.curCell.setOccupied(this.id);
 
       if(!this.hasReached(goalCell!)) return;
+
+      this.gatherRessource();
 
       this.hasArrived = true;
       this.isMoving   = false;

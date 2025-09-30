@@ -15,7 +15,7 @@ export class Node {
    cellID:      string;
    position:    IPosition;
 
-   collider:    INumber = { offsetY: 0, radius: 40 };
+   collider:    INumber;
    
    type:        number;
    baseAmount:  number;
@@ -28,6 +28,7 @@ export class Node {
       this.name       = params.name;
       this.cellID     = params.cellID;
       this.position   = params.position;
+      this.collider   = params.collider;
       this.type       = params.type;
       this.baseAmount = params.amount;
       this.amount     = params.amount;
