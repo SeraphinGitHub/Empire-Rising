@@ -26,15 +26,15 @@ export class Player {
    maxPop:    number = 0;
    curPop:    number = 0;
 
-   ressources: INumber = {
-      food:    100,
-      stone:   50,
-      wood:    75,
-      coal:    200,
-      ironOre: 150,
+   yield:     INumber = {
+      food:    0,
+      stone:   0,
+      wood:    0,
+      coal:    0,
+      ironOre: 0,
       ironBar: 0,
-      goldOre: 60,
-      goldBar: 20,
+      goldOre: 0,
+      goldBar: 0,
    }
 
    constructor(params: any) {
@@ -53,7 +53,7 @@ export class Player {
          name:       this.name,
          teamID:     this.teamID,
          teamColor:  this.teamColor,
-         ressources: this.ressources,
+         yield:      this.yield,
       }
    }
 
@@ -89,11 +89,27 @@ export class Player {
       battle: Battle,
    ) {
 
-      const { popCost, initPack } = battle.createNewAgent(data);
+      const { popCost, initPack } = battle.createNewAgent(data, this.id);
 
       this.updatePop(popCost);
 
       battle.spread("recruitUnit", initPack);
+   }
+
+   updateYield(yieldType: number) {
+      
+      switch(yieldType) {
+         case 1: this.yield.food    ++; break;
+         case 2: this.yield.stone   ++; break;
+         case 3: this.yield.wood    ++; break;
+         case 4: this.yield.coal    ++; break;
+         case 5: this.yield.ironOre ++; break;
+         case 6: this.yield.ironBar ++; break;
+         case 7: this.yield.goldOre ++; break;
+         case 8: this.yield.goldBar ++; break;
+      }
+
+      this.socket.emit("updateYield", this.yield);
    }
 
 }

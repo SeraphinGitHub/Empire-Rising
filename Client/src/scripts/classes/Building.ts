@@ -18,7 +18,7 @@ export class Building {
 
    collider:      INumber;
    
-   type:          number;
+   spriteID:      number;
    teamID:        number;
    buildTime:     number;
    health:        number;
@@ -36,7 +36,7 @@ export class Building {
       this.name         = params.name;
       this.position     = params.position;
       this.collider     = params.collider;
-      this.type         = params.type;
+      this.spriteID     = params.spriteID;
       this.teamID       = params.teamID;
       this.buildTime    = params.buildTime;
       this.health       = params.health;
@@ -89,7 +89,7 @@ export class Building {
             img,
 
             // Source
-            srcSize * (this.type -1),
+            srcSize * (this.spriteID -1),
             0,
             srcSize,
             srcSize,

@@ -55,7 +55,7 @@ export class GameManager {
    COS_45:                 number     = 0.707;
    COS_30:                 number     = 0.866;
    
-   ressources:             INumber    = {};
+   playerYield:            INumber    = {};
    teamID:                 number     = -1;
    teamColor:              string     = "";
    name:                   string     = "";
@@ -152,18 +152,20 @@ export class GameManager {
    watchGame() {
 
       this.socket.on("updatePop",   (data: any) => this.updatePop      (data));
+      this.socket.on("updateYield", (data: any) => this.updateYield    (data));
       this.socket.on("recruitUnit", (data: any) => this.createNewElem  (data, this.unitsList, Agent));
       this.socket.on("agentState",  (data: any) => this.setAgentState  (data));
       this.socket.on("agentMove",   (data: any) => this.setAgentTarget (data));
       this.socket.on("agentGather", (data: any) => this.setAgentGather (data));
+      this.socket.on("agentYield",  (data: any) => this.setAgentYield  (data));
    }
 
    initPlayer(playerPack: any) {
 
-      this.name       = playerPack.name;
-      this.teamID     = playerPack.teamID;
-      this.teamColor  = playerPack.teamColor;
-      this.ressources = playerPack.ressources;
+      this.name        = playerPack.name;
+      this.teamID      = playerPack.teamID;
+      this.teamColor   = playerPack.teamColor;
+      this.playerYield = playerPack.yield;
    }
    
    initGame(battlePack: any) {
@@ -247,12 +249,14 @@ export class GameManager {
          curPop,
          maxPop,
          gridPos,
+         playerYield,
       } = this;
       
       return {
          curPop,
          maxPop,
          gridPos,
+         playerYield,
          hoverCell: hoverCell ? hoverCell : { id: "null", x: 0, y: 0 },
          cartPos: curPos.cart,
          viewPort: { x, y },
@@ -416,6 +420,11 @@ export class GameManager {
       if(typeof(data) == "number") this.curPop = data;
    }
 
+   updateYield       (data: any) {
+      
+      this.playerYield = data;
+   }
+
    setAgentsID_List  () {
 
       let agentsID_List = [];
@@ -497,7 +506,7 @@ export class GameManager {
 
          const agent: Agent | undefined = this.unitsList.get(id);
          
-         if(!agent) return;
+         if(!agent) continue;
 
          agent.pathID           = pathID;
          agent.path             = [];
@@ -518,11 +527,11 @@ export class GameManager {
          
          const agent: Agent | undefined = this.unitsList.get(id);
          
-         if(!agent) return;
+         if(!agent) continue;
          
          const cell: Cell | undefined = this.getCell(cellID);
          
-         if(!cell) return;
+         if(!cell) continue;
    
          cell.isVacant   = isVacant;
          
@@ -553,16 +562,37 @@ export class GameManager {
    setAgentGather    (data: any) {
 
       for(const agentData of data) {
-         const { id, nodeNebName }: any = agentData;
+         const { id, nodeNebName, isGathering }: any = agentData;
          
          const agent: Agent | undefined = this.unitsList.get(id);
          
-         if(!agent) return;
+         if(!agent) continue;
 
-         agent.gatherRessource();
+         agent.isGathering = isGathering;
+         agent.nebName     = nodeNebName;
       }
    }
 
+
+   
+   // ***************************************************
+   setAgentYield    (data: any) {
+      
+      for(const agentData of data) {
+         const { id, gatherAmount }: any = agentData;
+         
+         const agent: Agent | undefined = this.unitsList.get(id);
+         
+         if(!agent) continue;
+         
+         if(!gatherAmount) continue;
+         console.log({ gatherAmount }); // ******************************************************
+      }
+      
+   }
+   // ***************************************************
+
+   
 
    // =========================================================================================
    // Draw Methods
@@ -630,8 +660,7 @@ export class GameManager {
       this.setRenderList(this.buildsList, renderList);
       this.setRenderList(this.unitsList,  renderList, (unit: any) => {
 
-         unit.walkPath(this.getCell.bind(this));
-         unit.updateAnimState(Frame);
+         unit.update(Frame, this.getCell.bind(this));
       });
 
       // Top-right to Bottom-left

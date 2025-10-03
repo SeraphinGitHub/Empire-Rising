@@ -17,13 +17,16 @@ export class Building {
 
    collider:      INumber;
    
-   type:          number;
+   spriteID:      number;
    teamID:        number;
    buildTime:     number;
    health:        number;
    baseHealth:    number;
 
    color:         string;
+
+   isBuilding:    boolean = true;
+
 
    constructor(params: any) {
 
@@ -32,7 +35,7 @@ export class Building {
       this.cellID       = params.cellID;
       this.position     = params.position;
       this.collider     = params.collider;
-      this.type         = params.type;
+      this.spriteID     = params.spriteID;
       this.teamID       = params.teamID;
       this.buildTime    = params.buildTime;
       this.health       = params.health;
@@ -47,7 +50,7 @@ export class Building {
          cellID:     this.cellID,
          position:   this.position,
          collider:   this.collider,
-         type:       this.type,
+         spriteID:   this.spriteID,
          teamID:     this.teamID,
          buildTime:  this.buildTime,
          health:     this.baseHealth,

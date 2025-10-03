@@ -10,42 +10,42 @@
          <div class="flex bar-3">
             <div class="flex ressource">
                <p>Food</p>
-               <p>{{ ressources.food     }}</p>
+               <p>{{ playerYield.food     }}</p>
             </div>
 
             <div class="flex ressource">
                <p>Stone</p>
-               <p>{{ ressources.stone    }}</p>
+               <p>{{ playerYield.stone    }}</p>
             </div>
 
             <div class="flex ressource">
                <p>Wood</p>
-               <p>{{ ressources.wood     }}</p>
+               <p>{{ playerYield.wood     }}</p>
             </div>
 
             <div class="flex ressource">
                <p>Coal</p>
-               <p>{{ ressources.coal     }}</p>
+               <p>{{ playerYield.coal     }}</p>
             </div>
 
             <div class="flex ressource">
                <p>Iron Ore</p>
-               <p>{{ ressources.ironOre  }}</p>
+               <p>{{ playerYield.ironOre  }}</p>
             </div>
 
             <div class="flex ressource">
                <p>Iron Bar</p>
-               <p>{{ ressources.ironBar  }}</p>
+               <p>{{ playerYield.ironBar  }}</p>
             </div>
 
             <div class="flex ressource">
                <p>Gold Ore</p>
-               <p>{{ ressources.goldOre  }}</p>
+               <p>{{ playerYield.goldOre  }}</p>
             </div>
 
             <div class="flex ressource">
                <p>Gold Bar</p>
-               <p>{{ ressources.goldBar  }}</p>
+               <p>{{ playerYield.goldBar  }}</p>
             </div>
          </div>
 
@@ -63,7 +63,7 @@
       name: "ButtonBar",
 
       props: {
-         ressources: Object,
+         playerYield: Object,
       },
 
       data() {

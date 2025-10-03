@@ -8,6 +8,8 @@ import {
    Cell,
    Grid,
    Pathfinder,
+   Player,
+   Node,
 } from "./_Export";
 
 import dotenv from "dotenv";
@@ -26,15 +28,21 @@ export class Agent {
    name:          string;
    basePath:      string; // for sprite img folder  
    nodeNebName:   string = "";
+   harvNodeID:    number = -1;
    
    popCost:       number;
    health:        number;
    armor:         number;
    damages:       number;
 
+   buildSpeed:    number;
+   gatherSpeed:   number;
+   gatherAmount:  number = 0;
+   carryAmount:   number;
+   gatherIntID:   NodeJS.Timeout | null = null;
+
    baseSpeed:     number;
    moveSpeed:     number;
-   buildSpeed:    number;
    attackSpeed:   number;
    animDelay:     number;
    lastUpdate:    number = Date.now();
@@ -44,46 +52,56 @@ export class Agent {
    oldCell:       Cell | null = null;
    curCell:       Cell;
    
-   hasUpdated:    boolean = false;
-
+   isUnit:        boolean;
+   isWorker:      boolean;
+   
    hasArrived:    boolean = true;
    hasReachNext:  boolean = true;
+   hasUpdated:    boolean = false;
    isMoving:      boolean = false;
    isSelected:    boolean = false;
    isAttacking:   boolean = false;
-
-   isGatherable:  boolean = true;
-   hasStartGather:   boolean = false;
+   isGatherable:  boolean = false;
    isGathering:   boolean = false;
+
+   // **********************************************
+   hasGathered: boolean = false;
+   // **********************************************
 
    Pathfinder:    Pathfinder;
 
    
    constructor(params: any) {
-      const { stats } = params;
+      const { stats }    = params;
 
-      this.id          = params.id;
-      this.playerID    = params.playerID;
-      this.teamID      = params.teamID;
-      this.teamColor   = params.teamColor;
-      this.position    = params.position;
-      this.curCell     = params.curCell;
+      this.id            = params.id;
+      this.playerID      = params.playerID;
+      this.teamID        = params.teamID;
+      this.teamColor     = params.teamColor;
+      this.position      = params.position;
+      this.curCell       = params.curCell;
       
-      this.name        = stats.name;
-      this.collider    = stats.collider;
-      this.popCost     = stats.popCost;
-      this.health      = stats.health;
-      this.armor       = stats.armor;
-      this.damages     = stats.damages;
-      
-      this.baseSpeed   = stats.moveSpeed;
-      this.moveSpeed   = this.setMoveSpeed(stats.moveSpeed);
-      this.buildSpeed  = stats.buildSpeed;
-      this.attackSpeed = stats.attackSpeed;
-      this.animDelay   = stats.animDelay;
-      this.basePath    = stats.basePath;
+      this.name          = stats.name;
+      this.collider      = stats.collider;
+      this.popCost       = stats.popCost;
+      this.health        = stats.health;
+      this.armor         = stats.armor;
+      this.damages       = stats.damages;
 
-      this.Pathfinder  = new Pathfinder(this);
+      this.buildSpeed    = stats.buildSpeed;
+      this.gatherSpeed   = stats.gatherSpeed;
+      this.carryAmount   = stats.carryAmount;
+      
+      this.baseSpeed     = stats.moveSpeed;
+      this.moveSpeed     = this.setMoveSpeed(stats.moveSpeed);
+      this.buildSpeed    = stats.buildSpeed;
+      this.attackSpeed   = stats.attackSpeed;
+      this.animDelay     = stats.animDelay;
+      this.basePath      = stats.basePath;
+      this.isWorker      = stats.isWorker;
+      this.isUnit        = stats.isUnit;
+
+      this.Pathfinder    = new Pathfinder(this);
    }
 
 
@@ -106,6 +124,8 @@ export class Agent {
          attackSpeed:   this.attackSpeed,
          animDelay:     this.animDelay,
          basePath:      this.basePath,
+         isUnit:        this.isUnit,
+         isWorker:      this.isWorker,
       }
    }
 
@@ -162,20 +182,63 @@ export class Agent {
       }
    }
 
-   gatherRessource() {
+   gatherRessource(
+      playersList: Map<string, Player>,
+      nodesList:   Map<number, Node>,
+   ) {
 
-      if(!this.isGatherable || this.isGathering) return;
-
+      if(!this.isGatherable) return;
+      
+      if(!this.gatherSpeed || !this.carryAmount) {
+         console.log({ message: "No gatherSpeed or carryAmount stat !" });
+         return;
+      }
+      
       this.isGathering = true;
-      this.hasStartGather = true; // *********************
+      
+      this.gatherIntID = setInterval(() => {
+         this.gatherAmount++
+
+         const node   = nodesList.get(this.harvNodeID);
+         const player = playersList.get(this.playerID);
+         
+         if(!node || !player) return;
+         
+         node  .updateAmount();
+         player.updateYield (node.yieldType);
+         
+         
+         // ******************
+         console.log({ message: this.carryAmount, gatherAmount: this.gatherAmount }); // ******************************************************
+         
+         if(this.gatherAmount >= this.carryAmount) {
+            
+            // ******************
+            console.log({ message: "clear !" }); // ******************************************************
+            
+            if(this.gatherIntID) clearInterval(this.gatherIntID);
+            this.hasGathered = true;
+            this.isGathering = false;
+            return;
+         };
+
+      }, this.gatherSpeed);
+      
    }
 
-   walkPath(Grid: Grid) {
+   walkPath(
+      Grid:        Grid,
+      playersList: Map<string, Player>,
+      nodesList:   Map<number, Node>,
+   ) {
       
       const { nextCell, goalCell, hasPath } = this.Pathfinder;
       
       if(!nextCell || !goalCell) return;
       
+      if(this.gatherIntID) clearInterval(this.gatherIntID);
+      this.isGathering  = false;
+
       if(!hasPath) {
          this.hasReachNext = true;
          this.hasArrived   = true;
@@ -202,11 +265,11 @@ export class Agent {
       this.curCell.setOccupied(this.id);
 
       if(!this.hasReached(goalCell!)) return;
-
-      this.gatherRessource();
-
+      
       this.hasArrived = true;
       this.isMoving   = false;
+      
+      if(this.isWorker) this.gatherRessource(playersList, nodesList);
    }
 
    moveTo(nextCell: Cell) {

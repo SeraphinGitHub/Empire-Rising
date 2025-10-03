@@ -12,7 +12,7 @@ import { BUILD_STATS    } from "../utils/buildStats";
 import { UNIT_STATS     } from "../utils/unitStats";
 import { NODE_STATS     } from "../utils/nodeStats";
 
-import { Server, Socket } from "socket.io";
+import { Server         } from "socket.io";
 import dotenv             from "dotenv";
 dotenv.config();
 
@@ -328,8 +328,15 @@ export class Battle {
          if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "19-25", "17-25", "17-29", "19-29", "21-29", "21-25"];
          
          cellID_Array.forEach((cellID: any) => {
+            let unitID = "_0100";
+
+            if(cellID === "17-21") unitID = "_0101"
+            
             player.recruitUnit({
-               cellID, unitID: "_0101", teamID: player.teamID, teamColor: player.teamColor,
+               cellID,
+               unitID,
+               teamID:    player.teamID,
+               teamColor: player.teamColor,
             }, this);
          });
          // **************************************************************
@@ -342,6 +349,7 @@ export class Battle {
          let stateList  = [];
          let moveList   = [];
          let gatherList = [];
+         let yieldList  = [];
 
          for(const [, agent] of this.unitsList) {
 
@@ -352,8 +360,6 @@ export class Battle {
                hasArrived,
                Pathfinder,
                nodeNebName,
-               hasStartGather,
-               isGathering,
             } = agent;
 
             // Send agent state (Every tick)
@@ -364,24 +370,33 @@ export class Battle {
                isVacant: curCell.isVacant,
             });
 
+            
+            // ***************************************************
+            if(agent.hasGathered) {
+               agent.hasGathered = false;
+
+               yieldList.push({
+                  id,
+                  gatherAmount: agent.gatherAmount,
+               });
+            }
+            // ***************************************************
+
+
             if(hasArrived) continue;
             
             const path = Pathfinder.path;
             let pathID: string[] = [];
             path.forEach((cell: Cell) => pathID.push(cell.id));
             
-            agent.walkPath(this.Grid);
-
-            if(agent.isGathering) {
-               agent.isGathering = false; // ****************
-               gatherList.push({
-                  id,
-                  hasStartGather,
-                  isGathering,
-                  nodeNebName,
-               })
-            }
-
+            agent.walkPath(this.Grid, this.playersList, this.nodesList); // Recast with agent.update() method
+            
+            gatherList.push({
+               id,
+               nodeNebName,
+               isGathering: agent.isGathering,
+            });
+            
             // Skip sending pathID pack if already sent once (Not every tick)
             if(agent.hasUpdated) continue;
             agent.hasUpdated = true;
@@ -395,8 +410,7 @@ export class Battle {
          this.spread("agentState",  stateList );
          this.spread("agentMove",   moveList  );
          this.spread("agentGather", gatherList);
-
-         console.log({ message: gatherList}); // ******************************************************
+         this.spread("agentYield",  yieldList );
 
       }, Math.floor( 1000/ Number(process.env.SERVER_FRAME_RATE) ));
    }
@@ -441,7 +455,7 @@ export class Battle {
       this.playersList.set(playerID, newPlayer);
    }
 
-   createNewAgent       (data: any): {[key: string]: any} {
+   createNewAgent       (data: any, playerID: string): {[key: string]: any} {
 
       const { unitID, cellID, teamID, teamColor } = data;
 
@@ -459,9 +473,9 @@ export class Battle {
 
       const newAgent = new Agent({
          id:         vacantID,
-         playerID:   this.id,
-         teamID:     teamID,
-         teamColor:  teamColor,
+         playerID,
+         teamID,
+         teamColor,
          stats:      agentStats,
          position: { x: cellX, y: cellY }, // ==> Tempory until create rally point !
          curCell:    startCell,            // ==> Tempory until create BuildingsClass with spawn position
@@ -512,13 +526,13 @@ export class Battle {
 
                if(classType === Node) {
                   params["baseAmount"] = elemStats.amount;                  
-                  elemCell.isNode      = true;
+                  elemCell.child = new classType(params);
                }
                
                if(classType === Building) {
                   params["teamID"    ] = 1;
                   params["baseHealth"] = elemStats.health;
-                  elemCell.isBuilding  = true;
+                  elemCell.child = new classType(params);
                }
                
                elemCell.isVacant  = false;
@@ -536,26 +550,34 @@ export class Battle {
       sortedUnitList: Set<Agent>,
       cell?:          Cell,
       nebName?:       string,
+      nodeID?:        number,
    ) {
 
       for(const id of AgentsID_List) {
          const agent = this.unitsList.get(id)!;
-         const { Pathfinder } = agent;
+         const { Pathfinder, isWorker } = agent;
 
          if(!cell
          || !cell.isVacant
          ||  cell.isTargeted
          ||  cell.isBlocked
-         ||  Pathfinder.hasTarget) {
+         ||  Pathfinder.hasTarget
+         ||  nebName && !isWorker) {
             
             continue;
          }
          
+         agent.isGatherable   = false;
          cell.isTargeted      = true;
          Pathfinder.hasTarget = true;
          Pathfinder.goalCell  = cell;
 
-         if(nebName) agent.nodeNebName = nebName;
+         // Only for gathering
+         if(nebName && nodeID && isWorker) {
+            agent.isGatherable = true;
+            agent.nodeNebName  = nebName;
+            agent.harvNodeID   = nodeID;
+         }
          
          sortedUnitList.add(agent);
       }
@@ -587,12 +609,12 @@ export class Battle {
       let sortedUnitList = new Set<Agent>();
       const focusCell = this.getCell(targetCell?.id);
       
-      if(focusCell && focusCell.isNode) {
+      if(focusCell && focusCell.child.isNode) {
          
          for(const [nebName, neb] of Object.entries(focusCell.nebStatusList)) {
             const nodeNeb = this.getCell(neb.id);
-            
-            this.setSortedUnitList(AgentsID_List, sortedUnitList, nodeNeb, nebName);
+
+            this.setSortedUnitList(AgentsID_List, sortedUnitList, nodeNeb, nebName, focusCell.child.id);
          }
 
          this.unitSearchPath(sortedUnitList);

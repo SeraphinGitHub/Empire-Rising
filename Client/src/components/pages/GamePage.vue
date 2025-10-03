@@ -5,7 +5,7 @@
       <CartCanvas/>
       <IsoCanvas/>
       <Coordinates v-if="isLoaded" :htmlData ="htmlData"/>
-      <ButtonBar :ressources ="ressources"/>
+      <ButtonBar :playerYield ="playerYield"/>
 
    </section>
 </template>
@@ -39,14 +39,14 @@
 
       data() {
       return {
-         isLoaded: false,
-         GManager: null,
-         htmlData: null,
-         Canvas:   {},
-         Ctx:      {},
-         playerName: "",
-         teamColor:  "",
-         ressources:  {},
+         isLoaded:    false,
+         GManager:    null,
+         htmlData:    null,
+         Canvas:      {},
+         Ctx:         {},
+         playerName:  "",
+         teamColor:   "",
+         playerYield: {},
       }},
 
       mounted() {
@@ -87,12 +87,15 @@
             this.isLoaded = true;
 
             setTimeout(() => {
-               this.playerName = this.GManager.name;
-               this.teamColor  = this.GManager.teamColor;
-               this.ressources = this.GManager.ressources;
+               this.playerName  = this.GManager.name;
+               this.teamColor   = this.GManager.teamColor;
+               this.playerYield = this.GManager.playerYield;
             }, 100);
    
-            setInterval(() => this.htmlData = this.GManager.setHtmlData(), 50);
+            setInterval(() => {
+               this.htmlData    = this.GManager.setHtmlData();
+               this.playerYield = this.htmlData.playerYield; 
+            }, 50);
          },
       }
    }

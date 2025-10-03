@@ -17,9 +17,12 @@ export class Node {
 
    collider:    INumber;
    
-   type:        number;
+   spriteID:    number;
+   yieldType:   number;
    baseAmount:  number;
    amount:      number;
+
+   isNode:      boolean = true;
 
 
    constructor(params: any) {
@@ -29,7 +32,8 @@ export class Node {
       this.cellID     = params.cellID;
       this.position   = params.position;
       this.collider   = params.collider;
-      this.type       = params.type;
+      this.spriteID   = params.spriteID;
+      this.yieldType  = params.yieldType;
       this.baseAmount = params.amount;
       this.amount     = params.amount;
    }
@@ -41,9 +45,15 @@ export class Node {
          cellID:     this.cellID,
          position:   this.position,
          collider:   this.collider,
-         type:       this.type,
+         spriteID:   this.spriteID,
          amount:     this.baseAmount,
       }
+   }
+
+
+   updateAmount() {
+      
+      this.amount--;
    }
 
 }

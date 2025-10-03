@@ -17,7 +17,7 @@ export class Node {
    screenPos:   IPosition = { x:0, y:0 };
    
    name:        string;
-   type:        number;
+   spriteID:    number;
    amount:      number;
    
    collider:    INumber;
@@ -31,7 +31,7 @@ export class Node {
       this.teamID    = params.teamID;
       this.position  = params.position;
       this.name      = params.name;
-      this.type      = params.type;
+      this.spriteID  = params.spriteID;
       this.amount    = params.amount;
       this.collider  = params.collider;
    }
@@ -50,7 +50,7 @@ export class Node {
       let offsetX  = 32;
       let offsetY  = 40;
 
-      if(this.type > 4) {
+      if(this.spriteID > 4) {
          destSize = 120;
          offsetX  = 65;
          offsetY  = 105;
@@ -60,7 +60,7 @@ export class Node {
          img,
 
          // Source
-         srcSize * (this.type -1),
+         srcSize * (this.spriteID -1),
          0,
          srcSize,
          srcSize,

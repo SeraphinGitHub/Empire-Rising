@@ -16,7 +16,7 @@ export const BUILD_STATS: {[key: string]: any} = {
       health:     30000,
       collider:   { offsetY: 0, radius: 20 },
       buildTime:  120, // seconds
-      type:       1,
+      spriteID:   1,
       color:      "",
    },
 
@@ -25,7 +25,7 @@ export const BUILD_STATS: {[key: string]: any} = {
       health:     18000,
       collider:   { offsetY: 0, radius: 20 },
       buildTime:  45, // seconds
-      type:       1,
+      spriteID:   1,
       color:      "",
    },
 
@@ -34,7 +34,7 @@ export const BUILD_STATS: {[key: string]: any} = {
       health:     9000,
       collider:   { offsetY: 0, radius: 20 },
       buildTime:  35, // seconds
-      type:       1,
+      spriteID:   1,
       color:      "",
    },
 
@@ -43,7 +43,7 @@ export const BUILD_STATS: {[key: string]: any} = {
       health:     15000,
       collider:   { offsetY: 0, radius: 30 },
       buildTime:  20, // seconds
-      type:       1,
+      spriteID:   1,
       color:      "",
    },
 

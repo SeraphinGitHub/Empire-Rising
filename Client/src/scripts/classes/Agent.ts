@@ -33,6 +33,8 @@ export class Agent {
    lastFrameY:    number = 8;
    animState:     number = 0;
    spriteCount:   number = 4;
+   
+   nebName:       string = "";
 
    position:      IPosition;
    servPos:       IPosition = { x:0, y:0 };
@@ -46,15 +48,15 @@ export class Agent {
    pathID:        string[]  = [];
    path:          Cell  []  = [];
 
-   isUnit:        boolean = true;
+   isUnit:        boolean;
+   isWorker:      boolean;
+
    hasReachNext:  boolean = false;
    hasArrived:    boolean = false;
    isMoving:      boolean = false;
    isSelected:    boolean = false;
    isAttacking:   boolean = false;
-
-   isGatherable:  boolean = true; // ***************
-   isGathering:   boolean = false; // ***************
+   isGathering:   boolean = false;
 
    img:           HTMLImageElement = new Image();
    sprites:       INumber = { height: 64, width: 64, offsetY: 25 };
@@ -87,6 +89,8 @@ export class Agent {
       this.buildSpeed  = params.buildSpeed;
       this.attackSpeed = params.attackSpeed;
       this.animDelay   = params.animDelay;
+      this.isUnit      = params.isUnit;
+      this.isWorker    = params.isWorker;
 
       this.setImageSource(params.basePath, params.teamColor);
    }
@@ -95,16 +99,6 @@ export class Agent {
       return {
          id:            this.id,
          isSelected:    this.isSelected,
-      }
-   }
-
-   updatePack() {
-      return {
-         id:            this.id,
-         isSelected:    this.isSelected,
-         teamID:        this.teamID,
-         position:      this.position,
-         curCellID:     this.curCell.id,
       }
    }
 
@@ -159,11 +153,23 @@ export class Agent {
 
    gatherRessource() {
 
-      // if(!this.isGatherable || !this.isGathering) return;
-      if(!this.isGatherable) return;
+      if(!this.isGathering) return;
+
+      let facingSide: number = -1;
+
+      switch(this.nebName) {
+         case "top":          facingSide = 3; break;
+         case "topRight":     facingSide = 2; break;
+         case "right":        facingSide = 1; break;
+         case "bottomRight":  facingSide = 1; break;
+         case "bottom":       facingSide = 0; break;
+         case "bottomLeft":   facingSide = 0; break;
+         case "left":         facingSide = 0; break;
+         case "topLeft":      facingSide = 3; break;
+      }
 
       this.animState = 3;
-      this.setFacingSide(this.animSpecs.gather.row);
+      this.frameY    = this.animSpecs.gather.row *this.spriteCount +facingSide;
    }
 
    // =========================================================================================
@@ -193,7 +199,6 @@ export class Agent {
 
       this.hasArrived = true;
 
-      // this.gatherRessource();
       this.inMovement(false);
    }
 
@@ -469,4 +474,17 @@ export class Agent {
       this.lastFrameY = this.frameY;
    }
    
+
+   // =========================================================================================
+   // Agent Update (Every frame)
+   // =========================================================================================
+   update(
+      Frame:   number,
+      getCell: Function,
+   ) {
+      this.walkPath        (getCell);
+      this.updateAnimState (Frame);
+      this.gatherRessource ();
+   }
+
 }

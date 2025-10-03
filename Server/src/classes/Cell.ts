@@ -26,6 +26,8 @@ export class Cell {
    size:           number;
    cellPerSide:    number;
 
+   child:          any = null;
+
    center:         IPosition     = {x:0, y:0};
    
    agentIDset:     Set<number>   = new Set();
