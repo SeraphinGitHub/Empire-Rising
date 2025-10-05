@@ -54,9 +54,10 @@ export class Agent {
    hasReachNext:  boolean = false;
    hasArrived:    boolean = false;
    isMoving:      boolean = false;
-   isSelected:    boolean = false;
    isAttacking:   boolean = false;
    isGathering:   boolean = false;
+   isSelected:    boolean = false;
+   isHover:       boolean = false;
 
    img:           HTMLImageElement = new Image();
    sprites:       INumber = { height: 64, width: 64, offsetY: 25 };

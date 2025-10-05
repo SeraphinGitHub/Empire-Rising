@@ -330,7 +330,7 @@ export class Battle {
          cellID_Array.forEach((cellID: any) => {
             let unitID = "_0100";
 
-            if(cellID === "17-21") unitID = "_0101"
+            if(cellID === "17-21") unitID = "_0101";
             
             player.recruitUnit({
                cellID,
@@ -526,19 +526,19 @@ export class Battle {
 
                if(classType === Node) {
                   params["baseAmount"] = elemStats.amount;                  
-                  elemCell.child = new classType(params);
                }
                
                if(classType === Building) {
-                  params["teamID"    ] = 1;
+                  params["teamID"    ] = 1; // ==> Temp  ************************
                   params["baseHealth"] = elemStats.health;
-                  elemCell.child = new classType(params);
                }
+               
+               const newElem = new classType(params);
+
+               if(classType !== Agent) elemCell.child = newElem;
                
                elemCell.isVacant  = false;
                elemCell.isBlocked = true;
-
-               const newElem = new classType(params);
                elemList.set(newElem.id, newElem);
             }
          }
@@ -562,7 +562,7 @@ export class Battle {
          ||  cell.isTargeted
          ||  cell.isBlocked
          ||  Pathfinder.hasTarget
-         ||  nebName && !isWorker) {
+         ||  nebName != null && !isWorker) {
             
             continue;
          }
@@ -573,7 +573,10 @@ export class Battle {
          Pathfinder.goalCell  = cell;
 
          // Only for gathering
-         if(nebName && nodeID && isWorker) {
+         if(nebName != null
+         && nodeID  != null
+         && isWorker) {
+
             agent.isGatherable = true;
             agent.nodeNebName  = nebName;
             agent.harvNodeID   = nodeID;

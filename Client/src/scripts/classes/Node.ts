@@ -23,6 +23,8 @@ export class Node {
    collider:    INumber;
 
    isSelected:  boolean = false;
+   isHover:     boolean = false;
+   isTransp:    boolean = false;
 
 
    constructor(params: any) {

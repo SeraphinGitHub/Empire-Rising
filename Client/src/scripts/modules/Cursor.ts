@@ -237,9 +237,14 @@ export class Cursor {
             ;
 
             if(isHovered && elem.teamID === GM.teamID) {
+               elem.isHover = true;
                curList.add(elem);
             }
-            else curList.delete(elem);
+            
+            else {
+               elem.isHover = false;
+               curList.delete(elem);
+            }
          }
          
          return;

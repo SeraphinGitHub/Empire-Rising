@@ -221,17 +221,12 @@ export class GameManager {
          
          this.Frame++;
       
-         this.clearCanvas("isometric");
-         this.clearCanvas("assets"   );
+         this.clearCanvas        ("isometric");
+         this.clearCanvas        ("assets"   );
          
-         this.drawViewportElem   ();
-
-         this.drawHover          (this.unitSelectList_cur);
-         this.drawSelectElem     (this.unitSelectList_old);
-         this.drawHover          (this.nodeSelectList_cur);
-         this.drawSelectElem     (this.nodeSelectList_old);
-         this.drawHover          (this.buildSelectList_cur);
-         this.drawSelectElem     (this.buildSelectList_old);
+         this.updateAllAgents    ();
+         this.drawViewportElems  ();
+         this.drawHoverElems     ();
          
          this.Grid     .update   (this);
          this.Cursor   .update   (this);
@@ -425,6 +420,14 @@ export class GameManager {
       this.playerYield = data;
    }
 
+   updateAllAgents   () {
+
+      for(const [, unit] of this.unitsList) {
+      
+         unit.update(this.Frame, this.getCell.bind(this));
+      }
+   } 
+
    setAgentsID_List  () {
 
       let agentsID_List = [];
@@ -541,22 +544,26 @@ export class GameManager {
       }
    }
 
-   setRenderList(
-      elemList:   any,
-      renderList: any[],
-      callback?:  Function,
-   ) {
+   setRenderList   (): any[] {
+      
+      let renderList: any = [];
 
-      for(const [, elem] of elemList) {
+      const allElemsList = [
+         ...this.unitsList,
+         ...this.nodesList,
+         ...this.buildsList,
+      ];
+
+      for(const [, elem] of allElemsList) {
          const elemPos = this.gridPos_toScreenPos(elem.position);
-
-         if(callback) callback(elem);
 
          if(!this.isViewScope(elemPos)) continue;
          
          elem.screenPos = elemPos;
          renderList.push(elem);
       }
+
+      return renderList;
    }
 
    setAgentGather    (data: any) {
@@ -597,35 +604,14 @@ export class GameManager {
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawSelectElem    (oldList: Set<any>) {
+   drawHoverElems    () {
       
-      if(oldList.size === 0 ) return;
-
-      for(const elem of oldList) {
+      for(const elem of this.setRenderList()) {
          const elemPos = this.gridPos_toScreenPos(elem.position);
-   
-         if(!this.isViewScope(elemPos)) return;
-   
-         elem.drawSelect(this.Ctx.isometric, true);
-      }
-   }
+      
+         if(!this.isViewScope(elemPos)) continue;
 
-   drawHover         (selectList: Set<Agent> | Set<Node> | Set<Building>) {
-
-      if(selectList.size === 0 ) return;
-
-      const {
-         assets:    ctx_assets,
-         isometric: ctx_isometric,
-      } = this.Ctx;
-
-      for(const elem of selectList) {
-         const elemPos = this.gridPos_toScreenPos(elem.position);
-         
-         if(!this.isViewScope(elemPos)) return;
-         
-         elem.drawSelect(ctx_isometric, false);
-         elem.drawInfos (ctx_assets, elemPos, this.Viewport);
+         if(elem.isHover) elem.drawInfos (this.Ctx.assets, elemPos, this.Viewport);
       }
    }
 
@@ -645,23 +631,16 @@ export class GameManager {
       }
    }
 
-   drawViewportElem  () {
+   drawViewportElems () {
 
       const {
          assets:    ctx_assets,
          isometric: ctx_isometric,
       } = this.Ctx;
 
-      const { Viewport, Frame, walls_Img, nodes_Img } = this;
+      const { Viewport, walls_Img, nodes_Img } = this;
 
-      let renderList: any = [];
-
-      this.setRenderList(this.nodesList,  renderList);
-      this.setRenderList(this.buildsList, renderList);
-      this.setRenderList(this.unitsList,  renderList, (unit: any) => {
-
-         unit.update(Frame, this.getCell.bind(this));
-      });
+      const renderList: any = [] = this.setRenderList();
 
       // Top-right to Bottom-left
       renderList.sort((a: any, b: any) => {
@@ -670,13 +649,15 @@ export class GameManager {
          return zIndexB -zIndexA
       });
 
+      
       renderList.forEach((elem: any) => {
          const { screenPos } = elem;
+         
+         if(elem.isSelected || elem.isHover) elem.drawSelect(ctx_isometric, elem.isSelected);
 
-         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport, nodes_Img );
+         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport, nodes_Img);
          if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport, walls_Img);
          if(elem instanceof Agent   ) {
-
             elem.drawSprite   (ctx_assets, screenPos, Viewport);
             // elem.drawCollider (ctx_assets, screenPos, Viewport);
 

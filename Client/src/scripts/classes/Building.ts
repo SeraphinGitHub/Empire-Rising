@@ -27,6 +27,7 @@ export class Building {
    color:         string;
 
    isSelected:    boolean = false;
+   isHover:       boolean = false;
    isTransp:      boolean = false;
 
 
