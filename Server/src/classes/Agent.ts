@@ -12,6 +12,10 @@ import {
    Node,
 } from "./_Export";
 
+import {
+   Battle,
+} from "modules/_Export";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -24,12 +28,14 @@ export class Agent {
    id:            number;
    playerID:      string;
    teamID:        number;
+   
    teamColor:     string;
    name:          string;
-   basePath:      string; // for sprite img folder  
+   spritePath:    string;
    nodeNebName:   string = "";
-   harvNodeID:    number = -1;
+   state:         string = "";
    
+   harvNodeID:    number = -1;
    popCost:       number;
    health:        number;
    armor:         number;
@@ -49,8 +55,12 @@ export class Agent {
 
    position:      IPosition;
    collider:      INumber;
+   pathID:        string[]    = [];
    oldCell:       Cell | null = null;
    curCell:       Cell;
+
+   gatherCell:    Cell | null = null;
+   dropOffCell:   Cell | null = null;
    
    isUnit:        boolean;
    isWorker:      boolean;
@@ -97,7 +107,7 @@ export class Agent {
       this.buildSpeed    = stats.buildSpeed;
       this.attackSpeed   = stats.attackSpeed;
       this.animDelay     = stats.animDelay;
-      this.basePath      = stats.basePath;
+      this.spritePath    = stats.spritePath;
       this.isWorker      = stats.isWorker;
       this.isUnit        = stats.isUnit;
 
@@ -123,9 +133,22 @@ export class Agent {
          buildSpeed:    this.buildSpeed,
          attackSpeed:   this.attackSpeed,
          animDelay:     this.animDelay,
-         basePath:      this.basePath,
+         spritePath:    this.spritePath,
          isUnit:        this.isUnit,
          isWorker:      this.isWorker,
+      }
+   }
+
+   updatePack() {
+      return {
+         id:            this.id,
+         state:         this.state,
+         position:      this.position,
+         cellID:        this.curCell.id,
+         isVacant:      this.curCell.isVacant,
+         nodeNebName:   this.nodeNebName,
+         isGathering:   this.isGathering,
+         pathID:        this.pathID,
       }
    }
 
@@ -152,9 +175,11 @@ export class Agent {
 
 
    // =========================================================================================
-   // Walk through path
+   // Methods
    // =========================================================================================
-   reloadSearchPath(cellsList: Map<string, Cell>) {
+   reloadSearchPath(
+      cellsList: Map<string, Cell>
+   ) {
 
       const { path, goalCell } = this.Pathfinder;
       const nextCell = path[1] ? path[1] : path[0];
@@ -183,8 +208,7 @@ export class Agent {
    }
 
    gatherRessource(
-      playersList: Map<string, Player>,
-      nodesList:   Map<number, Node>,
+      battle: Battle,
    ) {
 
       if(!this.isGatherable) return;
@@ -193,6 +217,8 @@ export class Agent {
          console.log({ message: "No gatherSpeed or carryAmount stat !" });
          return;
       }
+
+      const { Grid, playersList, nodesList } = battle;
       
       this.isGathering = true;
       
@@ -204,33 +230,104 @@ export class Agent {
          
          if(!node || !player) return;
          
-         node  .updateAmount();
-         player.updateYield (node.yieldType);
-         
-         
-         // ******************
-         console.log({ message: this.carryAmount, gatherAmount: this.gatherAmount }); // ******************************************************
+         node.updateAmount();
          
          if(this.gatherAmount >= this.carryAmount) {
             
-            // ******************
-            console.log({ message: "clear !" }); // ******************************************************
-            
+            this.isGathering  = false;
+            this.isGatherable = false;
+            this.hasGathered  = true;
+
             if(this.gatherIntID) clearInterval(this.gatherIntID);
-            this.hasGathered = true;
-            this.isGathering = false;
-            return;
+            
+            if(this.dropOffCell) this.setTargetTo(this.dropOffCell, Grid.cellsList);
+            else this.searchNearestWarehouse(player, Grid.cellsList);
          };
 
       }, this.gatherSpeed);
-      
    }
 
-   walkPath(
-      Grid:        Grid,
-      playersList: Map<string, Player>,
-      nodesList:   Map<number, Node>,
+   searchNearestWarehouse(
+      player:    Player,
+      cellsList: Map<string, Cell>,
    ) {
+
+      let bottomNebList = [];
+      let pathList      = [];
+
+      for(const [, {name, cellID}] of player.buildsID_List) {
+         if(name !== "Warehouse") continue;
+
+         const warehouseCell = cellsList.get(cellID);
+         if(!warehouseCell) continue;
+
+         for(const [nebName, neb] of Object.entries(warehouseCell.nebStatusList)) {
+            if(nebName === "bottom") bottomNebList.push( cellsList.get(neb.id) );
+         }
+      }
+
+      for(const cell of bottomNebList) {
+         if(!cell) continue;
+
+         this.Pathfinder.goalCell = cell;
+         this.Pathfinder.searchPath(cellsList);
+
+         if(!this.Pathfinder.hasPath) continue;
+         
+         pathList.push(this.Pathfinder.path);
+      }
+
+      const nearestPath    = pathList.sort((a, b) => a.length - b.length)[0];
+      const dropOffCell    = nearestPath[ nearestPath.length -1 ];
+      this.Pathfinder.path = nearestPath;
+
+      if(this.dropOffCell !== dropOffCell) this.dropOffCell = dropOffCell;
+
+      this.setTargetTo(dropOffCell);
+   }
+
+   setTargetTo(
+      targetCell: Cell,
+      cellsList?:  Map<string, Cell>,
+   ) {
+
+      targetCell!.isTargeted    = true;
+      this.Pathfinder.hasTarget = true;
+      this.Pathfinder.goalCell  = targetCell;
+      
+      if(cellsList) this.Pathfinder.searchPath(cellsList);
+
+      this.hasArrived = false;
+      this.hasUpdated = false;
+   }
+
+   dropAndReturn(
+      battle:   Battle,
+      goalCell: Cell,
+   ) {
+
+      const { Grid, playersList, nodesList } = battle;
+
+      if(!this.dropOffCell
+      || !this.gatherCell
+      || goalCell.id !== this.dropOffCell.id) {
+         
+         return;
+      }
+
+      this.setTargetTo(this.gatherCell, Grid.cellsList);
+      this.isGatherable = true;
+      
+      const node   = nodesList.get(this.harvNodeID);
+      const player = playersList.get(this.playerID);
+      
+      if(!node || !player) return;
+
+      player.updateYield(node.yieldType, this.gatherAmount);
+      this.gatherAmount = 0;
+   }
+
+   walkPath(battle: Battle) {
       
       const { nextCell, goalCell, hasPath } = this.Pathfinder;
       
@@ -257,7 +354,7 @@ export class Agent {
       this.oldCell    = this.curCell;
       this.curCell    = this.Pathfinder.path[0];
 
-      this.reloadSearchPath(Grid.cellsList); // instead ==> need to update if path became compromize
+      this.reloadSearchPath(battle.Grid.cellsList); // instead ==> need to update if path became compromize
 
       this.Pathfinder.path.shift();
       this.Pathfinder.nextCell = this.Pathfinder.path[0] ?? null;
@@ -269,7 +366,10 @@ export class Agent {
       this.hasArrived = true;
       this.isMoving   = false;
       
-      if(this.isWorker) this.gatherRessource(playersList, nodesList);
+      if(this.isWorker) {
+         this.gatherRessource(battle);
+         this.dropAndReturn  (battle, goalCell);
+      }
    }
 
    moveTo(nextCell: Cell) {
@@ -299,4 +399,28 @@ export class Agent {
       this.position.y += moveY;
    }
    
+
+   // =========================================================================================
+   // Update (Every frame)
+   // =========================================================================================
+   update(battle: Battle) {
+
+      this.state = "idle";
+
+      if(this.hasArrived) return;
+      
+      this.walkPath(battle); // Recast with agent.update() method
+
+      this.state = "gather";
+
+      // Skip sending pathID pack if already sent once (Not every tick)
+      if(this.hasUpdated) return;
+      this.hasUpdated = true;
+      
+      this.pathID = [];
+      this.Pathfinder.path.forEach((cell: Cell) => this.pathID.push(cell.id));
+
+      this.state = "move";
+   }
+
 }

@@ -26,6 +26,7 @@ export class Node {
    isHover:     boolean = false;
    isTransp:    boolean = false;
 
+   img:         HTMLImageElement = new Image();
 
    constructor(params: any) {
       
@@ -36,14 +37,26 @@ export class Node {
       this.spriteID  = params.spriteID;
       this.amount    = params.amount;
       this.collider  = params.collider;
+
+      this.setImageSource(params.spritePath);
    }
 
 
+   // =========================================================================================
+   // Methods
+   // =========================================================================================
+   setImageSource(spritePath: string) {
+      this.img.src = `${spritePath}.png`;
+   }
+
+
+   // =========================================================================================
+   // Draw Methods
+   // =========================================================================================
    drawSprite(
       ctx:   CanvasRenderingContext2D,
       pos:   IPosition,
       VPpos: IPosition,
-      img:   HTMLImageElement,
    ) {
 
       const srcSize  = 400;
@@ -59,7 +72,7 @@ export class Node {
       }
    
       ctx.drawImage(
-         img,
+         this.img,
 
          // Source
          srcSize * (this.spriteID -1),

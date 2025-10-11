@@ -17,7 +17,6 @@ const CAVALRY = {
 
 const MACHINERY = {
    popCost: 3,
-   isUnit:  false,
    collider: { offsetY: 0,   radius: 30 },
 }
 
@@ -43,12 +42,11 @@ export const UNIT_STATS: {[key: string]: any} = {
 
       buildSpeed:    10,
       gatherSpeed:   1500, // ms
-      // carryAmount:   20,
-      carryAmount:   5, // ==> for testing
+      carryAmount:   20,
       
       attackSpeed:   7,
       animDelay:     0.5,
-      basePath:     "Infantry/Worker/",
+      spritePath:   "Infantry/Worker/",
    },
 
    _0101: {
@@ -62,7 +60,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     3,
       attackSpeed:   12,
       animDelay:     0.5,
-      basePath:     "Infantry/Swordsman/",
+      spritePath:   "Infantry/Swordsman/",
    },
    
    _0102: {
@@ -76,7 +74,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     4,
       attackSpeed:   14,
       animDelay:     0.5,
-      basePath:     "Infantry/Archer/",
+      spritePath:   "Infantry/Archer/",
    },
    
    _0103: {
@@ -90,7 +88,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     3,
       attackSpeed:   10,
       animDelay:     0.5,
-      basePath:     "Infantry/Spearman/",
+      spritePath:   "Infantry/Spearman/",
    },
 
    
@@ -108,7 +106,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     6,
       attackSpeed:   12,
       animDelay:     0.5,
-      basePath:     "Cavalry/Swordsman/",
+      spritePath:   "Cavalry/Swordsman/",
    },
 
    _0202: {
@@ -122,7 +120,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     7,
       attackSpeed:   14,
       animDelay:     0.5,
-      basePath:     "Cavalry/Archer/",
+      spritePath:   "Cavalry/Archer/",
    },
 
 
@@ -133,28 +131,26 @@ export const UNIT_STATS: {[key: string]: any} = {
       name:         "Ballista",
       popCost:       MACHINERY.popCost,
       collider:      MACHINERY.collider,
-      isUnit:        MACHINERY.isUnit,
       health:        1200,
       armor:         500,
       damages:       200,
       moveSpeed:     2,
       attackSpeed:   8,
       animDelay:     0.5,
-      basePath:     "Machinery/Ballista/",
+      spritePath:   "Machinery/Ballista/",
    },
 
    _0302: {
       name:         "Catapult",
       popCost:       MACHINERY.popCost,
       collider:      MACHINERY.collider,
-      isUnit:        MACHINERY.isUnit,
       health:        2000,
       armor:         700,
       damages:       160,
       moveSpeed:     1,
       attackSpeed:   10,
       animDelay:     0.5,
-      basePath:     "Machinery/Catapult/",
+      spritePath:   "Machinery/Catapult/",
    },
 
 }

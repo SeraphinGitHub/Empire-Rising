@@ -12,7 +12,9 @@ export class Building {
 
    id:            number;
    name:          string;
+   teamColor:     string;
    cellID:        string;
+   spritePath:    string;
    position:      IPosition;
 
    collider:      INumber;
@@ -22,8 +24,6 @@ export class Building {
    buildTime:     number;
    health:        number;
    baseHealth:    number;
-
-   color:         string;
 
    isBuilding:    boolean = true;
 
@@ -40,7 +40,8 @@ export class Building {
       this.buildTime    = params.buildTime;
       this.health       = params.health;
       this.baseHealth   = params.baseHealth;
-      this.color        = params.color;
+      this.teamColor    = params.teamColor;
+      this.spritePath   = params.spritePath;
    }
 
    initPack() {
@@ -54,7 +55,8 @@ export class Building {
          teamID:     this.teamID,
          buildTime:  this.buildTime,
          health:     this.baseHealth,
-         color:      this.color,
+         teamColor:  this.teamColor,
+         spritePath: this.spritePath,
       }
    }
 

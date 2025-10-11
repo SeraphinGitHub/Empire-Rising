@@ -8,12 +8,12 @@ import {
    Player,
 } from "../classes/_Export";
 
-import { BUILD_STATS    } from "../utils/buildStats";
-import { UNIT_STATS     } from "../utils/unitStats";
-import { NODE_STATS     } from "../utils/nodeStats";
+import { BUILD_STATS } from "../utils/buildStats";
+import { UNIT_STATS  } from "../utils/unitStats";
+import { NODE_STATS  } from "../utils/nodeStats";
 
-import { Server         } from "socket.io";
-import dotenv             from "dotenv";
+import { Server      } from "socket.io";
+import dotenv          from "dotenv";
 dotenv.config();
 
 
@@ -141,6 +141,12 @@ const TILES = {
 }
 
 const BUILDINGS = {
+   warehouse: [
+      "15-11",
+      "29-16",
+      "32-39",
+   ],
+
    wall: [
       "9-21",
       "9-23",
@@ -345,72 +351,15 @@ export class Battle {
 
    sync() {
       setInterval(() => {
-
-         let stateList  = [];
-         let moveList   = [];
-         let gatherList = [];
-         let yieldList  = [];
+         let updatePack = [];
 
          for(const [, agent] of this.unitsList) {
 
-            const {
-               id,
-               position,
-               curCell,
-               hasArrived,
-               Pathfinder,
-               nodeNebName,
-            } = agent;
-
-            // Send agent state (Every tick)
-            stateList.push({
-               id,
-               position,
-               cellID:   curCell.id,
-               isVacant: curCell.isVacant,
-            });
-
-            
-            // ***************************************************
-            if(agent.hasGathered) {
-               agent.hasGathered = false;
-
-               yieldList.push({
-                  id,
-                  gatherAmount: agent.gatherAmount,
-               });
-            }
-            // ***************************************************
-
-
-            if(hasArrived) continue;
-            
-            const path = Pathfinder.path;
-            let pathID: string[] = [];
-            path.forEach((cell: Cell) => pathID.push(cell.id));
-            
-            agent.walkPath(this.Grid, this.playersList, this.nodesList); // Recast with agent.update() method
-            
-            gatherList.push({
-               id,
-               nodeNebName,
-               isGathering: agent.isGathering,
-            });
-            
-            // Skip sending pathID pack if already sent once (Not every tick)
-            if(agent.hasUpdated) continue;
-            agent.hasUpdated = true;
-            
-            moveList.push({
-               id,
-               pathID,
-            });
+            agent.update(this);
+            updatePack.push( agent.updatePack() );
          }
          
-         this.spread("agentState",  stateList );
-         this.spread("agentMove",   moveList  );
-         this.spread("agentGather", gatherList);
-         this.spread("agentYield",  yieldList );
+         this.spread("serverSync", updatePack);
 
       }, Math.floor( 1000/ Number(process.env.SERVER_FRAME_RATE) ));
    }
@@ -529,7 +478,8 @@ export class Battle {
                }
                
                if(classType === Building) {
-                  params["teamID"    ] = 1; // ==> Temp  ************************
+                  params["teamID"    ] = 1;        // ==> Temp  ************************
+                  params["teamColor" ] = "Blue";   // ==> Temp  ************************
                   params["baseHealth"] = elemStats.health;
                }
                
@@ -580,6 +530,7 @@ export class Battle {
             agent.isGatherable = true;
             agent.nodeNebName  = nebName;
             agent.harvNodeID   = nodeID;
+            agent.gatherCell   = cell;
          }
          
          sortedUnitList.add(agent);

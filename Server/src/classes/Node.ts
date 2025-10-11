@@ -13,6 +13,7 @@ export class Node {
    id:          number;
    name:        string;
    cellID:      string;
+   spritePath:  string;
    position:    IPosition;
 
    collider:    INumber;
@@ -36,6 +37,7 @@ export class Node {
       this.yieldType  = params.yieldType;
       this.baseAmount = params.amount;
       this.amount     = params.amount;
+      this.spritePath = params.spritePath;
    }
 
    initPack() {
@@ -47,6 +49,7 @@ export class Node {
          collider:   this.collider,
          spriteID:   this.spriteID,
          amount:     this.baseAmount,
+         spritePath: this.spritePath,
       }
    }
 

@@ -60,14 +60,14 @@ export class Agent {
    isHover:       boolean = false;
 
    img:           HTMLImageElement = new Image();
-   sprites:       INumber = { height: 64, width: 64, offsetY: 25 };
-   bigSprites:    INumber = { height: 64, width: 192 };
+   sprites:       INumber = { height: 64,  width: 64,  offsetY: 25 };
+   bigSprites:    INumber = { height: 128, width: 128, offsetY: 25 };
 
    animSpecs = {
       walk:    { index: 6, spritesNumber: 9,  row: 2 },
-      attack:  { index: 6, spritesNumber: 5,  row: 0 }, // ==> Tempory (sprites size different)
+      attack:  { index: 6, spritesNumber: 6,  row: 6 }, // ==> Tempory (sprites size different)
       gather:  { index: 6, spritesNumber: 8,  row: 1 },
-      died:    { index: 1, spritesNumber: 10, row: 5 },
+      died:    { index: 1, spritesNumber: 6,  row: 5 },
       idle:    { index: 6, spritesNumber: 1,  row: 2 },
    };
 
@@ -93,7 +93,7 @@ export class Agent {
       this.isUnit      = params.isUnit;
       this.isWorker    = params.isWorker;
 
-      this.setImageSource(params.basePath, params.teamColor);
+      this.setImageSource(params.spritePath, params.teamColor);
    }
 
    initPack() {
@@ -104,10 +104,10 @@ export class Agent {
    }
 
    setImageSource(
-      basePath:  string,
-      teamColor: string,
+      spritePath: string,
+      teamColor:  string,
    ) {
-      this.img.src = `${basePath}${teamColor}.png`;
+      this.img.src = `${spritePath}${teamColor}.png`;
    }
 
    inMovement(state: boolean) {
@@ -312,11 +312,15 @@ export class Agent {
       pos:   IPosition,
       VPpos: IPosition,
    ) {
-      const { width: originalWidth, height, offsetY } = this.sprites;
+      const { width: smallWidth, height: smallHeight, offsetY } = this.sprites;
 
-      let width = originalWidth;
+      let height = smallHeight;
+      let width  = smallWidth;
 
-      if(this.isAttacking) width = this.bigSprites.width;
+      if(this.isAttacking) {
+         height = this.bigSprites.height;
+         width  = this.bigSprites.width;
+      }
 
       ctx.drawImage(
          this.img!,

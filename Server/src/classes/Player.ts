@@ -1,12 +1,6 @@
 
-import {
-   Agent,
-   Cell,
-} from "../classes/_Export";
-
-import { Server, Socket } from "socket.io";
-import { Battle         } from "modules/Battle";
-import { UNIT_STATS     } from "../utils/unitStats";
+import { Socket  } from "socket.io";
+import { Battle  } from "modules/Battle";
 import { INumber } from "utils/interfaces";
 
 
@@ -15,18 +9,20 @@ import { INumber } from "utils/interfaces";
 // =====================================================================
 export class Player {
    
-   private socket: Socket;
+   private socket:   Socket;
    
-   id:        string;
-   battleID:  string;
-   name:      string;
-   teamColor: string;
+   id:               string;
+   battleID:         string;
+   name:             string;
+   teamColor:        string;
 
-   teamID:    number;
-   maxPop:    number = 0;
-   curPop:    number = 0;
+   buildsID_List:    Map<number, {name: string, cellID: string}> = new Map<number, {name: string, cellID: string}>();
 
-   yield:     INumber = {
+   teamID:           number;
+   maxPop:           number  = 0;
+   curPop:           number  = 0;
+
+   yield:            INumber = {
       food:    0,
       stone:   0,
       wood:    0,
@@ -71,6 +67,11 @@ export class Player {
       battlePack: any,
    ) {
       
+      for(const { id, name, teamID, cellID } of battlePack.buildsList) {
+         
+         if(teamID === this.teamID) this.buildsID_List.set(id, {name, cellID});
+      }
+
       this.socket.emit("initBattle", {
          gridPack,
          battlePack,
@@ -96,17 +97,20 @@ export class Player {
       battle.spread("recruitUnit", initPack);
    }
 
-   updateYield(yieldType: number) {
+   updateYield(
+      yieldType: number,
+      amount:    number   
+   ) {
       
       switch(yieldType) {
-         case 1: this.yield.food    ++; break;
-         case 2: this.yield.stone   ++; break;
-         case 3: this.yield.wood    ++; break;
-         case 4: this.yield.coal    ++; break;
-         case 5: this.yield.ironOre ++; break;
-         case 6: this.yield.ironBar ++; break;
-         case 7: this.yield.goldOre ++; break;
-         case 8: this.yield.goldBar ++; break;
+         case 1: this.yield.food    += amount; break;
+         case 2: this.yield.stone   += amount; break;
+         case 3: this.yield.wood    += amount; break;
+         case 4: this.yield.coal    += amount; break;
+         case 5: this.yield.ironOre += amount; break;
+         case 6: this.yield.ironBar += amount; break;
+         case 7: this.yield.goldOre += amount; break;
+         case 8: this.yield.goldBar += amount; break;
       }
 
       this.socket.emit("updateYield", this.yield);

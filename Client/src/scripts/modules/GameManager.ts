@@ -92,18 +92,12 @@ export class GameManager {
    // Images & Sources ==> Need to move in a dedicated class later 
    flatG_Img:              HTMLImageElement = new Image();
    highG_Img:              HTMLImageElement = new Image();
-   walls_Img:              HTMLImageElement = new Image();
-   nodes_Img:              HTMLImageElement = new Image();
 
    flatG_Src:              string = "Terrain/Flat_Grass.png";
    highG_Src:              string = "Terrain/High_Grass.png";
-   walls_Src:              string = "Buildings/wall.png";
-   nodes_Src:              string = "Ressources/nodes.png";
 
    isFlatG_Loaded:         boolean = false;
    isHighG_Loaded:         boolean = false;
-   isWalls_Loaded:         boolean = false;
-   isOres_Loaded:          boolean = false;
    // ***************  Temp  ***************
 
 
@@ -118,8 +112,6 @@ export class GameManager {
       // ***************  Temp  ***************
       this.flatG_Img.src = this.flatG_Src;
       this.highG_Img.src = this.highG_Src;
-      this.walls_Img.src = this.walls_Src;
-      this.nodes_Img.src = this.nodes_Src;
       // ***************  Temp  ***************
 
       this.Canvas     = Canvas;
@@ -151,13 +143,10 @@ export class GameManager {
 
    watchGame() {
 
-      this.socket.on("updatePop",   (data: any) => this.updatePop      (data));
-      this.socket.on("updateYield", (data: any) => this.updateYield    (data));
-      this.socket.on("recruitUnit", (data: any) => this.createNewElem  (data, this.unitsList, Agent));
-      this.socket.on("agentState",  (data: any) => this.setAgentState  (data));
-      this.socket.on("agentMove",   (data: any) => this.setAgentTarget (data));
-      this.socket.on("agentGather", (data: any) => this.setAgentGather (data));
-      this.socket.on("agentYield",  (data: any) => this.setAgentYield  (data));
+      this.socket.on("updatePop",   (data: any) => this.updatePop       (data));
+      this.socket.on("updateYield", (data: any) => this.updateYield     (data));
+      this.socket.on("serverSync",  (data: any) => this.syncWithServer  (data));
+      this.socket.on("recruitUnit", (data: any) => this.createNewElem   (data, this.unitsList, Agent));
    }
 
    initPlayer(playerPack: any) {
@@ -191,15 +180,12 @@ export class GameManager {
       
       this.flatG_Img.addEventListener("load", () => this.isFlatG_Loaded = true);
       this.highG_Img.addEventListener("load", () => this.isHighG_Loaded = true);
-      this.walls_Img.addEventListener("load", () => this.isWalls_Loaded = true);
-      this.nodes_Img.addEventListener("load", () => this.isOres_Loaded  = true);
       
       const loadTerrain = setInterval(() => {
          
          if(!this.isFlatG_Loaded
-         || !this.isHighG_Loaded
-         || !this.isWalls_Loaded
-         || !this.isOres_Loaded) {
+         || !this.isHighG_Loaded) {
+            console.log({ Error: "initMap() => Could not pass loadTerrain !" });
             return;
          }
          
@@ -420,6 +406,65 @@ export class GameManager {
       this.playerYield = data;
    }
 
+   syncWithServer    (data: any) {
+
+      for(const agentData of data) {
+         
+         const {
+            id,
+            state,
+            position,
+            cellID,
+            isVacant,
+            nodeNebName,
+            isGathering,
+            pathID,
+         }: any = agentData;
+
+         const agent: Agent | undefined = this.unitsList.get(id);
+         
+         if(!agent) continue;
+
+
+         if(state === "idle") {
+            const cell: Cell | undefined = this.getCell(cellID);
+      
+            if(!cell) continue;
+      
+            cell.isVacant   = isVacant;
+            agent.servPos.x = position.x;
+            agent.servPos.y = position.y;
+            agent.curCell   = cell;
+         }
+
+
+         if(state === "gather") {
+            agent.isGathering = isGathering;
+            agent.nebName     = nodeNebName;
+         }
+
+
+         // if(state === "yield") {
+         //    if(!gatherAmount) continue;
+         //    console.log({ gatherAmount });
+         // }
+
+
+         if(state === "move") {
+            agent.pathID           = pathID;
+            agent.path             = [];
+   
+            agent.setNextCell(this.getCell.bind(this));
+            agent.setGoalCell(this.getCell.bind(this));
+   
+            if(pathID.length === 0) agent.inMovement(false);
+   
+            pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
+         }
+
+      }
+   }
+
    updateAllAgents   () {
 
       for(const [, unit] of this.unitsList) {
@@ -502,49 +547,7 @@ export class GameManager {
       clientList.set(newElem.id, newElem);
    }
 
-   setAgentTarget    (data: any) {
-
-      for(const agentData of data) {
-         const { id, pathID }: any = agentData;
-
-         const agent: Agent | undefined = this.unitsList.get(id);
-         
-         if(!agent) continue;
-
-         agent.pathID           = pathID;
-         agent.path             = [];
-
-         agent.setNextCell(this.getCell.bind(this));
-         agent.setGoalCell(this.getCell.bind(this));
-
-         if(pathID.length === 0) agent.inMovement(false);
-
-         pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
-      }
-   }
-
-   setAgentState     (data: any) {
-
-      for(const agentData of data) {
-         const { id, position, cellID, isVacant }: any = agentData;
-         
-         const agent: Agent | undefined = this.unitsList.get(id);
-         
-         if(!agent) continue;
-         
-         const cell: Cell | undefined = this.getCell(cellID);
-         
-         if(!cell) continue;
-   
-         cell.isVacant   = isVacant;
-         
-         agent.servPos.x = position.x;
-         agent.servPos.y = position.y;
-         agent.curCell   = cell;
-      }
-   }
-
-   setRenderList   (): any[] {
+   setRenderList     (): any[] {
       
       let renderList: any = [];
 
@@ -565,40 +568,6 @@ export class GameManager {
 
       return renderList;
    }
-
-   setAgentGather    (data: any) {
-
-      for(const agentData of data) {
-         const { id, nodeNebName, isGathering }: any = agentData;
-         
-         const agent: Agent | undefined = this.unitsList.get(id);
-         
-         if(!agent) continue;
-
-         agent.isGathering = isGathering;
-         agent.nebName     = nodeNebName;
-      }
-   }
-
-
-   
-   // ***************************************************
-   setAgentYield    (data: any) {
-      
-      for(const agentData of data) {
-         const { id, gatherAmount }: any = agentData;
-         
-         const agent: Agent | undefined = this.unitsList.get(id);
-         
-         if(!agent) continue;
-         
-         if(!gatherAmount) continue;
-         console.log({ gatherAmount }); // ******************************************************
-      }
-      
-   }
-   // ***************************************************
-
    
 
    // =========================================================================================
@@ -638,7 +607,7 @@ export class GameManager {
          isometric: ctx_isometric,
       } = this.Ctx;
 
-      const { Viewport, walls_Img, nodes_Img } = this;
+      const { Viewport } = this;
 
       const renderList: any = [] = this.setRenderList();
 
@@ -655,8 +624,8 @@ export class GameManager {
          
          if(elem.isSelected || elem.isHover) elem.drawSelect(ctx_isometric, elem.isSelected);
 
-         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport, nodes_Img);
-         if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport, walls_Img);
+         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport);
+         if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport);
          if(elem instanceof Agent   ) {
             elem.drawSprite   (ctx_assets, screenPos, Viewport);
             // elem.drawCollider (ctx_assets, screenPos, Viewport);

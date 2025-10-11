@@ -17,16 +17,25 @@ export const BUILD_STATS: {[key: string]: any} = {
       collider:   { offsetY: 0, radius: 20 },
       buildTime:  120, // seconds
       spriteID:   1,
-      color:      "",
+      spritePath: "",
+   },
+
+   warehouse: {
+      name:      "Warehouse",
+      health:     12000,
+      collider:   { offsetY: 0, radius: 20 },
+      buildTime:  30, // seconds
+      spriteID:   1,
+      spritePath: "Buildings/Warehouse/",
    },
 
    barrack: {
       name:      "Barrack",
-      health:     18000,
+      health:     15000,
       collider:   { offsetY: 0, radius: 20 },
       buildTime:  45, // seconds
       spriteID:   1,
-      color:      "",
+      spritePath: "",
    },
 
    farm: {
@@ -35,16 +44,16 @@ export const BUILD_STATS: {[key: string]: any} = {
       collider:   { offsetY: 0, radius: 20 },
       buildTime:  35, // seconds
       spriteID:   1,
-      color:      "",
+      spritePath: "",
    },
 
    wall: {
       name:      "Wall",
-      health:     15000,
+      health:     20000,
       collider:   { offsetY: 0, radius: 30 },
       buildTime:  20, // seconds
       spriteID:   1,
-      color:      "",
+      spritePath: "Buildings/Wall/",
    },
 
 }

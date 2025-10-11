@@ -23,13 +23,12 @@ export class Building {
    buildTime:     number;
    health:        number;
    baseHealth:    number;
-
-   color:         string;
-
+   
    isSelected:    boolean = false;
    isHover:       boolean = false;
    isTransp:      boolean = false;
 
+   img:           HTMLImageElement = new Image();
 
    constructor(params: any) {
 
@@ -42,7 +41,8 @@ export class Building {
       this.buildTime    = params.buildTime;
       this.health       = params.health;
       this.baseHealth   = params.baseHealth;
-      this.color        = params.color;
+
+      this.setImageSource(params.spritePath, params.teamColor);
    }
 
 
@@ -69,6 +69,13 @@ export class Building {
       // this.isTransp = false;
    }
 
+   setImageSource(
+      spritePath: string,
+      teamColor:  string,
+   ) {
+      this.img.src = `${spritePath}${teamColor}.png`;
+   }
+
 
    // =========================================================================================
    // Draw Methods
@@ -77,7 +84,6 @@ export class Building {
       ctx:      CanvasRenderingContext2D,
       pos:      IPosition,
       VPpos:    IPosition,
-      img:      HTMLImageElement,
    ) {
       
       const srcSize  = 280;
@@ -87,7 +93,7 @@ export class Building {
 
       const drawImg = () => {
          ctx.drawImage(
-            img,
+            this.img,
 
             // Source
             srcSize * (this.spriteID -1),

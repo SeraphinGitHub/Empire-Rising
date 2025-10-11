@@ -7,9 +7,10 @@ import {
 // ================================================================================================
 // Common Stats
 // ================================================================================================
-const farmCol: INumber = { offsetY: 0 , radius: 60 };
-const oreCol:  INumber = { offsetY: 0 , radius: 40 };
-const treeCol: INumber = { offsetY: 0 , radius: 30 };
+const farmCol:  INumber = { offsetY: 0 , radius: 60 };
+const oreCol:   INumber = { offsetY: 0 , radius: 40 };
+const treeCol:  INumber = { offsetY: 0 , radius: 30 };
+const oresPath: string  = "Ressources/nodes";
 
 
 // ================================================================================================
@@ -22,6 +23,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   farmCol,
       yieldType:  1,
       spriteID:   1,
+      spritePath: oresPath,
    },
 
    stone: {
@@ -30,6 +32,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   oreCol,
       yieldType:  2,
       spriteID:   4,
+      spritePath: oresPath,
    },
 
    coal: {
@@ -38,6 +41,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   oreCol,
       yieldType:  4,
       spriteID:   1, // ==> has to match with sprite order
+      spritePath: oresPath,
    },
    
    iron: {
@@ -46,6 +50,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   oreCol,
       yieldType:  5,
       spriteID:   3,
+      spritePath: oresPath,
    },
    
    gold: {
@@ -54,6 +59,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   oreCol,
       yieldType:  7,
       spriteID:   2,
+      spritePath: oresPath,
    },
    
    tree_1: {
@@ -62,6 +68,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   treeCol,
       yieldType:  3,
       spriteID:   5,
+      spritePath: oresPath,
    },
 
    tree_2: {
@@ -70,6 +77,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   treeCol,
       yieldType:  3,
       spriteID:   6,
+      spritePath: oresPath,
    },
 
    tree_3: {
@@ -78,6 +86,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   treeCol,
       yieldType:  3,
       spriteID:   7,
+      spritePath: oresPath,
    },
 
    tree_4: {
@@ -86,6 +95,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   treeCol,
       yieldType:  3,
       spriteID:   8,
+      spritePath: oresPath,
    },
 
    tree_5: {
@@ -94,6 +104,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   treeCol,
       yieldType:  3,
       spriteID:   9,
+      spritePath: oresPath,
    },
 
    tree_6: {
@@ -102,6 +113,7 @@ export const NODE_STATS: {[key: string]: any} = {
       collider:   treeCol,
       yieldType:  3,
       spriteID:   10,
+      spritePath: oresPath,
    },
 
 }
