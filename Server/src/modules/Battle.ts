@@ -330,13 +330,14 @@ export class Battle {
 
          // **************************************************************
          let cellID_Array: any = [];
-         if(player.teamID === 1) cellID_Array = ["17-21", "19-21", "21-21", "19-19", "17-19", "17-23", "19-23", "21-23", "21-19"];
+         // if(player.teamID === 1) cellID_Array = ["17-21", "19-21", "21-21", "19-19", "17-19", "17-23", "19-23", "21-23", "21-19"];
+         if(player.teamID === 1) cellID_Array = ["17-21"];
          if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "19-25", "17-25", "17-29", "19-29", "21-29", "21-25"];
          
          cellID_Array.forEach((cellID: any) => {
-            let unitID = "_0100";
+            let unitID = "_0101";
 
-            if(cellID === "17-21") unitID = "_0101";
+            // if(cellID === "17-21") unitID = "_0100";
             
             player.recruitUnit({
                cellID,

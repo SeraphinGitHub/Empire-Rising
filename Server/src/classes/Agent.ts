@@ -1,15 +1,14 @@
 
 import {
    INumber,
+   INumberList,
    IPosition,
 } from "../utils/interfaces";
 
 import {
    Cell,
-   Grid,
    Pathfinder,
    Player,
-   Node,
 } from "./_Export";
 
 import {
@@ -31,9 +30,10 @@ export class Agent {
    
    teamColor:     string;
    name:          string;
-   spritePath:    string;
    nodeNebName:   string = "";
    state:         string = "";
+   spritePath:    string;
+   spriteSpecs:   INumberList;
    
    harvNodeID:    number = -1;
    popCost:       number;
@@ -108,6 +108,7 @@ export class Agent {
       this.attackSpeed   = stats.attackSpeed;
       this.animDelay     = stats.animDelay;
       this.spritePath    = stats.spritePath;
+      this.spriteSpecs   = stats.spriteSpecs;
       this.isWorker      = stats.isWorker;
       this.isUnit        = stats.isUnit;
 
@@ -134,6 +135,7 @@ export class Agent {
          attackSpeed:   this.attackSpeed,
          animDelay:     this.animDelay,
          spritePath:    this.spritePath,
+         spriteSpecs:   this.spriteSpecs,
          isUnit:        this.isUnit,
          isWorker:      this.isWorker,
       }

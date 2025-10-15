@@ -2,6 +2,7 @@
 
 import {
    INumber,
+   INumberList,
    IPosition,
 } from "../utils/interfaces";
 
@@ -29,10 +30,8 @@ export class Agent {
    animDelay:     number;
 
    frameX:        number = 0;
-   frameY:        number = 8;
-   lastFrameY:    number = 8;
-   animState:     number = 0;
-   spriteCount:   number = 4;
+   frameY:        number = 1;
+   animState:     number = 1;
    
    nebName:       string = "";
 
@@ -51,6 +50,7 @@ export class Agent {
    isUnit:        boolean;
    isWorker:      boolean;
 
+   hasSwapState:  boolean = false;
    hasReachNext:  boolean = false;
    hasArrived:    boolean = false;
    isMoving:      boolean = false;
@@ -60,16 +60,8 @@ export class Agent {
    isHover:       boolean = false;
 
    img:           HTMLImageElement = new Image();
-   sprites:       INumber = { height: 64,  width: 64,  offsetY: 25 };
-   bigSprites:    INumber = { height: 128, width: 128, offsetY: 25 };
-
-   animSpecs = {
-      walk:    { index: 6, spritesNumber: 9,  row: 2 },
-      attack:  { index: 6, spritesNumber: 6,  row: 6 }, // ==> Tempory (sprites size different)
-      gather:  { index: 6, spritesNumber: 8,  row: 1 },
-      died:    { index: 1, spritesNumber: 6,  row: 5 },
-      idle:    { index: 6, spritesNumber: 1,  row: 2 },
-   };
+   spriteSpecs:   INumberList;
+   spriteParams:  INumber = { sourceY: 0, size: 0, offsetY: 0 };
 
    
    constructor(params: any) {
@@ -90,10 +82,12 @@ export class Agent {
       this.buildSpeed  = params.buildSpeed;
       this.attackSpeed = params.attackSpeed;
       this.animDelay   = params.animDelay;
+      this.spriteSpecs = params.spriteSpecs;
       this.isUnit      = params.isUnit;
       this.isWorker    = params.isWorker;
 
-      this.setImageSource(params.spritePath, params.teamColor);
+      this.setImageSource (params);
+      this.setSpriteParams(this.spriteSpecs.idle);
    }
 
    initPack() {
@@ -103,23 +97,35 @@ export class Agent {
       }
    }
 
-   setImageSource(
-      spritePath: string,
-      teamColor:  string,
-   ) {
+   setImageSource(params: any) {
+      const { spritePath, teamColor } = params;
       this.img.src = `${spritePath}${teamColor}.png`;
    }
 
-   inMovement(state: boolean) {
-      
-      if(state) {
-         this.isMoving  = state;
-         this.animState = 1;
+   setSpriteParams(stateSpec: INumber) {
+      const { sourceY: srcY_a, size: size_a, offsetY: offsetY_a } = stateSpec;
+      const { sourceY: srcY_b, size: size_b, offsetY: offsetY_b } = this.spriteParams;
+
+      if(srcY_a    === srcY_b
+      && size_a    === size_b
+      && offsetY_a === offsetY_b) {
+         
          return;
       }
 
-      this.isMoving  = state;
-      this.animState = 0;
+      this.spriteParams.sourceY = srcY_a;
+      this.spriteParams.size    = size_a;
+      this.spriteParams.offsetY = offsetY_a;
+   }
+
+   inMovement(state: boolean) {
+
+      if(state && this.isMoving) return;
+
+      this.setSpriteParams(this.spriteSpecs[state ? "walk" : "idle"]);
+      this.isMoving     = state;
+      this.animState    = state ? 2 : 1;
+      this.hasSwapState = true;
    }
 
    setNextCell(getCell: Function) {
@@ -168,9 +174,11 @@ export class Agent {
          case "left":         facingSide = 0; break;
          case "topLeft":      facingSide = 3; break;
       }
-
-      this.animState = 3;
-      this.frameY    = this.animSpecs.gather.row *this.spriteCount +facingSide;
+      
+      this.animState    = 4;
+      this.frameY       = facingSide;
+      this.hasSwapState = true;
+      this.setSpriteParams(this.spriteSpecs.gather);
    }
 
    // =========================================================================================
@@ -179,13 +187,14 @@ export class Agent {
    walkPath(getCell: Function) {
 
       if(!this.nextCell) return;
-
+      
       this.hasReachNext = false;
       this.hasArrived   = false;
       this.inMovement(true);
-
+      
       // Moving toward nextCell
       this.moveTo(this.nextCell);
+      this.setFacingSide();
       this.checkReachedNext(this.nextCell);
 
       // Arrived at nextCell
@@ -199,7 +208,6 @@ export class Agent {
       if(!this.hasReachNext) return;
 
       this.hasArrived = true;
-
       this.inMovement(false);
    }
 
@@ -216,8 +224,6 @@ export class Agent {
          y: deltaY,
       }
 
-      this.setFacingSide(this.animSpecs.walk.row);
-
       const dist = Math.hypot(deltaX,  deltaY);
 
       if(dist === 0) {
@@ -232,6 +238,64 @@ export class Agent {
 
       this.position.x += moveX;
       this.position.y += moveY;
+   }
+
+
+   // =========================================================================================
+   // Animation States
+   // =========================================================================================
+   updateAnimState(frame: number) {
+      const { die, idle, walk, gather, attack } = this.spriteSpecs;
+
+      switch(this.animState) {
+
+         case 0: this.animation( frame, die    ); break;
+         case 1: this.animation( frame, idle   ); break;
+         case 2: this.animation( frame, walk   ); break;
+         case 3: this.animation( frame, attack ); break;
+         case 4: this.animation( frame, gather ); break;
+      }
+   }
+
+   animation(
+      frame:     number,
+      stateSpec: any,
+   ) {
+      const { index, spriteNum } = stateSpec;
+
+      if(this.hasSwapState) {
+         this.hasSwapState = false;
+         this.frameX = 0;
+         return;
+      }
+
+      if(frame % index === 0) {         
+         if(this.frameX < spriteNum -1) this.frameX++;
+   
+         else {
+            this.frameX = 0;
+            // if(!this.isAnimable) this.isAnimable = true;
+         }
+      }
+   }
+
+   setFacingSide() {
+      const { x: deltaX, y: deltaY } = this.deltaPos;
+
+      const isLeft  = deltaX < 0;
+      const isRight = deltaX > 0;
+      const isUp    = deltaY < 0;
+      const isDown  = deltaY > 0;
+
+      if(isUp)    this.frameY = 0; // Facing Up
+      if(isLeft)  this.frameY = 1; // Facing Left
+      if(isDown)  this.frameY = 3; // Facing Right
+      if(isRight) this.frameY = 0; // Facing Up
+
+      if(isUp   && isLeft ) this.frameY = 1; // Facing Left
+      if(isUp   && isRight) this.frameY = 0; // Facing Up
+      if(isDown && isLeft)  this.frameY = 2; // Facing Down
+      if(isDown && isRight) this.frameY = 3; // Facing Right
    }
 
 
@@ -312,30 +376,22 @@ export class Agent {
       pos:   IPosition,
       VPpos: IPosition,
    ) {
-      const { width: smallWidth, height: smallHeight, offsetY } = this.sprites;
-
-      let height = smallHeight;
-      let width  = smallWidth;
-
-      if(this.isAttacking) {
-         height = this.bigSprites.height;
-         width  = this.bigSprites.width;
-      }
+      const { sourceY, size, offsetY } = this.spriteParams;
 
       ctx.drawImage(
-         this.img!,
+         this.img,
 
          // Source
-         this.frameX * width,
-         this.frameY * height,
-         width,
-         height,      
+         this.frameX * size,
+         this.frameY * size +sourceY,
+         size,
+         size,      
          
          // Destination
-         pos.x -VPpos.x - width  *0.5,
-         pos.y -VPpos.y - height *0.5 -offsetY,
-         width,
-         height,
+         pos.x -VPpos.x - (size *0.5),
+         pos.y -VPpos.y - (size *0.5) -offsetY,
+         size,
+         size,
       );
    }
 
@@ -405,78 +461,6 @@ export class Agent {
       );
       ctx.fill();
       ctx.closePath();
-   }
-
-
-   // =========================================================================================
-   // Animation States
-   // =========================================================================================
-   updateAnimState(frame: number) {
-
-      const { walk, attack, gather, died, idle } = this.animSpecs;
-
-      switch(this.animState) {
-
-         // Walk
-         case 1:  this.animation(frame, walk.index,   walk.spritesNumber  );
-         break;
-         
-         // Attack
-         case 2:  this.animation(frame, attack.index, attack.spritesNumber);
-         break;
-         
-         // Gather
-         case 3:  this.animation(frame, gather.index, gather.spritesNumber);
-         break;
-         
-         // Died
-         case 4:  this.animation(frame, died.index,   died.spritesNumber  );
-         break;
-         
-         // Idle
-         default: this.animation(frame, idle.index,   idle.spritesNumber  );
-         break;
-      }
-   }
-
-   animation(
-      frame:      number,
-      index:      number,
-      spritesNum: number,
-   ) {
-      
-      if(frame % index === 0) {         
-         if(this.frameX < spritesNum -2) this.frameX++;
-   
-         else {
-            this.frameX = 0;
-            // if(!this.isAnimable) this.isAnimable = true;
-         }
-      }
-   }
-
-   setFacingSide(animRow: number) {
-
-      const { x: deltaX, y: deltaY } = this.deltaPos;
-      
-      const isLeft  = deltaX < 0;
-      const isRight = deltaX > 0;
-      const isUp    = deltaY < 0;
-      const isDown  = deltaY > 0;
-
-      const spriteRow = animRow* this.spriteCount;
-
-      if(isUp)    this.frameY = spriteRow +0;
-      if(isLeft)  this.frameY = spriteRow +1;
-      if(isDown)  this.frameY = spriteRow +3;
-      if(isRight) this.frameY = spriteRow +0;
-
-      if(isUp   && isLeft ) this.frameY = spriteRow +1;
-      if(isUp   && isRight) this.frameY = spriteRow +0;
-      if(isDown && isLeft)  this.frameY = spriteRow +2;
-      if(isDown && isRight) this.frameY = spriteRow +3;
-    
-      this.lastFrameY = this.frameY;
    }
    
 

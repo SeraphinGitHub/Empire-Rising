@@ -37,6 +37,10 @@ export interface INumber {
    [key: string]: number,
 }
 
+export interface INumberList {
+   [key: string]: INumber,
+}
+
 export interface IPosList {
    [key: string]: IPosition,
 }

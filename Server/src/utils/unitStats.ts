@@ -4,20 +4,22 @@
 // Common Stats
 // ================================================================================================
 const INFANTRY = {
-   popCost:  1,
-   isUnit:   true,
-   collider: { offsetY: -15, radius: 15 },
+   popCost:    1,
+   isUnit:     true,
+   collider:   { offsetY: -15, radius: 15 },
+   smallOffY: 25,
+   bigOffY:   25 *3,
 }
 
 const CAVALRY = {
-   popCost: 2,
-   isUnit:  true,
-   collider: { offsetY: 0,   radius: 20 },
+   popCost:   2,
+   isUnit:    true,
+   collider:  { offsetY: 0,   radius: 20 },
 }
 
 const MACHINERY = {
-   popCost: 3,
-   collider: { offsetY: 0,   radius: 30 },
+   popCost:   3,
+   collider:  { offsetY: 0,   radius: 30 },
 }
 
 
@@ -46,21 +48,28 @@ export const UNIT_STATS: {[key: string]: any} = {
       
       attackSpeed:   7,
       animDelay:     0.5,
-      spritePath:   "Infantry/Worker/",
+      spritePath:   "Units/Worker/",
    },
 
    _0101: {
-      name:         "Swordsman",
+      name:         "Knight",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
       isUnit:        INFANTRY.isUnit,
-      health:        500,
-      armor:         200,
-      damages:       40,
+      health:        650,
+      armor:         400,
+      damages:       55,
       moveSpeed:     3,
-      attackSpeed:   12,
-      animDelay:     0.5,
-      spritePath:   "Infantry/Swordsman/",
+      attackSpeed:   16,
+      animDelay:     0.7,
+
+      spritePath:   "Units/Knight/",
+      spriteSpecs:   {
+         die:    { sourceY: 0,   size: 64,  index: 6,  spriteNum: 5, offsetY: INFANTRY.smallOffY, },
+         idle:   { sourceY: 64,  size: 64,  index: 20, spriteNum: 2, offsetY: INFANTRY.smallOffY, },
+         walk:   { sourceY: 320, size: 64,  index: 6,  spriteNum: 8, offsetY: INFANTRY.smallOffY, },
+         attack: { sourceY: 576, size: 192, index: 6,  spriteNum: 5, offsetY: INFANTRY.bigOffY,   },
+      },
    },
    
    _0102: {
@@ -74,10 +83,24 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     4,
       attackSpeed:   14,
       animDelay:     0.5,
-      spritePath:   "Infantry/Archer/",
+      spritePath:   "Units/Archer/",
    },
    
    _0103: {
+      name:         "Swordsman",
+      popCost:       INFANTRY.popCost,
+      collider:      INFANTRY.collider,
+      isUnit:        INFANTRY.isUnit,
+      health:        500,
+      armor:         200,
+      damages:       40,
+      moveSpeed:     3,
+      attackSpeed:   12,
+      animDelay:     0.5,
+      spritePath:   "Units/Swordsman/",
+   },
+
+   _0104: {
       name:         "Spearman",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
@@ -88,7 +111,21 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     3,
       attackSpeed:   10,
       animDelay:     0.5,
-      spritePath:   "Infantry/Spearman/",
+      spritePath:   "Units/Spearman/",
+   },
+
+   _0105: {
+      name:         "Barbarian",
+      popCost:       INFANTRY.popCost,
+      collider:      INFANTRY.collider,
+      isUnit:        INFANTRY.isUnit,
+      health:        400,
+      armor:         120,
+      damages:       50,
+      moveSpeed:     3,
+      attackSpeed:   10,
+      animDelay:     0.5,
+      spritePath:   "Units/Barbarian/",
    },
 
    
