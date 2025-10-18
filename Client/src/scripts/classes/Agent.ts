@@ -16,52 +16,64 @@ import {
 // =====================================================================
 export class Agent {
 
-   id:            number;
-   teamID:        number;
-   name:          string;
+   id:               number;
+   teamID:           number;
+   name:             string;
    
-   popCost:       number;   
-   health:        number;
-   armor:         number;
-   damages:       number;
-   moveSpeed:     number;
-   buildSpeed:    number;
-   attackSpeed:   number;
-   animDelay:     number;
-
-   frameX:        number = 0;
-   frameY:        number = 1;
-   animState:     number = 1;
+   popCost:          number;   
+   health:           number;
+   armor:            number;
+   damages:          number;
+   moveSpeed:        number;
+   buildSpeed:       number;
+   attackSpeed:      number;
+   animDelay:        number;
    
-   nebName:       string = "";
+   state:            number = -1;
+   frameX:           number = 0;
+   frameY:           number = 2;
+   
+   nebName:          string = "";
 
-   position:      IPosition;
-   servPos:       IPosition = { x:0, y:0 };
-   deltaPos:      IPosition = { x:0, y:0 };
-   screenPos:     IPosition = { x:0, y:0 };
+   position:         IPosition;
+   servPos:          IPosition = { x:0, y:0 };
+   deltaPos:         IPosition = { x:0, y:0 };
+   screenPos:        IPosition = { x:0, y:0 };
 
-   collider:      INumber;   
-   curCell:       Cell;
-   goalCell:      Cell;   
-   nextCell:      Cell | null = null;
-   pathID:        string[]  = [];
-   path:          Cell  []  = [];
+   collider:         INumber;   
+   curCell:          Cell;
+   goalCell:         Cell;   
+   nextCell:         Cell | null = null;
+   lastPathID:       string[]  = [];
+   pathID:           string[]  = [];
+   path:             Cell  []  = [];
 
-   isUnit:        boolean;
-   isWorker:      boolean;
+   isUnit:           boolean;
+   isWorker:         boolean;
 
-   hasSwapState:  boolean = false;
-   hasReachNext:  boolean = false;
-   hasArrived:    boolean = false;
-   isMoving:      boolean = false;
-   isAttacking:   boolean = false;
-   isGathering:   boolean = false;
-   isSelected:    boolean = false;
-   isHover:       boolean = false;
-
-   img:           HTMLImageElement = new Image();
-   spriteSpecs:   INumberList;
-   spriteParams:  INumber = { sourceY: 0, size: 0, offsetY: 0 };
+   isHover:          boolean = false;
+   isSelected:       boolean = false;
+   isMoving:         boolean = false;
+   isAttacking:      boolean = false;
+   isGathering:      boolean = false;
+   isWalkActive:     boolean = false;
+   isGatherActive:   boolean = false;
+   hasArrived:       boolean = false;
+   hasReachNext:     boolean = false;
+   hasResetAnim:     boolean = false;
+   
+   img:              HTMLImageElement = new Image();
+   spriteSpecs:      INumberList;
+   spriteParams:     INumber = { srcY: 0, size: 0, offsetY: 25 };
+   
+   // -----------------
+   // States
+   // -----------------
+   // die    => 0
+   // idle   => 1
+   // walk   => 2
+   // attack => 3
+   // gather => 4
 
    
    constructor(params: any) {
@@ -87,7 +99,7 @@ export class Agent {
       this.isWorker    = params.isWorker;
 
       this.setImageSource (params);
-      this.setSpriteParams(this.spriteSpecs.idle);
+      this.setSpriteParams("idle");
    }
 
    initPack() {
@@ -97,38 +109,53 @@ export class Agent {
       }
    }
 
-   setImageSource(params: any) {
+
+   // =========================================================================================
+   // Methods
+   // =========================================================================================
+   setImageSource    (params: any) {
       const { spritePath, teamColor } = params;
       this.img.src = `${spritePath}${teamColor}.png`;
    }
 
-   setSpriteParams(stateSpec: INumber) {
-      const { sourceY: srcY_a, size: size_a, offsetY: offsetY_a } = stateSpec;
-      const { sourceY: srcY_b, size: size_b, offsetY: offsetY_b } = this.spriteParams;
+   setSpriteParams   (animStateName: string) {
+      const { srcY: srcY_a, size: size_a } = this.spriteSpecs[animStateName];
+      const { srcY: srcY_b, size: size_b } = this.spriteParams;
 
-      if(srcY_a    === srcY_b
-      && size_a    === size_b
-      && offsetY_a === offsetY_b) {
-         
+      if(srcY_a === srcY_b
+      && size_a === size_b) {
          return;
       }
 
-      this.spriteParams.sourceY = srcY_a;
-      this.spriteParams.size    = size_a;
-      this.spriteParams.offsetY = offsetY_a;
+      this.spriteParams.srcY = srcY_a;
+      this.spriteParams.size = size_a;
    }
 
-   inMovement(state: boolean) {
+   setMoveStateTo    (isMoving: boolean) {
 
-      if(state && this.isMoving) return;
+      if(this.isMoving === isMoving) return;
 
-      this.setSpriteParams(this.spriteSpecs[state ? "walk" : "idle"]);
-      this.isMoving     = state;
-      this.animState    = state ? 2 : 1;
-      this.hasSwapState = true;
+      this.isMoving     = isMoving;
+      this.hasArrived   = !isMoving;
+      this.hasResetAnim = true;
+      
+      if(this.isGatherActive) return;
+
+      if(isMoving) this.setSpriteParams("walk");
+      else         this.setSpriteParams("idle");
    }
 
-   setNextCell(getCell: Function) {
+   isPathDiff        (
+      oldPathID: string[],
+      newPathID: string[],
+   ): boolean {
+
+      if(oldPathID.length !== newPathID.length) return true;
+      
+      return oldPathID.some((cellID, index) => cellID !== newPathID[index]);
+   }
+
+   setNextCell       (getCell: Function) {
 
       const targetCell: Cell | null = getCell(this.pathID[0]) ?? null;
       
@@ -136,13 +163,13 @@ export class Agent {
       this.pathID.shift();
    }
    
-   setGoalCell(getCell: Function) {
+   setGoalCell       (getCell: Function) {
 
       const goalCell: Cell = getCell(this.pathID[ this.pathID.length -1 ]);
       this.goalCell = goalCell;
    }
 
-   checkReachedNext(cell: Cell) {
+   checkReachedNext  (cell: Cell) {
 
       if(!cell) return;
       
@@ -158,60 +185,70 @@ export class Agent {
       this.hasReachNext = true;
    }
 
-   gatherRessource() {
-
-      if(!this.isGathering) return;
-
-      let facingSide: number = -1;
-
-      switch(this.nebName) {
-         case "top":          facingSide = 3; break;
-         case "topRight":     facingSide = 2; break;
-         case "right":        facingSide = 1; break;
-         case "bottomRight":  facingSide = 1; break;
-         case "bottom":       facingSide = 0; break;
-         case "bottomLeft":   facingSide = 0; break;
-         case "left":         facingSide = 0; break;
-         case "topLeft":      facingSide = 3; break;
-      }
+   toggleWalking     (
+      pathID:  string[],
+      getCell: Function,
+   ) {
       
-      this.animState    = 4;
-      this.frameY       = facingSide;
-      this.hasSwapState = true;
-      this.setSpriteParams(this.spriteSpecs.gather);
+      if(this.isWalkActive || !this.isPathDiff(pathID, this.lastPathID)) {
+         this.isWalkActive = false;
+         return;
+      }
+
+      this.isWalkActive = true;
+      
+      this.lastPathID = [...pathID];
+      this.pathID     = pathID;
+      this.path       = pathID.map((id: string) => getCell(id));
+      this.setNextCell( getCell );
+      this.setGoalCell( getCell );
+
+      if(pathID.length === 0) this.setMoveStateTo(false);
+   }
+   
+   toggleGathering   () {
+
+      if(this.state !== 4) {
+         this.isGatherActive = false;
+         return;
+      }
+
+      if(this.isGatherActive) return
+      this.isGatherActive = true;
+
+      this.setSpriteParams("gather");
+      this.hasResetAnim = true;
    }
 
+
    // =========================================================================================
-   // Walk through path
+   // Agent Update (Every frame)
    // =========================================================================================
-   walkPath(getCell: Function) {
+   walkPath          (getCell: Function) {
 
       if(!this.nextCell) return;
       
-      this.hasReachNext = false;
-      this.hasArrived   = false;
-      this.inMovement(true);
+      this.hasReachNext    = false;
+      this.setMoveStateTo  (true);
       
       // Moving toward nextCell
-      this.moveTo(this.nextCell);
-      this.setFacingSide();
+      this.moveTo          (this.nextCell);
       this.checkReachedNext(this.nextCell);
 
       // Arrived at nextCell
       if(!this.hasReachNext) return;
 
-      this.hasReachNext = true;
-      this.curCell    = this.nextCell;
-      this.setNextCell(getCell);
+      this.hasReachNext    = true;
+      this.curCell         = this.nextCell;
+      this.setNextCell     (getCell);
       this.checkReachedNext(this.goalCell);
       
       if(!this.hasReachNext) return;
 
-      this.hasArrived = true;
-      this.inMovement(false);
+      this.setMoveStateTo  (false);
    }
 
-   moveTo(nextCell: Cell) {
+   moveTo            (nextCell: Cell) {
       
       const { x: posX,  y: posY  } = this.position;
       const { x: nextX, y: nextY } = nextCell.center;
@@ -240,15 +277,49 @@ export class Agent {
       this.position.y += moveY;
    }
 
+   update            (
+      Frame:   number,
+      getCell: Function,
+   ) {
+      this.walkPath        (getCell);
+      this.updateAnimState (Frame);
+      this.setFacingSide   ();
+   }
+
+   serverSync        (
+      data:    any,
+      cell:    Cell,
+      getCell: Function,
+   ) {
+      const {
+         isVacant,
+         state,
+         position,
+         nodeNebName,
+         isGathering,
+         pathID,
+      }: any = data;
+      
+      if(cell.isVacant    !== isVacant   ) cell.isVacant    = isVacant;
+      if(this.state       !== state      ) this.state       = state;
+      if(this.curCell     !== cell       ) this.curCell     = cell;
+      if(this.servPos.x   !== position.x ) this.servPos.x   = position.x;
+      if(this.servPos.y   !== position.y ) this.servPos.y   = position.y;
+      if(this.nebName     !== nodeNebName) this.nebName     = nodeNebName;
+      if(this.isGathering !== isGathering) this.isGathering = isGathering;
+      
+      this.toggleWalking  (pathID, getCell);
+      this.toggleGathering();
+   }
+
 
    // =========================================================================================
    // Animation States
    // =========================================================================================
-   updateAnimState(frame: number) {
+   updateAnimState   (frame: number) {
       const { die, idle, walk, gather, attack } = this.spriteSpecs;
 
-      switch(this.animState) {
-
+      switch(this.state) {
          case 0: this.animation( frame, die    ); break;
          case 1: this.animation( frame, idle   ); break;
          case 2: this.animation( frame, walk   ); break;
@@ -257,21 +328,21 @@ export class Agent {
       }
    }
 
-   animation(
+   animation         (
       frame:     number,
       stateSpec: any,
    ) {
       const { index, spriteNum } = stateSpec;
 
-      if(this.hasSwapState) {
-         this.hasSwapState = false;
+      if(this.hasResetAnim) {
+         this.hasResetAnim = false;
          this.frameX = 0;
          return;
       }
 
       if(frame % index === 0) {         
          if(this.frameX < spriteNum -1) this.frameX++;
-   
+
          else {
             this.frameX = 0;
             // if(!this.isAnimable) this.isAnimable = true;
@@ -279,7 +350,7 @@ export class Agent {
       }
    }
 
-   setFacingSide() {
+   setFacingSide     () {
       const { x: deltaX, y: deltaY } = this.deltaPos;
 
       const isLeft  = deltaX < 0;
@@ -287,22 +358,38 @@ export class Agent {
       const isUp    = deltaY < 0;
       const isDown  = deltaY > 0;
 
-      if(isUp)    this.frameY = 0; // Facing Up
-      if(isLeft)  this.frameY = 1; // Facing Left
-      if(isDown)  this.frameY = 3; // Facing Right
-      if(isRight) this.frameY = 0; // Facing Up
+      let tempFrameY = 0;
 
-      if(isUp   && isLeft ) this.frameY = 1; // Facing Left
-      if(isUp   && isRight) this.frameY = 0; // Facing Up
-      if(isDown && isLeft)  this.frameY = 2; // Facing Down
-      if(isDown && isRight) this.frameY = 3; // Facing Right
+      if(isUp              ) tempFrameY = 0; // Facing Up
+      if(isLeft            ) tempFrameY = 1; // Facing Left
+      if(isDown            ) tempFrameY = 3; // Facing Right
+      if(isRight           ) tempFrameY = 0; // Facing Up
+
+      if(isUp   && isLeft  ) tempFrameY = 1; // Facing Left
+      if(isUp   && isRight ) tempFrameY = 0; // Facing Up
+      if(isDown && isLeft  ) tempFrameY = 2; // Facing Down
+      if(isDown && isRight ) tempFrameY = 3; // Facing Right
+
+      if(this.isGathering) switch(this.nebName) {
+
+         case "top":          tempFrameY = 3; break;
+         case "topRight":     tempFrameY = 2; break;
+         case "right":        tempFrameY = 1; break;
+         case "bottomRight":  tempFrameY = 1; break;
+         case "bottom":       tempFrameY = 0; break;
+         case "bottomLeft":   tempFrameY = 0; break;
+         case "left":         tempFrameY = 0; break;
+         case "topLeft":      tempFrameY = 3; break;
+      }
+
+      if(this.frameY !== tempFrameY) this.frameY = tempFrameY;
    }
 
 
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawPath(ctx: CanvasRenderingContext2D) {
+   drawPath          (ctx: CanvasRenderingContext2D) {
       
       if(!this.path.length || this.hasArrived) return;
 
@@ -321,7 +408,7 @@ export class Agent {
       // this.drawScanNebs(ctx);
    }
 
-   drawScanNebs(ctx: CanvasRenderingContext2D) {
+   drawScanNebs      (ctx: CanvasRenderingContext2D) {
       
       // // Display scanned neighbors   
       // this.Pathfnder.closedSet.forEach((cell: Cell) => {
@@ -332,7 +419,7 @@ export class Agent {
       // });
    }
 
-   drawPathLine(
+   drawPathLine      (
       ctx:      CanvasRenderingContext2D,
       curCell:  Cell,
       nextCell: Cell,
@@ -352,7 +439,7 @@ export class Agent {
       ctx.stroke();
    }
 
-   drawCollider(
+   drawCollider      (
       ctx:   CanvasRenderingContext2D,
       pos:   IPosition,
       VPpos: IPosition,
@@ -371,19 +458,19 @@ export class Agent {
       ctx.closePath();
    }
 
-   drawSprite(
+   drawSprite        (
       ctx:   CanvasRenderingContext2D,
       pos:   IPosition,
       VPpos: IPosition,
    ) {
-      const { sourceY, size, offsetY } = this.spriteParams;
+      const { srcY, size, offsetY } = this.spriteParams;
 
       ctx.drawImage(
          this.img,
 
          // Source
          this.frameX * size,
-         this.frameY * size +sourceY,
+         this.frameY * size +srcY,
          size,
          size,      
          
@@ -395,7 +482,7 @@ export class Agent {
       );
    }
 
-   drawSelect(
+   drawSelect        (
       ctx:      CanvasRenderingContext2D,
       isSelect: boolean,
    ) {
@@ -415,7 +502,7 @@ export class Agent {
       ctx.closePath();
    }
 
-   drawInfos(
+   drawInfos         (
       ctx:   CanvasRenderingContext2D,
       pos:   IPosition,
       VPpos: IPosition
@@ -428,7 +515,7 @@ export class Agent {
       this.drawID(ctx, adjustedPos);
    }
 
-   drawID(
+   drawID            (
       ctx: CanvasRenderingContext2D,
       pos: IPosition,
    ) {
@@ -448,7 +535,7 @@ export class Agent {
       ctx.fillText(text, x, y -54,);
    }
 
-   drawServerPos(
+   drawServerPos     (
       ctx: CanvasRenderingContext2D,
    ) {
 
@@ -461,19 +548,6 @@ export class Agent {
       );
       ctx.fill();
       ctx.closePath();
-   }
-   
-
-   // =========================================================================================
-   // Agent Update (Every frame)
-   // =========================================================================================
-   update(
-      Frame:   number,
-      getCell: Function,
-   ) {
-      this.walkPath        (getCell);
-      this.updateAnimState (Frame);
-      this.gatherRessource ();
    }
 
 }

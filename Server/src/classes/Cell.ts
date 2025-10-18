@@ -6,10 +6,6 @@ import {
    ILineList,
 } from "../utils/interfaces";
 
-import {
-   Grid,
-} from "./_Export";
-
 
 // =====================================================================
 // Cell Class
@@ -22,7 +18,6 @@ export class Cell {
    j:              number;
    x:              number;
    y:              number;
-   zIndex:         number;
    size:           number;
    cellPerSide:    number;
 
@@ -54,7 +49,6 @@ export class Cell {
 
 
    constructor(
-      zIndex:      number,
       cellPerSide: number,
       size:        number,
       i:           number,
@@ -66,11 +60,34 @@ export class Cell {
       this.j           = j;
       this.x           = i *size;
       this.y           = j *size;
-      this.zIndex      = zIndex;
       this.size        = size;
       this.cellPerSide = cellPerSide;
       
       this.setCenter();
+   }
+
+   initPack() {
+      return {
+         id:             this.id,
+         i:              this.i,
+         j:              this.j,
+         x:              this.x,
+         y:              this.y,
+         size:           this.size,
+         cellPerSide:    this.cellPerSide,
+         center:         this.center,
+         agentIDset:     [...this.agentIDset],
+         collider:       this.collider,
+         nebStatusList:  this.nebStatusList,
+         nebCoordList:   this.nebCoordList,
+         isVacant:       this.isVacant,
+         isBlocked:      this.isBlocked,
+         isTargeted:     this.isTargeted,
+         isOverlaped:    this.isOverlaped,
+         isTransp:       this.isTransp,
+         isNode:         this.isNode,
+         isBuilding:     this.isBuilding,
+      }
    }
    
    

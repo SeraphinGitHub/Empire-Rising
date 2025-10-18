@@ -122,8 +122,8 @@ export class GameManager {
       this.halfGrid   = this.gridSize *0.5;
 
       this.Viewport   = new Viewport  (this);
-      this.Grid       = new Grid      (this);
       this.Cursor     = new Cursor    (this);
+      this.Grid       = new Grid      ();
       this.Collision  = new Collision ();
       
       this.init(initPack);
@@ -147,6 +147,7 @@ export class GameManager {
       this.socket.on("updateYield", (data: any) => this.updateYield     (data));
       this.socket.on("serverSync",  (data: any) => this.syncWithServer  (data));
       this.socket.on("recruitUnit", (data: any) => this.createNewElem   (data, this.unitsList, Agent));
+      this.socket.on("updateCells", (data: any) => this.Grid.updateCell (data));
    }
 
    initPlayer(playerPack: any) {
@@ -159,12 +160,14 @@ export class GameManager {
    
    initGame(battlePack: any) {
 
-      this.interval     = Math.floor(1000 / battlePack.frameRate);
-      this.maxPop       = battlePack.maxPop;
-      this.BUILD_STATS  = battlePack.BUILD_STATS;
-      this.UNIT_STATS   = battlePack.UNIT_STATS;
-      this.NODE_STATS   = battlePack.NODE_STATS;
-      this.TILES        = battlePack.TILES;       // ==> Tempory
+      this.Grid.init        (battlePack.cellsList);
+
+      this.interval        = Math.floor(1000 / battlePack.frameRate);
+      this.maxPop          = battlePack.maxPop;
+      this.BUILD_STATS     = battlePack.BUILD_STATS;
+      this.UNIT_STATS      = battlePack.UNIT_STATS;
+      this.NODE_STATS      = battlePack.NODE_STATS;
+      this.TILES           = battlePack.TILES;       // ==> Tempory
    }
 
    initMap() {
@@ -406,65 +409,6 @@ export class GameManager {
       this.playerYield = data;
    }
 
-   syncWithServer    (data: any) {
-
-      for(const agentData of data) {
-         
-         const {
-            id,
-            state,
-            position,
-            cellID,
-            isVacant,
-            nodeNebName,
-            isGathering,
-            pathID,
-         }: any = agentData;
-
-         const agent: Agent | undefined = this.unitsList.get(id);
-         
-         if(!agent) continue;
-
-
-         if(state === "idle") {
-            const cell: Cell | undefined = this.getCell(cellID);
-      
-            if(!cell) continue;
-      
-            cell.isVacant   = isVacant;
-            agent.servPos.x = position.x;
-            agent.servPos.y = position.y;
-            agent.curCell   = cell;
-         }
-
-
-         if(state === "gather") {
-            agent.isGathering = isGathering;
-            agent.nebName     = nodeNebName;
-         }
-
-
-         // if(state === "yield") {
-         //    if(!gatherAmount) continue;
-         //    console.log({ gatherAmount });
-         // }
-
-
-         if(state === "move") {
-            agent.pathID           = pathID;
-            agent.path             = [];
-   
-            agent.setNextCell(this.getCell.bind(this));
-            agent.setGoalCell(this.getCell.bind(this));
-   
-            if(pathID.length === 0) agent.inMovement(false);
-   
-            pathID.forEach((ID: string) => agent.path.push( this.getCell(ID)! ));
-         }
-
-      }
-   }
-
    updateAllAgents   () {
 
       for(const [, unit] of this.unitsList) {
@@ -568,7 +512,25 @@ export class GameManager {
 
       return renderList;
    }
+
    
+   // =========================================================================================
+   // Server Sync
+   // =========================================================================================
+   syncWithServer    (data: any) {
+
+      for(const agentData of data) {
+         const { id, cellID }: any = agentData;
+
+         const agent: Agent | undefined = this.unitsList.get(id);
+         const cell:  Cell  | undefined = this.getCell(cellID);
+         
+         if(!agent || !cell) continue;
+         
+         agent.serverSync(agentData, cell, this.getCell.bind(this));
+      }
+   }
+
 
    // =========================================================================================
    // Draw Methods

@@ -20,12 +20,11 @@ export class Grid {
       this.gridSize = params.gridSize;
       this.halfGrid = params.gridSize *0.5;
 
-      this.setCellsList();
+      this.setServer_CellsList();
       this.setNeighbors();
    }
 
-   setCellsList() {
-      let zIndex = 0;
+   setServer_CellsList() {
 
       const cellPerSide = Math.floor(this.gridSize / this.cellSize);
       
@@ -33,7 +32,6 @@ export class Grid {
          for(let j = 0; j < cellPerSide; j++) {  // Cells
             
             const cell: Cell = new Cell(
-               zIndex,
                cellPerSide,
                this.cellSize,
                cellPerSide -i -1,
@@ -41,9 +39,19 @@ export class Grid {
             );
             
             this.cellsList.set(cell.id, cell);
-            zIndex++;
          }
       }
+   }
+
+   setClient_CellsList() {
+
+      const tempList: any = {};
+
+      for(const [id, cell] of this.cellsList) {
+         tempList[id] = cell.initPack();
+      }
+
+      return tempList;
    }
 
    setNeighbors() {

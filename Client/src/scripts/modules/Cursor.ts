@@ -146,7 +146,7 @@ export class Cursor {
          GM.socket.emit("startAgentPF", {
             targetCell:    this.targetCell,
             targetArea:    this.targetArea,
-            AgentsID_List: GM.setAgentsID_List()
+            AgentsID_List: GM.setAgentsID_List(),
          });
       }
    }
@@ -195,7 +195,7 @@ export class Cursor {
    // =========================================================================================
    // Methods
    // =========================================================================================
-   setSelectMode(
+   setSelectMode     (
       GM:       GameManager,
       isSelect: boolean,
    ) {
@@ -211,7 +211,7 @@ export class Cursor {
       this.handleSelectMode(GM, isSelect, buildsList, buildSelectList_old, buildSelectList_cur);
    }
 
-   handleSelectMode     (
+   handleSelectMode  (
       GM:       GameManager,
       isSelect: boolean,
       elemList: Map<number, any>,
@@ -301,7 +301,7 @@ export class Cursor {
       }
    }
    
-   getCellCoord(
+   getCellCoord      (
       coord:    number,
       cellSize: number,
    ): number {
@@ -309,7 +309,7 @@ export class Cursor {
       return coord -(coord % cellSize);
    }
 
-   setPosition(
+   setPosition       (
       GM:        GameManager,
       event:     MouseEvent,
       isPressed: boolean,

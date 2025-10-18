@@ -19,52 +19,46 @@ export class Cell {
    j:              number;
    x:              number;
    y:              number;
-   zIndex:         number;
    size:           number;
    cellPerSide:    number;
 
-   center:         IPosition     = {x:0, y:0};
+   center:         IPosition;
 
-   agentIDset:     Set<number>   = new Set();
-   collider:       ILineList     = {};
-   nebStatusList:  INebList      = {};
-   nebCoordList:   ICoordArray   = {
-      top:         [ 0, -1,  false], // isDiagonal ==> false
-      topRight:    [ 1, -1,  true ], // isDiagonal ==> true
-      right:       [ 1,  0,  false],
-      bottomRight: [ 1,  1,  true ],
-      bottom:      [ 0,  1,  false],
-      bottomLeft:  [-1,  1,  true ],
-      left:        [-1,  0,  false],
-      topLeft:     [-1, -1,  true ],
-   };
+   agentIDset:     Set<number>;
+   collider:       ILineList;
+   nebStatusList:  INebList;
+   nebCoordList:   ICoordArray;
    
-   isVacant:       boolean = true;
-   isBlocked:      boolean = false;
-   isOverlaped:    boolean = false;
-   isNode:         boolean = false;
-   isBuilding:     boolean = false;
+   isVacant:       boolean;
+   isBlocked:      boolean;
+   isOverlaped:    boolean;
+   isNode:         boolean;
+   isBuilding:     boolean;
 
    // ----------- Tempory -----------
    isDiffTile:     boolean = false;
    // ----------- Tempory -----------
 
-   constructor(
-      zIndex:      number,
-      cellPerSide: number,
-      size:        number,
-      i:           number,
-      j:           number,
-   ) {
+
+   constructor(params: any) {
       
-      this.id          = `${i}-${j}`;
-      this.i           = i;
-      this.j           = j;
-      this.x           = i *size;
-      this.y           = j *size;
-      this.zIndex      = zIndex;
-      this.size        = size;
-      this.cellPerSide = cellPerSide;
+      this.id              = params.id;
+      this.i               = params.i;
+      this.j               = params.j;
+      this.x               = params.x;
+      this.y               = params.y;
+      this.size            = params.size;
+      this.cellPerSide     = params.cellPerSide;
+      this.center          = params.center;
+      this.agentIDset      = new Set(params.agentIDset);
+      this.collider        = params.collider;
+      this.nebStatusList   = params.nebStatusList;
+      this.nebCoordList    = params.nebCoordList;
+      this.isVacant        = params.isVacant;
+      this.isBlocked       = params.isBlocked;
+      this.isOverlaped     = params.isOverlaped;
+      this.isNode          = params.isNode;
+      this.isBuilding      = params.isBuilding;
       
       this.init();
    }

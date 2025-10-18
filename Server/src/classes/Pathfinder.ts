@@ -72,6 +72,7 @@ export class Pathfinder {
       this.openSet   = new Set([curCell]);
       this.closedSet = new Set();
       this.hasTarget = false;
+      this.hasPath   = false;
       this.path      = [];
    }
 

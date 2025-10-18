@@ -7,42 +7,18 @@ import { GameManager } from "../modules/GameManager";
 // =====================================================================
 export class Grid {
 
-   private GM:       GameManager;
-
    cellsList:        Map<string, Cell> = new Map();
 
-   constructor(GManager: GameManager) {
+   init(cellsList: any) {
 
-      this.GM = GManager;
-      this.init();
-   }
-
-   init() {
-      
-      this.setCellsList();
+      this.setCellsList(cellsList);
       this.setNeighbors();
    }
 
-   setCellsList() {
-      let zIndex = 0;
+   setCellsList(cellsList: any) {
 
-      const { gridSize, cellSize } = this.GM;
-      const cellPerSide = Math.floor(gridSize / cellSize);
-      
-      for(let i = 0; i < cellPerSide; i++) {     // Collums
-         for(let j = 0; j < cellPerSide; j++) {  // Cells
-            
-            const cell: Cell = new Cell(
-               zIndex,
-               cellPerSide,
-               cellSize,
-               cellPerSide -i -1,
-               j
-            );
-            
-            this.cellsList.set(cell.id, cell);
-            zIndex++;
-         }
+      for(const [id, cellParams] of Object.entries(cellsList)) {
+         this.cellsList.set(id, new Cell(cellParams));
       }
    }
 
@@ -51,6 +27,15 @@ export class Grid {
       for(const [, cell] of this.cellsList) {
          cell.setNeighborsList();
       }
+   }
+   
+   updateCell(params: any) {
+      const { cellID, varName, newState } = params;
+
+      const cell: any = this.cellsList.get(cellID);
+      if(!cell) return;
+
+      cell[varName] = newState;
    }
 
 

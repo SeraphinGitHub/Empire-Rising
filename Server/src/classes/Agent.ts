@@ -31,10 +31,11 @@ export class Agent {
    teamColor:     string;
    name:          string;
    nodeNebName:   string = "";
-   state:         string = "";
    spritePath:    string;
    spriteSpecs:   INumberList;
    
+   state:         number = 1;
+   oldHarvNodeID:    number = 0;
    harvNodeID:    number = -1;
    popCost:       number;
    health:        number;
@@ -73,6 +74,16 @@ export class Agent {
    isAttacking:   boolean = false;
    isGatherable:  boolean = false;
    isGathering:   boolean = false;
+   isPathReload:  boolean = false;
+
+   // -----------------
+   // States
+   // -----------------
+   // die    => 0
+   // idle   => 1
+   // walk   => 2
+   // attack => 3
+   // gather => 4
 
    // **********************************************
    hasGathered: boolean = false;
@@ -150,11 +161,12 @@ export class Agent {
          isVacant:      this.curCell.isVacant,
          nodeNebName:   this.nodeNebName,
          isGathering:   this.isGathering,
+         isGatherable:  this.isGatherable,
          pathID:        this.pathID,
       }
    }
 
-   setMoveSpeed(moveSpeed: number): number {
+   setMoveSpeed            (moveSpeed: number): number {
       
       const clientFPS: number = Number(process.env.CLIENT_FRAME_RATE);
       const serverFPS: number = Number(process.env.SERVER_FRAME_RATE);
@@ -162,54 +174,83 @@ export class Agent {
       return moveSpeed * Math.floor( clientFPS / serverFPS );
    }
    
-   hasReached(cell: Cell): boolean {
+   hasArrivedTo            (cell: Cell): boolean {
       
       const { x: posX,  y: posY  } = this.position;
       const { x: cellX, y: cellY } = cell.center;
   
-      if(posX !== cellX
-      || posY !== cellY) {
-         return false;
+      if(posX === cellX
+      && posY === cellY) {
+         return true;
       }
       
-      return true;
+      return false;
    }
 
 
    // =========================================================================================
    // Methods
    // =========================================================================================
-   reloadSearchPath(
-      cellsList: Map<string, Cell>
-   ) {
+   setState                (newState: string) {
 
-      const { path, goalCell } = this.Pathfinder;
-      const nextCell = path[1] ? path[1] : path[0];
-      
-      if(nextCell!.id === goalCell!.id) return;
+      let tempState = null;
 
-      const neighbors = [
-         "topLeft",
-         "top",
-         "topRight",
-         "right",
-         "bottomRight",
-         "bottom",
-         "bottomLeft",
-         "left",
-      ].map((name) => {
-         const neb = nextCell.nebStatusList[name];
-         if(neb) return cellsList.get(neb.id);
-      });
-
-      if(nextCell.isBlocked
-      || neighbors.some((neb) => nextCell.isBlockedDiag(cellsList, neb!) )) {
-
-         this.Pathfinder.searchPath(cellsList);
+      switch(newState) {
+         case "die":    tempState = 0; break
+         case "idle":   tempState = 1; break
+         case "walk":   tempState = 2; break
+         case "attack": tempState = 3; break
+         case "gather": tempState = 4; break
       }
+      
+      if(tempState === null
+      || tempState === this.state) {
+         return
+      }
+
+      this.state = tempState;
    }
 
-   gatherRessource(
+   setCellState            (battle: Battle) {
+
+      this.oldCell = this.curCell;
+      this.curCell = this.Pathfinder.path[0];
+
+      const isPathCompromized = this.Pathfinder.path.some(cell => cell.isBlocked === true);
+
+      if(isPathCompromized && !this.isPathReload) {
+
+         this.Pathfinder.searchPath(battle.Grid.cellsList);
+         this.hasUpdated   = false;
+         this.isPathReload = true;
+      }
+
+      this.Pathfinder.path.shift();
+      this.Pathfinder.nextCell = this.Pathfinder.path[0] ?? null;
+      this.oldCell.setVacant  (this.id);
+      this.curCell.setOccupied(this.id);
+   }
+
+   cancelWalking           (nextCell: Cell) {
+
+      this.position.x   = nextCell.center.x;
+      this.position.y   = nextCell.center.y;
+
+      this.isMoving     = false;
+      this.hasUpdated   = false;
+      this.hasArrived   = true;
+      this.hasReachNext = true;
+   }
+
+   cancelGathering         () {
+
+      clearInterval(this.gatherIntID!);
+
+      this.isGathering = false;
+      this.gatherIntID = null;
+   }
+   
+   gatherRessource         (
       battle: Battle,
    ) {
 
@@ -223,7 +264,7 @@ export class Agent {
       const { Grid, playersList, nodesList } = battle;
       
       this.isGathering = true;
-      
+
       this.gatherIntID = setInterval(() => {
          this.gatherAmount++
 
@@ -242,14 +283,19 @@ export class Agent {
 
             if(this.gatherIntID) clearInterval(this.gatherIntID);
             
-            if(this.dropOffCell) this.setTargetTo(this.dropOffCell, Grid.cellsList);
+            if(this.dropOffCell
+            && this.oldHarvNodeID === this.harvNodeID) {
+               
+               this.setTargetTo(this.dropOffCell, Grid.cellsList);
+            }
+            
             else this.searchNearestWarehouse(player, Grid.cellsList);
          };
 
       }, this.gatherSpeed);
    }
 
-   searchNearestWarehouse(
+   searchNearestWarehouse  (
       player:    Player,
       cellsList: Map<string, Cell>,
    ) {
@@ -283,12 +329,13 @@ export class Agent {
       const dropOffCell    = nearestPath[ nearestPath.length -1 ];
       this.Pathfinder.path = nearestPath;
 
-      if(this.dropOffCell !== dropOffCell) this.dropOffCell = dropOffCell;
+      if(this.dropOffCell   !== dropOffCell    ) this.dropOffCell   = dropOffCell;
+      if(this.oldHarvNodeID !== this.harvNodeID) this.oldHarvNodeID = this.harvNodeID;
 
       this.setTargetTo(dropOffCell);
    }
 
-   setTargetTo(
+   setTargetTo             (
       targetCell: Cell,
       cellsList?:  Map<string, Cell>,
    ) {
@@ -303,7 +350,7 @@ export class Agent {
       this.hasUpdated = false;
    }
 
-   dropAndReturn(
+   dropAndReturn           (
       battle:   Battle,
       goalCell: Cell,
    ) {
@@ -329,52 +376,34 @@ export class Agent {
       this.gatherAmount = 0;
    }
 
-   walkPath(battle: Battle) {
-      
+   walkPath                (battle: Battle) {
       const { nextCell, goalCell, hasPath } = this.Pathfinder;
       
       if(!nextCell || !goalCell) return;
-      
-      if(this.gatherIntID) clearInterval(this.gatherIntID);
-      this.isGathering  = false;
+      if(this.isGathering && this.gatherIntID) this.cancelGathering();
+      if(!hasPath) return this.cancelWalking(nextCell);
 
-      if(!hasPath) {
-         this.hasReachNext = true;
-         this.hasArrived   = true;
-         this.isMoving     = false;
-         this.position.x   = nextCell.center.x;
-         this.position.y   = nextCell.center.y;
-         this.hasUpdated   = false;
-         return;
-      };
-      
       this.moveTo(nextCell);
-      this.hasReachNext = false;
       
-      if(!this.hasReached(nextCell)) return;
+      if(!this.isMoving   ) this.isMoving     = true;
+      if(this.hasReachNext) this.hasReachNext = false;
+      if(!this.hasArrivedTo(nextCell)) return;
       
-      this.oldCell    = this.curCell;
-      this.curCell    = this.Pathfinder.path[0];
+      this.setCellState(battle);
 
-      this.reloadSearchPath(battle.Grid.cellsList); // instead ==> need to update if path became compromize
+      if(!this.hasArrivedTo(goalCell)) return;
 
-      this.Pathfinder.path.shift();
-      this.Pathfinder.nextCell = this.Pathfinder.path[0] ?? null;
-      this.oldCell.setVacant  (this.id);
-      this.curCell.setOccupied(this.id);
-
-      if(!this.hasReached(goalCell!)) return;
-      
-      this.hasArrived = true;
       this.isMoving   = false;
+      this.hasArrived = true;
+      this.Pathfinder.resetPath();
       
-      if(this.isWorker) {
-         this.gatherRessource(battle);
-         this.dropAndReturn  (battle, goalCell);
-      }
+      if(!this.isWorker) return;
+
+      this.gatherRessource(battle);
+      this.dropAndReturn  (battle, goalCell);
    }
 
-   moveTo(nextCell: Cell) {
+   moveTo                  (nextCell: Cell) {
 
       const now = Date.now();
       const dt  = (now -this.lastUpdate) /1000;
@@ -407,22 +436,26 @@ export class Agent {
    // =========================================================================================
    update(battle: Battle) {
 
-      this.state = "idle";
-
       if(this.hasArrived) return;
       
-      this.walkPath(battle); // Recast with agent.update() method
-
-      this.state = "gather";
-
-      // Skip sending pathID pack if already sent once (Not every tick)
-      if(this.hasUpdated) return;
-      this.hasUpdated = true;
+      this.walkPath(battle);
       
-      this.pathID = [];
-      this.Pathfinder.path.forEach((cell: Cell) => this.pathID.push(cell.id));
+      if(this.hasArrived
+      && !this.isMoving
+      && !this.isGathering
+      && !this.isAttacking) this.setState("idle");
 
-      this.state = "move";
+      if(this.isGathering) this.setState("gather");
+
+      // Skip sending pathID if already sent once (Not every tick)
+      if(this.hasUpdated) return;
+
+      this.hasUpdated   = true;
+      this.isPathReload = false;
+
+      this.pathID = this.Pathfinder.path.map((cell: Cell) => cell.id);
+
+      if(this.isMoving) this.setState("walk");
    }
 
 }

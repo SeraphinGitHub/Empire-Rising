@@ -297,6 +297,7 @@ export class Battle {
          frameRate:  Number(process.env.CLIENT_FRAME_RATE),
          maxPop:     this.setPlayerMaxPop(),
 
+         cellsList:  this.Grid.setClient_CellsList(),
          // unitsList:  this.setClientList(this.unitsList),
          nodesList:  this.setClientList(this.nodesList),
          buildsList: this.setClientList(this.buildsList),
@@ -335,9 +336,10 @@ export class Battle {
          if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "19-25", "17-25", "17-29", "19-29", "21-29", "21-25"];
          
          cellID_Array.forEach((cellID: any) => {
-            let unitID = "_0101";
+            let unitID = "_0100";
+            // let unitID = "_0104";
 
-            // if(cellID === "17-21") unitID = "_0100";
+            // if(cellID === "17-21" || cellID === "19-21") unitID = "_0101";
             
             player.recruitUnit({
                cellID,
@@ -526,6 +528,7 @@ export class Battle {
          // Only for gathering
          if(nebName != null
          && nodeID  != null
+         // && nebName.isVacant // **********************
          && isWorker) {
 
             agent.isGatherable = true;
@@ -546,11 +549,11 @@ export class Battle {
       for(const agent of sortedUnitList) {
          
          agent.Pathfinder.searchPath(cellsList);
-
+         
          if(!agent.Pathfinder.hasPath) continue;
-            
-         agent.hasArrived = false;
-         agent.hasUpdated = false;
+         
+         agent.hasArrived  = false;
+         agent.hasUpdated  = false;
       }
    }
 

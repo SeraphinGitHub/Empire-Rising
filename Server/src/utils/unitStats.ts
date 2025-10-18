@@ -7,8 +7,6 @@ const INFANTRY = {
    popCost:    1,
    isUnit:     true,
    collider:   { offsetY: -15, radius: 15 },
-   smallOffY: 25,
-   bigOffY:   25 *3,
 }
 
 const CAVALRY = {
@@ -48,7 +46,15 @@ export const UNIT_STATS: {[key: string]: any} = {
       
       attackSpeed:   7,
       animDelay:     0.5,
+
       spritePath:   "Units/Worker/",
+      spriteSpecs:   {
+         die:    { srcY: 0,    size: 64,   index: 6,   spriteNum: 5 },
+         idle:   { srcY: 64,   size: 64,   index: 20,  spriteNum: 2 },
+         walk:   { srcY: 320,  size: 64,   index: 6,   spriteNum: 8 },
+         // attack: { srcY: 576,  size: 192,  index: 6,   spriteNum: 5 },
+         gather: { srcY: 576,  size: 192,  index: 6,   spriteNum: 4 },
+      },
    },
 
    _0101: {
@@ -65,25 +71,32 @@ export const UNIT_STATS: {[key: string]: any} = {
 
       spritePath:   "Units/Knight/",
       spriteSpecs:   {
-         die:    { sourceY: 0,   size: 64,  index: 6,  spriteNum: 5, offsetY: INFANTRY.smallOffY, },
-         idle:   { sourceY: 64,  size: 64,  index: 20, spriteNum: 2, offsetY: INFANTRY.smallOffY, },
-         walk:   { sourceY: 320, size: 64,  index: 6,  spriteNum: 8, offsetY: INFANTRY.smallOffY, },
-         attack: { sourceY: 576, size: 192, index: 6,  spriteNum: 5, offsetY: INFANTRY.bigOffY,   },
+         die:    { srcY: 0,    size: 64,   index: 6,   spriteNum: 5 },
+         idle:   { srcY: 64,   size: 64,   index: 20,  spriteNum: 2 },
+         walk:   { srcY: 320,  size: 64,   index: 6,   spriteNum: 8 },
+         attack: { srcY: 576,  size: 192,  index: 6,   spriteNum: 5 },
       },
    },
    
    _0102: {
-      name:         "Archer",
+      name:         "Barbarian",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
       isUnit:        INFANTRY.isUnit,
-      health:        300,
-      armor:         80,
-      damages:       60,
-      moveSpeed:     4,
-      attackSpeed:   14,
+      health:        400,
+      armor:         120,
+      damages:       50,
+      moveSpeed:     3,
+      attackSpeed:   10,
       animDelay:     0.5,
-      spritePath:   "Units/Archer/",
+
+      spritePath:   "Units/Barbarian/",
+      spriteSpecs:   {
+         die:    { srcY: 0,    size: 64,   index: 6,   spriteNum: 5 },
+         idle:   { srcY: 64,   size: 64,   index: 20,  spriteNum: 2 },
+         walk:   { srcY: 320,  size: 64,   index: 6,   spriteNum: 8 },
+         attack: { srcY: 576,  size: 192,  index: 6,   spriteNum: 5 },
+      },
    },
    
    _0103: {
@@ -97,7 +110,14 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     3,
       attackSpeed:   12,
       animDelay:     0.5,
+
       spritePath:   "Units/Swordsman/",
+      spriteSpecs:   {
+         die:    { srcY: 0,    size: 192,  index: 6,   spriteNum: 5 },
+         idle:   { srcY: 192,  size: 192,  index: 20,  spriteNum: 2 },
+         walk:   { srcY: 960,  size: 192,  index: 6,   spriteNum: 8 },
+         attack: { srcY: 1728, size: 192,  index: 6,   spriteNum: 5 },
+      },
    },
 
    _0104: {
@@ -111,21 +131,32 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     3,
       attackSpeed:   10,
       animDelay:     0.5,
+
       spritePath:   "Units/Spearman/",
+      spriteSpecs:   {
+         die:    { srcY: 0,    size: 192,  index: 6,   spriteNum: 5 },
+         idle:   { srcY: 192,  size: 192,  index: 20,  spriteNum: 2 },
+         walk:   { srcY: 960,  size: 192,  index: 6,   spriteNum: 8 },
+         attack: { srcY: 1728, size: 192,  index: 6,   spriteNum: 5 },
+      },
    },
 
    _0105: {
-      name:         "Barbarian",
+      name:         "Archer",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
       isUnit:        INFANTRY.isUnit,
-      health:        400,
-      armor:         120,
-      damages:       50,
-      moveSpeed:     3,
-      attackSpeed:   10,
+      health:        300,
+      armor:         80,
+      damages:       60,
+      moveSpeed:     4,
+      attackSpeed:   14,
       animDelay:     0.5,
-      spritePath:   "Units/Barbarian/",
+
+      spritePath:   "Units/Archer/",
+      spriteSpecs:   {
+
+      },
    },
 
    
@@ -143,7 +174,11 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     6,
       attackSpeed:   12,
       animDelay:     0.5,
+
       spritePath:   "Cavalry/Swordsman/",
+      spriteSpecs:   {
+         
+      },
    },
 
    _0202: {
@@ -157,7 +192,11 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     7,
       attackSpeed:   14,
       animDelay:     0.5,
+
       spritePath:   "Cavalry/Archer/",
+      spriteSpecs:   {
+
+      },
    },
 
 
@@ -174,7 +213,11 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     2,
       attackSpeed:   8,
       animDelay:     0.5,
+
       spritePath:   "Machinery/Ballista/",
+      spriteSpecs:   {
+         
+      },
    },
 
    _0302: {
@@ -187,7 +230,11 @@ export const UNIT_STATS: {[key: string]: any} = {
       moveSpeed:     1,
       attackSpeed:   10,
       animDelay:     0.5,
+
       spritePath:   "Machinery/Catapult/",
+      spriteSpecs:   {
+         
+      },
    },
 
 }
