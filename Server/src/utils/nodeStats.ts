@@ -7,9 +7,9 @@ import {
 // ================================================================================================
 // Common Stats
 // ================================================================================================
-const farmCol:  INumber = { offsetY: 0 , radius: 60 };
-const oreCol:   INumber = { offsetY: 0 , radius: 40 };
-const treeCol:  INumber = { offsetY: 0 , radius: 30 };
+const farmCol:  INumber = { offsetY: 0,  radius: 60 };
+const oreCol:   INumber = { offsetY: -5, radius: 25 };
+const treeCol:  INumber = { offsetY: -5, radius: 15 };
 const oresPath: string  = "Ressources/nodes";
 
 

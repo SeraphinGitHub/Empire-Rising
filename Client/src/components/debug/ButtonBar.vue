@@ -2,59 +2,61 @@
 <template>
    <section class="flex btn-bar">
 
-         <div class="flex bar-1">
-            <button class="flex" @click="toggleGM('show_VP'  )">Viewport</button>
-            <button class="flex" @click="toggleGM('show_Grid')">Grid    </button>
+      <div class="flex bar-1">
+         <button class="flex bgd-blue"   @click="toggleGM('show_VP'  )">Viewport</button>
+         <button class="flex bgd-blue"   @click="toggleGM('show_Grid')">Grid    </button>
+      </div>
+
+      <div class="flex bar-2">
+         <button class="flex bgd-orange" @click="toggleGM('isCastleMode',  $event)">Castle  </button>
+         <button class="flex bgd-orange" @click="toggleGM('isBarrackMode', $event)">Barrack </button>
+         <button class="flex bgd-orange" @click="toggleGM('isWallMode',    $event)">Wall    </button>
+         <button class="flex bgd-orange" @click="toggleGM('isUnitMode',    $event)">Unit    </button>
+      </div>
+
+      <div class="flex bar-3">
+         <div class="flex ressource">
+            <p>Food</p>
+            <p>{{ playerYield.food     }}</p>
          </div>
 
-         <div class="flex bar-3">
-            <div class="flex ressource">
-               <p>Food</p>
-               <p>{{ playerYield.food     }}</p>
-            </div>
-
-            <div class="flex ressource">
-               <p>Stone</p>
-               <p>{{ playerYield.stone    }}</p>
-            </div>
-
-            <div class="flex ressource">
-               <p>Wood</p>
-               <p>{{ playerYield.wood     }}</p>
-            </div>
-
-            <div class="flex ressource">
-               <p>Coal</p>
-               <p>{{ playerYield.coal     }}</p>
-            </div>
-
-            <div class="flex ressource">
-               <p>Iron Ore</p>
-               <p>{{ playerYield.ironOre  }}</p>
-            </div>
-
-            <div class="flex ressource">
-               <p>Iron Bar</p>
-               <p>{{ playerYield.ironBar  }}</p>
-            </div>
-
-            <div class="flex ressource">
-               <p>Gold Ore</p>
-               <p>{{ playerYield.goldOre  }}</p>
-            </div>
-
-            <div class="flex ressource">
-               <p>Gold Bar</p>
-               <p>{{ playerYield.goldBar  }}</p>
-            </div>
+         <div class="flex ressource">
+            <p>Stone</p>
+            <p>{{ playerYield.stone    }}</p>
          </div>
 
-         <div class="flex bar-2">
-            <button class="flex" @click="toggleGM('isWallMode', $event)">Wall</button>
-            <button class="flex" @click="toggleGM('isUnitMode', $event)">Unit</button>
+         <div class="flex ressource">
+            <p>Wood</p>
+            <p>{{ playerYield.wood     }}</p>
          </div>
 
-      </section>
+         <div class="flex ressource">
+            <p>Coal</p>
+            <p>{{ playerYield.coal     }}</p>
+         </div>
+
+         <div class="flex ressource">
+            <p>Iron Ore</p>
+            <p>{{ playerYield.ironOre  }}</p>
+         </div>
+
+         <div class="flex ressource">
+            <p>Iron Bar</p>
+            <p>{{ playerYield.ironBar  }}</p>
+         </div>
+
+         <div class="flex ressource">
+            <p>Gold Ore</p>
+            <p>{{ playerYield.goldOre  }}</p>
+         </div>
+
+         <div class="flex ressource">
+            <p>Gold Bar</p>
+            <p>{{ playerYield.goldBar  }}</p>
+         </div>
+      </div>
+
+   </section>
 </template>
 
 
@@ -63,7 +65,7 @@
       name: "ButtonBar",
 
       props: {
-         playerYield: Object,
+         playerYield:  Object,
       },
 
       data() {
@@ -103,39 +105,32 @@
 
    .btn-bar {
       position: fixed;
-      justify-content: space-around !important;
-      bottom: 50px;
-      height: 100px;
-      width:  95%;
+      justify-content: space-between;
+      bottom: 30px;
+      width:  97%;
       // background: white;
 
-      .bar-1 button {
-         background: linear-gradient(to bottom right,
-            blue,
-            dodgerblue,
-            white,
-            dodgerblue,
-            blue
-         );
+      .bar-1 {
+         position: relative;
+         justify-content: space-between;
+         width: 22%;
+         top: 165px;
       }
 
+      .bar-2 {
+         width: 100%;
+      }
+
+      .bar-1 button,
       .bar-2 button {
-         background: linear-gradient(to bottom right,
-            orangered,
-            darkorange,
-            orange,
-            gold,
-            white,
-            gold,
-            orange,
-            darkorange,
-            orangered
-         );
+         margin: 10px;
+         height: 50px;
+         width: 100px;
       }
 
       .bar-3 {
          justify-content: space-around;
-         align-content: space-around;
+         margin: auto;
          height: 100px;
          width: 55%;
          border: 4px double black;
@@ -174,6 +169,30 @@
          border-radius: 10px;
          font-size: 20px;
       }
+   }
+
+   .bgd-blue {
+      background: linear-gradient(to bottom right,
+         blue,
+         dodgerblue,
+         white,
+         dodgerblue,
+         blue
+      );
+   }
+
+   .bgd-orange {
+      background: linear-gradient(to bottom right,
+         orangered,
+         darkorange,
+         orange,
+         gold,
+         white,
+         gold,
+         orange,
+         darkorange,
+         orangered
+      );
    }
 
    button:active {

@@ -42,7 +42,8 @@ export const UNIT_STATS: {[key: string]: any} = {
 
       buildSpeed:    10,
       gatherSpeed:   1500, // ms
-      carryAmount:   20,
+      carryAmount:   4,
+      // carryAmount:   20,
       
       attackSpeed:   7,
       animDelay:     0.5,

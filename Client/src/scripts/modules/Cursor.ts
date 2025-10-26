@@ -190,14 +190,14 @@ export class Cursor {
       GM.Viewport.mouseScrollCam (GM);
       GM.Viewport.isScrollDetect = true;
    }
-
+   
 
    // =========================================================================================
    // Methods
    // =========================================================================================
    setSelectMode     (
-      GM:       GameManager,
-      isSelect: boolean,
+      GM:      GameManager,
+      isHover: boolean,
    ) {
 
       const {
@@ -206,49 +206,54 @@ export class Cursor {
          buildsList, buildSelectList_cur, buildSelectList_old,
       } = GM;
 
-      this.handleSelectMode(GM, isSelect, unitsList,  unitSelectList_old,  unitSelectList_cur );
-      this.handleSelectMode(GM, isSelect, nodesList,  nodeSelectList_old,  nodeSelectList_cur );
-      this.handleSelectMode(GM, isSelect, buildsList, buildSelectList_old, buildSelectList_cur);
+      this.handleSelectMode(GM, isHover, unitsList,  unitSelectList_old,  unitSelectList_cur );
+      this.handleSelectMode(GM, isHover, nodesList,  nodeSelectList_old,  nodeSelectList_cur );
+      this.handleSelectMode(GM, isHover, buildsList, buildSelectList_old, buildSelectList_cur);
    }
 
    handleSelectMode  (
       GM:       GameManager,
-      isSelect: boolean,
+      isHover:  boolean,
       elemList: Map<number, any>,
       oldList:  Set<any>,
       curList:  Set<any>,
    ) {
 
+      if(!isHover && curList.size === 0 && oldList.size === 0) return;
+      
+      const { isSelecting, selectArea, curPos } = this;
+      
       // =====================================
       // Selection
       // =====================================
-      if(isSelect) {
-         const { isSelecting, selectArea, curPos } = this;
-
-         // If collide with mouse or select area ==> Add elem to CurrentList
-         for(const [, elem] of elemList) {
-            const elemCol = GM.setElemCollider(elem);
-
-            const isHovered =
-               GM.Collision.point_toCircle(curPos.cart, elemCol)
-               ||(elem.isUnit
-               && isSelecting
-               && GM.Collision.square_toCircle(selectArea, elemCol))
-            ;
-
-            if(isHovered && elem.teamID === GM.teamID) {
-               elem.isHover = true;
-               curList.add(elem);
-            }
-            
-            else {
-               elem.isHover = false;
-               curList.delete(elem);
-            }
-         }
+      // If collide with mouse or select area ==> Add elem to curList
+      for(const elem of elemList.values()) {
          
-         return;
+         if(!isHover) {
+            elem.isHover = false;
+            continue;
+         }
+
+         const elemCol = GM.setElemCollider(elem);
+
+         const isHovered =
+            elem.teamID === GM.teamID
+            && (
+               GM.Collision.point_toCircle (curPos.cart, elemCol) 
+            ||(
+               GM.Collision.square_toCircle(selectArea,  elemCol)
+               && elem.isUnit
+               && isSelecting
+            ))
+         ;
+
+         elem.isHover = isHovered;
+
+         if(isHovered) curList.add   (elem);
+         else          curList.delete(elem);
       }
+
+      if(isHover) return;
       
       
       // =====================================
@@ -284,17 +289,15 @@ export class Cursor {
 
             elem.isSelected = true;
             oldList.add(elem);
-            curList.delete(elem);
          }
-
+         
+         curList.clear();
          return;
       }
 
 
       // Case 3: if oldList not empty, but curList is empty ==> clear all
       for(const elem of oldList) {
-         
-         if(!elem.isSelected) continue;
          
          elem.isSelected = false;
          oldList.delete(elem);

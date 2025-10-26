@@ -17,6 +17,7 @@ import {
 export class Agent {
 
    id:               number;
+   zIndex:           number = Infinity;
    teamID:           number;
    name:             string;
    

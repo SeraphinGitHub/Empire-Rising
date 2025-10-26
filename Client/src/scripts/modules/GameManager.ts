@@ -66,8 +66,11 @@ export class GameManager {
    
    show_Grid:              boolean    = true;
    show_VP:                boolean    = false;
-   isWallMode:             boolean    = false;
    isUnitMode:             boolean    = false;
+   
+   isWallMode:             boolean    = false;
+   isCastleMode:           boolean    = false;
+   isBarrackMode:          boolean    = false;
    
    unitsList:              Map<number, Agent>    = new Map();
    unitSelectList_old:     Set<Agent>            = new Set();
@@ -474,39 +477,59 @@ export class GameManager {
       };
 
       if(classType === Agent) {
-         params["curCell"]  = elemCell;
+         Object.assign( params,   { curCell: elemCell });
          elemCell.isVacant  = false;
          elemCell.isBlocked = false;
          elemCell.agentIDset.add(initPack.id);
       }
       
-      else {
-         if(classType === Node    ) elemCell.isNode     = true;
-         if(classType === Building) elemCell.isBuilding = true;
-
+      if(classType === Node) {
+         elemCell.isNode    = true;
          elemCell.isBlocked = true;
+      }
+
+      if(classType === Building) {
+         Object.assign( params,   {
+            i: Math.floor( initPack.position.x /this.cellSize ),
+            j: Math.floor( initPack.position.y /this.cellSize ),
+         });
+
+         elemCell.isBuilding = true;
+         elemCell.isBlocked  = true;
       }
 
       const newElem = new classType(params);
       clientList.set(newElem.id, newElem);
+
+      if(newElem instanceof Building) newElem.setZindex(this.getCell.bind(this));
    }
 
-   setRenderList     (): any[] {
+   setRenderList     (): Array<Agent | Node | Building> {
       
-      let renderList: any = [];
+      let renderList: Array<Agent | Node | Building> = [];
 
       const allElemsList = [
-         ...this.unitsList,
-         ...this.nodesList,
-         ...this.buildsList,
+         ...this.unitsList .values(),
+         ...this.nodesList .values(),
+         ...this.buildsList.values(),
       ];
 
-      for(const [, elem] of allElemsList) {
+      for(const elem of allElemsList) {
          const elemPos = this.gridPos_toScreenPos(elem.position);
 
          if(!this.isViewScope(elemPos)) continue;
+
+         if(elem.screenPos.x !== elemPos.x
+         || elem.screenPos.y !== elemPos.y) {
+
+            elem.screenPos = elemPos;
+         }
          
-         elem.screenPos = elemPos;
+         if(elem instanceof Agent) {
+            const newZindex = elem.position.x -elem.position.y;
+            if(elem.zIndex !== newZindex) elem.zIndex = newZindex;
+         }
+         
          renderList.push(elem);
       }
 
@@ -542,7 +565,7 @@ export class GameManager {
       
          if(!this.isViewScope(elemPos)) continue;
 
-         if(elem.isHover) elem.drawInfos (this.Ctx.assets, elemPos, this.Viewport);
+         if(elem.isHover) elem.drawInfos(this.Ctx.assets, elemPos, this.Viewport);
       }
    }
 
@@ -575,9 +598,7 @@ export class GameManager {
 
       // Top-right to Bottom-left
       renderList.sort((a: any, b: any) => {
-         const zIndexA = a.position.x -a.position.y;
-         const zIndexB = b.position.x -b.position.y;
-         return zIndexB -zIndexA
+         return b.zIndex -a.zIndex;
       });
 
       
@@ -598,6 +619,8 @@ export class GameManager {
                // elem.curCell.drawVacancy (ctx_isometric);
             }
          }
+
+         // elem.drawCollider(ctx_assets, screenPos, Viewport);
       });
    }
 

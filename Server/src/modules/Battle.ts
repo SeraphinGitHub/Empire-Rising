@@ -141,6 +141,14 @@ const TILES = {
 }
 
 const BUILDINGS = {
+   castle: [
+      "21-12",
+   ],
+
+   barrack: [
+      "22-23",
+   ],
+
    warehouse: [
       "15-11",
       "29-16",
@@ -152,22 +160,22 @@ const BUILDINGS = {
       "9-23",
       "9-25",
 
-      "21-8",
-      "22-8",
-      "23-8",
-      "24-8",
-      "25-8",
-      "25-9",
-      "25-10",
-      "25-11",
-      "25-12",
-      "24-12",
-      "23-12",
-      "22-12",
-      "21-12",
-      "21-11",
-      "21-10",
-      "21-9",
+      // "21-8",
+      // "22-8",
+      // "23-8",
+      // "24-8",
+      // "25-8",
+      // "25-9",
+      // "25-10",
+      // "25-11",
+      // "25-12",
+      // "24-12",
+      // "23-12",
+      // "22-12",
+      // "21-12",
+      // "21-11",
+      // "21-10",
+      // "21-9",
       
       "33-16",
       "34-17",
@@ -252,7 +260,7 @@ const NODES = {
 // =====================================================================
 export class Battle {
 
-   syncRate:         number = Math.floor( 1000 / Number(process.env.SERVER_FRAME_RATE));
+   syncRate:         number = Math.floor( 1000 / Number(process.env.SERVER_FRAME_RATE) );
 
    private Room:     Server;
    id:               string;
@@ -331,15 +339,15 @@ export class Battle {
 
          // **************************************************************
          let cellID_Array: any = [];
-         // if(player.teamID === 1) cellID_Array = ["17-21", "19-21", "21-21", "19-19", "17-19", "17-23", "19-23", "21-23", "21-19"];
-         if(player.teamID === 1) cellID_Array = ["17-21"];
+         if(player.teamID === 1) cellID_Array = ["27-22","25-18",    "12-23", "14-21", "14-23", "17-21", "19-21", "21-21", "19-19", "17-19", "17-23", "19-23", "21-23", "21-19"];
          if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "19-25", "17-25", "17-29", "19-29", "21-29", "21-25"];
          
          cellID_Array.forEach((cellID: any) => {
             let unitID = "_0100";
-            // let unitID = "_0104";
 
-            // if(cellID === "17-21" || cellID === "19-21") unitID = "_0101";
+            if(cellID === "14-21") unitID = "_0101";
+            if(cellID === "14-23") unitID = "_0102";
+            if(cellID === "12-23") unitID = "_0103";
             
             player.recruitUnit({
                cellID,
@@ -483,7 +491,9 @@ export class Battle {
                if(classType === Building) {
                   params["teamID"    ] = 1;        // ==> Temp  ************************
                   params["teamColor" ] = "Blue";   // ==> Temp  ************************
-                  params["baseHealth"] = elemStats.health;
+                  params["baseHealth"] = elemStats.baseHealth;
+
+                  this.setBuildArea(elemCell, elemStats.buildSize);
                }
                
                const newElem = new classType(params);
@@ -494,6 +504,22 @@ export class Battle {
                elemCell.isBlocked = true;
                elemList.set(newElem.id, newElem);
             }
+         }
+      }
+   }
+
+   setBuildArea(
+      mainCell:  Cell,
+      buildSize: number,
+   ) {
+
+      for(let i = 0; i < buildSize; i++) {
+         for(let j = 0; j < buildSize; j++) {
+            
+            const cellID = `${mainCell.i +i}-${mainCell.j -j}`;
+            const cell   = this.getCell(cellID);
+
+            if(cell && !cell.isBlocked) cell.isBlocked = true;
          }
       }
    }

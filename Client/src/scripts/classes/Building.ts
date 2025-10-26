@@ -12,15 +12,23 @@ export class Building {
 
    id:            number;
    name:          string;
+   
+   i:             number;
+   j:             number;
+   zIndex:        number = Infinity;
 
    position:      IPosition;
    screenPos:     IPosition = { x:0, y:0 };
-
+   
+   offset:        INumber;
    collider:      INumber;
    
    spriteID:      number;
    teamID:        number;
    buildTime:     number;
+   buildSize:     number;
+   spriteRatio:   number;
+   spriteSize:    number;
    health:        number;
    baseHealth:    number;
    
@@ -34,11 +42,17 @@ export class Building {
 
       this.id           = params.id;
       this.name         = params.name;
+      this.i            = params.i;
+      this.j            = params.j;
       this.position     = params.position;
+      this.offset       = params.offset;
       this.collider     = params.collider;
       this.spriteID     = params.spriteID;
       this.teamID       = params.teamID;
       this.buildTime    = params.buildTime;
+      this.buildSize    = params.buildSize;
+      this.spriteRatio  = params.spriteRatio;
+      this.spriteSize   = params.spriteSize;
       this.health       = params.health;
       this.baseHealth   = params.baseHealth;
 
@@ -76,6 +90,17 @@ export class Building {
       this.img.src = `${spritePath}${teamColor}.png`;
    }
 
+   setZindex(getCell: Function) {
+      const { i, j, buildSize } = this;
+
+      const cellID = `${ i }-${ j -buildSize +1 }`;
+      const cell   = getCell(cellID);
+
+      if(!cell) return;
+      
+      this.zIndex = cell.x - cell.y;
+   }
+
 
    // =========================================================================================
    // Draw Methods
@@ -86,31 +111,35 @@ export class Building {
       VPpos:    IPosition,
    ) {
       
-      const srcSize  = 280;
-      const destSize = 90;
-      const offsetX  = 48;
-      const offsetY  = 75;
+      const {
+         img,
+         spriteID,
+         offset,
+         spriteRatio,
+         spriteSize,
+         isTransp,
+      } = this;
 
       const drawImg = () => {
          ctx.drawImage(
-            this.img,
+            img,
 
             // Source
-            srcSize * (this.spriteID -1),
+            spriteSize * (spriteID -1),
             0,
-            srcSize,
-            srcSize,
+            spriteSize,
+            spriteSize,
             
             // Destination
-            pos.x -offsetX -VPpos.x,
-            pos.y -offsetY -VPpos.y,
-            destSize +10,
-            destSize,
+            pos.x -offset.x -VPpos.x,
+            pos.y -offset.y -VPpos.y,
+            spriteSize *spriteRatio,
+            spriteSize *spriteRatio,
          );
       }
 
 
-      if(this.isTransp) {
+      if(isTransp) {
          ctx.save();
          ctx.globalAlpha = 0.5;
 
@@ -139,7 +168,25 @@ export class Building {
       ctx.arc(
          x,
          y,
-         this.collider.radius, 0, Math.PI *2
+         this.collider.radius *2, 0, Math.PI *2
+      );
+      ctx.fill();
+      ctx.closePath();
+   }
+
+   drawCollider(
+      ctx:   CanvasRenderingContext2D,
+      pos:   IPosition,
+      VPpos: IPosition,
+   ) {
+      const { radius, offsetY } = this.collider;
+
+      ctx.fillStyle = "lime";
+      ctx.beginPath();
+      ctx.arc(
+         pos.x -VPpos.x,
+         pos.y -VPpos.y +offsetY,
+         radius, 0, Math.PI *2
       );
       ctx.fill();
       ctx.closePath();
