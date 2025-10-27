@@ -102,8 +102,9 @@ export class Cursor {
          this.isSelecting = true;
          this.isTriggered = true;
 
-         this.createWalls (GM);
-         this.setWallsList(GM);
+         this.createWalls (GM); // **************
+         this.setWallsList(GM); // **************
+         GM.createBuilding();   // **************
          GM.TEST_UnitMode();
          GM.Viewport.resetScroll();
       }
@@ -134,7 +135,7 @@ export class Cursor {
       if(state === "Down") {
          this.isTargeting = true;
 
-         this.resetWallsList ();
+         this.resetWallsList (); // **************
          this.setTargetCell  ();
          this.setTargetArea  (GM);
          this.resetSelectArea(GM);
@@ -185,7 +186,7 @@ export class Cursor {
 
       this.update_SelectArea     (GM);
       this.update_TargetArea     (GM);
-      this.update_WallsList      (GM);
+      this.update_WallsList      (GM); // **************
 
       GM.Viewport.mouseScrollCam (GM);
       GM.Viewport.isScrollDetect = true;

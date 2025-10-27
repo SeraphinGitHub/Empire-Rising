@@ -29,7 +29,7 @@ export const UNIT_STATS: {[key: string]: any} = {
    // ===========================================
    // Infantry
    // ===========================================
-   _0100: {
+   worker: {
       name:         "Worker",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
@@ -58,7 +58,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       },
    },
 
-   _0101: {
+   knight: {
       name:         "Knight",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
@@ -79,7 +79,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       },
    },
    
-   _0102: {
+   barbarian: {
       name:         "Barbarian",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
@@ -100,7 +100,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       },
    },
    
-   _0103: {
+   swordsman: {
       name:         "Swordsman",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
@@ -121,7 +121,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       },
    },
 
-   _0104: {
+   spearman: {
       name:         "Spearman",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
@@ -142,7 +142,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       },
    },
 
-   _0105: {
+   archer: {
       name:         "Archer",
       popCost:       INFANTRY.popCost,
       collider:      INFANTRY.collider,
@@ -164,7 +164,7 @@ export const UNIT_STATS: {[key: string]: any} = {
    // ===========================================
    // Cavalry
    // ===========================================
-   _0201: {
+   m_swordsman: {
       name:         "Mounted Swordsman",
       popCost:       CAVALRY.popCost,
       collider:      CAVALRY.collider,
@@ -182,7 +182,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       },
    },
 
-   _0202: {
+   m_archer: {
       name:         "Mounted Archer",
       popCost:       CAVALRY.popCost,
       collider:      CAVALRY.collider,
@@ -204,7 +204,7 @@ export const UNIT_STATS: {[key: string]: any} = {
    // ===========================================
    // Machinery
    // ===========================================
-   _0301: {
+   ballista: {
       name:         "Ballista",
       popCost:       MACHINERY.popCost,
       collider:      MACHINERY.collider,
@@ -221,7 +221,7 @@ export const UNIT_STATS: {[key: string]: any} = {
       },
    },
 
-   _0302: {
+   catapult: {
       name:         "Catapult",
       popCost:       MACHINERY.popCost,
       collider:      MACHINERY.collider,

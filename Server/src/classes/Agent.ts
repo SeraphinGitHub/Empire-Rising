@@ -257,7 +257,7 @@ export class Agent {
       if(!this.isGatherable) return;
       
       if(!this.gatherSpeed || !this.carryAmount) {
-         console.log({ message: "No gatherSpeed or carryAmount stat !" });
+         console.log({ gatherRessource: "No gatherSpeed or carryAmount stat !" });
          return;
       }
 

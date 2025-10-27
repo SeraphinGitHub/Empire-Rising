@@ -343,11 +343,11 @@ export class Battle {
          if(player.teamID === 2) cellID_Array = ["17-27", "19-27", "21-27", "19-25", "17-25", "17-29", "19-29", "21-29", "21-25"];
          
          cellID_Array.forEach((cellID: any) => {
-            let unitID = "_0100";
+            let unitID = "worker";
 
-            if(cellID === "14-21") unitID = "_0101";
-            if(cellID === "14-23") unitID = "_0102";
-            if(cellID === "12-23") unitID = "_0103";
+            if(cellID === "14-21") unitID = "knight";
+            if(cellID === "14-23") unitID = "barbarian";
+            if(cellID === "12-23") unitID = "swordsman";
             
             player.recruitUnit({
                cellID,
@@ -415,7 +415,10 @@ export class Battle {
       this.playersList.set(playerID, newPlayer);
    }
 
-   createNewAgent       (data: any, playerID: string): {[key: string]: any} {
+   createNewAgent       (
+      data:     any,
+      playerID: string,
+   ): {[key: string]: any} {
 
       const { unitID, cellID, teamID, teamColor } = data;
 
@@ -447,6 +450,53 @@ export class Battle {
          popCost,
          initPack: newAgent.initPack(),
       }
+   }
+
+   createNewBuilding    (
+      data:     any,
+      playerID: string,
+   ): {[key: string]: any} | null {
+
+      const { buildID, cellID } = data;
+
+      const cell   = this.getCell(cellID);
+      const player = this.playersList.get(playerID);
+
+      if(!cell || !player || !buildID) {
+         
+         console.log({
+            createNewBuilding: 
+              !cell   ? "Building's cell does not exist!"
+            : !player ? "Player does not exist!"
+            :           "build_ID does not exist!"
+         });
+
+         return null;
+      }
+      
+      const stats = BUILD_STATS[buildID];
+
+      const params: any = {
+         ...stats,
+         cellID,
+         id:        this.buildsList.size,
+         position:  cell.center,
+         teamID:    player.teamID,
+         teamColor: player.teamColor,
+      };
+
+      this.setBuildArea(cell, stats.buildSize);
+      
+      const newBuilding = new Building(params);
+      
+      cell.isVacant  = false;
+      cell.isBlocked = true;
+      cell.child     = newBuilding;
+      this.buildsList.set(newBuilding.id, newBuilding);
+
+      return {
+         initPack: newBuilding.initPack(),
+      };
    }
 
    setClientList        (elemList: Map<number, any>) {
@@ -513,10 +563,12 @@ export class Battle {
       buildSize: number,
    ) {
 
+      const { i: cell_i, j: cell_j } = mainCell;
+
       for(let i = 0; i < buildSize; i++) {
          for(let j = 0; j < buildSize; j++) {
             
-            const cellID = `${mainCell.i +i}-${mainCell.j -j}`;
+            const cellID = `${cell_i +i}-${cell_j -j}`;
             const cell   = this.getCell(cellID);
 
             if(cell && !cell.isBlocked) cell.isBlocked = true;

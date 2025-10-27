@@ -8,10 +8,10 @@
       </div>
 
       <div class="flex bar-2">
-         <button class="flex bgd-orange" @click="toggleGM('isCastleMode',  $event)">Castle  </button>
-         <button class="flex bgd-orange" @click="toggleGM('isBarrackMode', $event)">Barrack </button>
-         <button class="flex bgd-orange" @click="toggleGM('isWallMode',    $event)">Wall    </button>
-         <button class="flex bgd-orange" @click="toggleGM('isUnitMode',    $event)">Unit    </button>
+         <button class="flex bgd-orange" @click="toggleGM('castle',  $event)">Castle  </button>
+         <button class="flex bgd-orange" @click="toggleGM('barrack', $event)">Barrack </button>
+         <button class="flex bgd-orange" @click="toggleGM('wall',    $event)">Wall    </button>
+         <button class="flex bgd-orange" @click="toggleGM('unit',    $event)">Unit    </button>
       </div>
 
       <div class="flex bar-3">
@@ -70,7 +70,8 @@
 
       data() {
       return {
-         isActive:   {},
+         isActive:    false,
+         activeElems: {},
       }},
 
       methods: {
@@ -79,22 +80,37 @@
             property: string,
             event?:   Event,
          ) {
+
             const GM = this.$parent.GManager;
+            
+            if(property.includes("show_")) {
+               GM[property] = !GM[property];
+               return;
+            }
 
-            GM[property] = !GM[property];
+            this.isActive  = !this.isActive;
+            GM.buildID     = this.isActive ? property : "";
+            GM.isBuildMode = !GM.isBuildMode;
 
-            if(property === "isWallMode") {
+            if(property === "wall") {
+               GM.isWallMode        = !GM.isWallMode;
                GM.Cursor.selectCell = null;
                GM.Cursor.raycast    = null;
             }
 
             if(!event) return;
 
-            const elem     = event.target as HTMLElement;
-            const isActive = this.isActive[property];
+            const elem = event.target as HTMLElement;
+            elem.classList.toggle("active", this.isActive);
+            
+            // if(this.activeElems.hasOwnProperty( property )) return;
 
-            elem.classList.toggle("active", !isActive);
-            this.isActive[property]       = !isActive;
+            // this.activeElems[property] = elem;
+
+            // for(const [key, elem] of Object.entries(this.activeElems)) {
+            //    if(key === property) continue;
+            //    (elem as HTMLElement).classList.toggle("active", !this.isActive);
+            // }
          }
       },
    }

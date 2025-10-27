@@ -81,7 +81,7 @@ export class ServerManager {
 
       this.socketsList.set(socket.id, socket);
       socket.emit("connected");
-      console.log({ message: "--SocketIO-- Player Connected !" });
+      console.log({ connect: "--SocketIO-- Player Connected !" });
    }
 
    disconnect        (socket: Socket) {
@@ -100,7 +100,7 @@ export class ServerManager {
       playBatList       .delete(playerID);
       battle.playersList.delete(playerID);
       
-      console.log({ message: "--SocketIO-- Player disconnected" });
+      console.log({ disconnect: "--SocketIO-- Player disconnected" });
    }
 
    generateBattleID  (): string { // ==> Need to add logic
@@ -141,7 +141,7 @@ export class ServerManager {
 
       const battle = this.battlesList.get(battleID);
 
-      if(!battle) return console.log({ error: "No battle found !" });
+      if(!battle) return console.log({ joinBattle: "No battle found !" });
 
       battle.createNewPlayer(playerProps);
       this.playBatList.set(socket.id, battleID);
@@ -153,7 +153,7 @@ export class ServerManager {
       const { battleID } = data;
       const battle = this.battlesList.get(battleID);
 
-      if(!battle) return console.log({ error: "Could not load battle !" });
+      if(!battle) return console.log({ loadBattle: "Could not load battle !" });
       
       battle.start();
    }

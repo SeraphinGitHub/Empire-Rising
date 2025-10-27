@@ -59,6 +59,7 @@ export class GameManager {
    teamID:                 number     = -1;
    teamColor:              string     = "";
    name:                   string     = "";
+   buildID:                string     = "";
 
    gridPos:                IPosition  = {x:0, y:0};
    terrainPos:             IPosition  = {x:0, y:0};
@@ -66,11 +67,10 @@ export class GameManager {
    
    show_Grid:              boolean    = true;
    show_VP:                boolean    = false;
-   isUnitMode:             boolean    = false;
    
+   isUnitMode:             boolean    = false;
+   isBuildMode:            boolean    = false;
    isWallMode:             boolean    = false;
-   isCastleMode:           boolean    = false;
-   isBarrackMode:          boolean    = false;
    
    unitsList:              Map<number, Agent>    = new Map();
    unitSelectList_old:     Set<Agent>            = new Set();
@@ -146,11 +146,12 @@ export class GameManager {
 
    watchGame() {
 
-      this.socket.on("updatePop",   (data: any) => this.updatePop       (data));
-      this.socket.on("updateYield", (data: any) => this.updateYield     (data));
-      this.socket.on("serverSync",  (data: any) => this.syncWithServer  (data));
-      this.socket.on("recruitUnit", (data: any) => this.createNewElem   (data, this.unitsList, Agent));
-      this.socket.on("updateCells", (data: any) => this.Grid.updateCell (data));
+      this.socket.on("updatePop",     (data: any) => this.updatePop       (data));
+      this.socket.on("updateYield",   (data: any) => this.updateYield     (data));
+      this.socket.on("serverSync",    (data: any) => this.syncWithServer  (data));
+      this.socket.on("recruitUnit",   (data: any) => this.createNewElem   (data, this.unitsList,  Agent   ));
+      this.socket.on("placeBuilding", (data: any) => this.createNewElem   (data, this.buildsList, Building));
+      this.socket.on("updateCells",   (data: any) => this.Grid.updateCell (data));
    }
 
    initPlayer(playerPack: any) {
@@ -536,6 +537,16 @@ export class GameManager {
       return renderList;
    }
 
+   createBuilding    () { // ********************************
+
+      if(!this.isBuildMode) return;
+      
+      this.socket.emit("placeBuilding", {
+         buildID: this.buildID,
+         cellID:  this.Cursor.hoverCell!.id,
+      });
+   }
+
    
    // =========================================================================================
    // Server Sync
@@ -694,7 +705,7 @@ export class GameManager {
       if(!this.isUnitMode) return;
       
       this.socket.emit("recruitUnit", {
-         unitID:   "_0101",
+         unitID:   "swordsman",
          cellID:    this.Cursor.hoverCell!.id,
          teamID:    this.teamID,
          teamColor: this.teamColor,

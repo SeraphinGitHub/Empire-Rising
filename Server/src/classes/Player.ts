@@ -55,8 +55,9 @@ export class Player {
 
    watch(battle: Battle) {
       
-      this.socket.on("recruitUnit",  (data: any) => this.recruitUnit    (data, battle));
-      this.socket.on("startAgentPF", (data: any) => battle.startAgentPF (data));
+      this.socket.on("recruitUnit",   (data: any) => this.recruitUnit    (data, battle));
+      this.socket.on("placeBuilding", (data: any) => this.placeBuilding  (data, battle));
+      this.socket.on("startAgentPF",  (data: any) => battle.startAgentPF (data));
    }
    
    // =========================================================================================
@@ -95,6 +96,22 @@ export class Player {
       this.updatePop(popCost);
 
       battle.spread("recruitUnit", initPack);
+   }
+
+   placeBuilding(
+      data:   any,
+      battle: Battle,
+   ) {
+
+      const building = battle.createNewBuilding(data, this.id);
+
+      if(building === null) return;
+
+      const { id, name, cellID  } = building.initPack;
+
+      this.buildsID_List.set(id, { name, cellID });
+
+      battle.spread("placeBuilding", building.initPack);
    }
 
    updateYield(
