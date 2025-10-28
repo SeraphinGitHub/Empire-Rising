@@ -485,7 +485,7 @@ export class Battle {
          teamColor: player.teamColor,
       };
 
-      this.setBuildArea(cell, stats.buildSize);
+      this.setBuildOccupied(cell, stats.buildSize);
       
       const newBuilding = new Building(params);
       
@@ -543,7 +543,7 @@ export class Battle {
                   params["teamColor" ] = "Blue";   // ==> Temp  ************************
                   params["baseHealth"] = elemStats.baseHealth;
 
-                  this.setBuildArea(elemCell, elemStats.buildSize);
+                  this.setBuildOccupied(elemCell, elemStats.buildSize);
                }
                
                const newElem = new classType(params);
@@ -558,7 +558,7 @@ export class Battle {
       }
    }
 
-   setBuildArea(
+   setBuildOccupied(
       mainCell:  Cell,
       buildSize: number,
    ) {
@@ -606,7 +606,7 @@ export class Battle {
          // Only for gathering
          if(nebName != null
          && nodeID  != null
-         // && nebName.isVacant // **********************
+         // && neb.isVacant // **********************
          && isWorker) {
 
             agent.isGatherable = true;

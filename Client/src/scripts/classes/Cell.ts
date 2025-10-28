@@ -37,6 +37,8 @@ export class Cell {
 
    // ----------- Tempory -----------
    isDiffTile:     boolean = false;
+   isValid:        boolean = false;
+   isUnvalid:      boolean = false;
    // ----------- Tempory -----------
 
 
@@ -187,6 +189,11 @@ export class Cell {
       // this.drawCollider(ctx);
    }
 
+   drawGhost   (ctx: CanvasRenderingContext2D) {
+      this.drawUnvalid(ctx);
+      this.drawValid(ctx);
+   }
+
    drawCenter  (ctx: CanvasRenderingContext2D) {
       const { x: cellX, y: cellY } = this.center;
 
@@ -254,7 +261,21 @@ export class Cell {
 
       if(!this.isBlocked) return;
       
-      this.drawColor(ctx, "rgba(255, 0, 0, 0.7)")
+      this.drawColor(ctx, "rgba(255, 0, 0, 0.7)");
+   }
+
+   drawUnvalid (ctx: CanvasRenderingContext2D) {
+
+      if(!this.isUnvalid) return;
+      
+      this.drawColor(ctx, "rgba(255, 0, 0, 0.7)");
+   }
+
+   drawValid  (ctx: CanvasRenderingContext2D) {
+
+      if(!this.isValid) return;
+      
+      this.drawColor(ctx, "rgba(0, 255, 0, 0.7)");
    }
 
    drawVacancy (ctx: CanvasRenderingContext2D) {

@@ -60,6 +60,7 @@ export class GameManager {
    teamColor:              string     = "";
    name:                   string     = "";
    buildID:                string     = "";
+   buildStats:             any        = null;
 
    gridPos:                IPosition  = {x:0, y:0};
    terrainPos:             IPosition  = {x:0, y:0};
@@ -537,10 +538,41 @@ export class GameManager {
       return renderList;
    }
 
-   createBuilding    () { // ********************************
+   toggleGhostBuild(
+      property: string,
+      isActive: boolean,
+   ) {
 
-      if(!this.isBuildMode) return;
+      const { hoverCell, ghostID } = this.Cursor;
+
+      if(!isActive) {
+
+         this.buildID    = "";
+         this.buildStats = null;
+         this.Cursor.clearGhostBuild();
+         this.buildsList.delete(ghostID);
+
+         return;
+      }
+
+      if(!hoverCell) return;
+
+      this.buildID        = property;
+      const buildStats    = this.buildStats = this.BUILD_STATS[this.buildID];
+
+      const ghostBuilding = new Building({
+         ...buildStats,
+         position:  hoverCell.center,
+         teamColor: this.teamColor,
+      }); 
       
+      this.buildsList.set(ghostID, ghostBuilding);
+   }
+
+   createBuilding    () {
+
+      if(!this.isBuildMode || this.buildID === "" || this.buildStats === null) return;
+
       this.socket.emit("placeBuilding", {
          buildID: this.buildID,
          cellID:  this.Cursor.hoverCell!.id,
@@ -618,8 +650,14 @@ export class GameManager {
          
          if(elem.isSelected || elem.isHover) elem.drawSelect(ctx_isometric, elem.isSelected);
 
-         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport);
-         if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport);
+         if(elem instanceof Node) elem.drawSprite(ctx_assets, screenPos, Viewport);
+         
+         if(elem instanceof Building) {
+            // if(this.isBuildMode && this.buildID !== "") elem.isTransp = true;
+            
+            elem.drawSprite(ctx_assets, screenPos, Viewport);
+         }
+
          if(elem instanceof Agent   ) {
             elem.drawSprite   (ctx_assets, screenPos, Viewport);
             // elem.drawCollider (ctx_assets, screenPos, Viewport);
@@ -633,6 +671,7 @@ export class GameManager {
 
          // elem.drawCollider(ctx_assets, screenPos, Viewport);
       });
+
    }
 
 

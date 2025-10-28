@@ -54,7 +54,9 @@ export class Cursor {
    targetCell:     Cell  | null = null;
    selectCell:     Cell  | null = null;
 
-   wallsList:      Set<Cell>    = new Set();
+   ghostID:        number       = -99;
+   ghostWallsList: Set<Cell>    = new Set();
+   ghostBuildList: Set<Cell>    = new Set();
 
    isSelecting:    boolean      = false;
    isTargeting:    boolean      = false;
@@ -104,7 +106,7 @@ export class Cursor {
 
          this.createWalls (GM); // **************
          this.setWallsList(GM); // **************
-         GM.createBuilding();   // **************
+         GM.createBuilding();
          GM.TEST_UnitMode();
          GM.Viewport.resetScroll();
       }
@@ -183,6 +185,7 @@ export class Cursor {
       this.setPosition           (GM, event, false);
       this.setHoverCell          (GM);
       this.setSelectMode         (GM, true);
+      this.setGhostBuild         (GM);
 
       this.update_SelectArea     (GM);
       this.update_TargetArea     (GM);
@@ -190,6 +193,7 @@ export class Cursor {
 
       GM.Viewport.mouseScrollCam (GM);
       GM.Viewport.isScrollDetect = true;
+
    }
    
 
@@ -482,7 +486,7 @@ export class Cursor {
 
       if(!GM.isWallMode || !this.isTriggered || !this.selectCell) return;
       
-      const { selectCell, hoverCell, wallsList, curPos } = this;
+      const { selectCell, hoverCell, ghostWallsList, curPos } = this;
 
       const { x: startX, y: startY } = selectCell.center;
       const { x: endX,   y: endY   } = hoverCell ? hoverCell.center : GM.screenPos_toGridPos(curPos.iso);
@@ -507,9 +511,9 @@ export class Cursor {
             ? cell.isOverlaped = true
             : cell.isOverlaped = false;
             
-            wallsList.add(cell);
+            ghostWallsList.add(cell);
          }
-         else wallsList.delete(cell);
+         else ghostWallsList.delete(cell);
       }
    }  
 
@@ -517,7 +521,7 @@ export class Cursor {
       
       if(!this.isTriggered) return;
 
-      for(const cell of this.wallsList) {
+      for(const cell of this.ghostWallsList) {
          
          if(!cell
          ||  cell.isBlocked
@@ -530,14 +534,70 @@ export class Cursor {
          cell.isBlocked = true;
       }
 
-      this.wallsList.clear();
+      this.ghostWallsList.clear();
    }
 
    resetWallsList    () {
 
       this.isTriggered = false;
       this.raycast     = null;
-      this.wallsList.clear();
+      this.ghostWallsList.clear();
+   }
+
+   clearGhostBuild   () {
+
+      for(const cell of this.ghostBuildList) {
+         cell.isValid   = false;
+         cell.isUnvalid = false;
+      }
+      
+      this.ghostBuildList.clear();
+   }
+
+   setGhostBuild     (GM: GameManager) {
+
+      const { buildStats } = GM;
+      const hoverCell      = this.hoverCell;
+      
+      if(!buildStats?.buildSize || !hoverCell) return;
+
+      const { i: cell_i, j: cell_j } = hoverCell!;
+      const buildSize                = buildStats.buildSize;
+
+      // Reset previous ghost cells
+      for(const cell of this.ghostBuildList) {
+         if(!cell) continue;
+         
+         cell.isValid   = false;
+         cell.isUnvalid = false;
+      }
+
+      this.ghostBuildList.clear();
+      
+      let tempList: Cell[] = [];
+
+      // Loop through the build zone
+      for(let i = 0; i < buildSize; i++) {
+         for(let j = 0; j < buildSize; j++) {
+            
+            const cellID = `${cell_i +i}-${cell_j -j}`;
+            const cell   = GM.getCell(cellID);
+
+            if(!cell) continue;
+            
+            cell.isValid   = !cell.isBlocked;
+            cell.isUnvalid =  cell.isBlocked;
+
+            tempList.push(cell);
+         }
+      }
+      
+      this.ghostBuildList = new Set(tempList);
+      const ghostBuild    = GM.buildsList.get(this.ghostID);
+
+      if(!ghostBuild) return;
+
+      ghostBuild.position = hoverCell.center;
    }
 
    
@@ -606,7 +666,7 @@ export class Cursor {
 
       if(!GM.isWallMode) return;
       
-      const { selectCell, raycast, wallsList } = this;
+      const { selectCell, raycast, ghostWallsList } = this;
       const { isometric                      } = GM.Ctx;
 
       if(!selectCell || !raycast) return;
@@ -614,7 +674,7 @@ export class Cursor {
       selectCell.drawColor  (isometric, "gold");
       this.drawRaycast      (isometric, raycast);
 
-      for(const cell of wallsList) {
+      for(const cell of ghostWallsList) {
          !cell.isOverlaped
          ? cell.drawCollider(isometric)
          : cell.drawColor   (isometric, "blue")

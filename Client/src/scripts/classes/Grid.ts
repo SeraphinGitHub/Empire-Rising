@@ -44,10 +44,13 @@ export class Grid {
    // =========================================================================================
    drawGrid(GM: GameManager) {
 
-      if(!GM.show_Grid) return;
-      
-      for(const [, cell] of this.cellsList) {
-         cell.drawInfos(GM.Ctx.isometric);
+      for(const cell of this.cellsList.values()) {
+         const cellPos = GM.gridPos_toScreenPos(cell.center);
+
+         if(!GM.isViewScope(cellPos)) continue;
+
+         if(GM.show_Grid)   cell.drawInfos(GM.Ctx.isometric);
+         if(GM.isBuildMode) cell.drawGhost(GM.Ctx.isometric);
       }
    }
 

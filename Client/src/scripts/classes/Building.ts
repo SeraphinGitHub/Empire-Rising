@@ -87,7 +87,14 @@ export class Building {
       spritePath: string,
       teamColor:  string,
    ) {
-      this.img.src = `${spritePath}${teamColor}.png`;
+      const imgSrc = `${spritePath}${teamColor}.png`;
+      
+      if(imgSrc.includes("undefined")) {
+         console.log({ setImageSource_BuildingClass: "Path is broken - missing teamColor !" });
+         return;
+      }
+
+      this.img.src = imgSrc;
    }
 
    setZindex(getCell: Function) {

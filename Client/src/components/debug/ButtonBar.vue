@@ -89,7 +89,7 @@
             }
 
             this.isActive  = !this.isActive;
-            GM.buildID     = this.isActive ? property : "";
+            GM.toggleGhostBuild(property, this.isActive);
             GM.isBuildMode = !GM.isBuildMode;
 
             if(property === "wall") {
