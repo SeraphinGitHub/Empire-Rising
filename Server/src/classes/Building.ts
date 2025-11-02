@@ -4,10 +4,6 @@ import {
    IPosition,
 } from "utils/interfaces";
 
-import {
-   Cell,
-} from "./_Export";
-
 
 // =====================================================================
 // Building Class
@@ -15,14 +11,15 @@ import {
 export class Building {
 
    id:            number;
+   teamColor:     number;
    name:          string;
-   teamColor:     string;
    cellID:        string;
    spritePath:    string;
    position:      IPosition;
 
    offset:        INumber;
    collider:      INumber;
+   footPrint:     string[];
    
    spriteID:      number;
    teamID:        number;
@@ -44,6 +41,7 @@ export class Building {
       this.position     = params.position;
       this.offset       = params.offset;
       this.collider     = params.collider;
+      this.footPrint    = params.footPrint;
       this.spriteID     = params.spriteID;
       this.teamID       = params.teamID;
       this.buildTime    = params.buildTime;
@@ -64,6 +62,7 @@ export class Building {
          position:      this.position,
          offset:        this.offset,
          collider:      this.collider,
+         footPrint:     this.footPrint,
          spriteID:      this.spriteID,
          teamID:        this.teamID,
          buildTime:     this.buildTime,

@@ -74,7 +74,7 @@
             playerProps: {
                name:       "Séraphin",
                teamID:      1,
-               teamColor:  "Blue",
+               teamColor:   0,
             },
 
             mapSettings: {

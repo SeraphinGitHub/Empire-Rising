@@ -52,21 +52,31 @@ export class Agent {
    isUnit:           boolean;
    isWorker:         boolean;
 
-   isHover:          boolean = false;
-   isSelected:       boolean = false;
-   isMoving:         boolean = false;
-   isAttacking:      boolean = false;
-   isGathering:      boolean = false;
-   isWalkActive:     boolean = false;
-   isGatherActive:   boolean = false;
-   hasArrived:       boolean = false;
-   hasReachNext:     boolean = false;
-   hasResetAnim:     boolean = false;
+   isHover:          boolean   = false;
+   isSelected:       boolean   = false;
+   isMoving:         boolean   = false;
+   isAttacking:      boolean   = false;
+   isGathering:      boolean   = false;
+   isWalkActive:     boolean   = false;
+   isGatherActive:   boolean   = false;
+   hasArrived:       boolean   = false;
+   hasReachNext:     boolean   = false;
+   hasResetAnim:     boolean   = false;
    
    img:              HTMLImageElement = new Image();
    spriteSpecs:      INumberList;
-   spriteParams:     INumber = { srcY: 0, size: 0, offsetY: 25 };
-   
+   spriteParams:     INumber   = { srcY: 0, size: 0, offsetY: 25 };
+
+   colorType:        string[]  = [
+      "Blue",
+      "Green",
+      "Orange",
+      "Pink",
+      "Purple",
+      "Red",
+      "Yellow",
+   ];
+
    // -----------------
    // States
    // -----------------
@@ -116,7 +126,9 @@ export class Agent {
    // =========================================================================================
    setImageSource    (params: any) {
       const { spritePath, teamColor } = params;
-      const imgSrc = `${spritePath}${teamColor}.png`;
+      
+      const colorName = this.colorType[teamColor];
+      const imgSrc    = `${spritePath}${colorName}.png`;
       
       if(imgSrc.includes("undefined")) {
          console.log({ setImageSource_BuildingClass: "Path is broken - missing teamColor !" });
@@ -459,7 +471,7 @@ export class Agent {
       ctx.beginPath();
       ctx.arc(
          pos.x -VPpos.x,
-         pos.y -VPpos.y +offsetY,
+         pos.y -VPpos.y -offsetY,
          radius, 0, Math.PI *2
       );
       ctx.fill();

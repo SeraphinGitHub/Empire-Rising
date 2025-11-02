@@ -55,8 +55,8 @@ export class Cursor {
    selectCell:     Cell  | null = null;
 
    ghostID:        number       = -99;
+   ghostZone:      Set<Cell>    = new Set();
    ghostWallsList: Set<Cell>    = new Set();
-   ghostBuildList: Set<Cell>    = new Set();
 
    isSelecting:    boolean      = false;
    isTargeting:    boolean      = false;
@@ -185,7 +185,7 @@ export class Cursor {
       this.setPosition           (GM, event, false);
       this.setHoverCell          (GM);
       this.setSelectMode         (GM, true);
-      this.setGhostBuild         (GM);
+      this.setGhostZone          (GM);
 
       this.update_SelectArea     (GM);
       this.update_TargetArea     (GM);
@@ -544,60 +544,51 @@ export class Cursor {
       this.ghostWallsList.clear();
    }
 
-   clearGhostBuild   () {
+   clearGhostZone   () {
 
-      for(const cell of this.ghostBuildList) {
+      for(const cell of this.ghostZone) {
          cell.isValid   = false;
          cell.isUnvalid = false;
       }
       
-      this.ghostBuildList.clear();
+      this.ghostZone.clear();
    }
 
-   setGhostBuild     (GM: GameManager) {
+   setGhostZone     (GM: GameManager) {
 
-      const { buildStats } = GM;
+      const { ghostBuild } = GM;
       const hoverCell      = this.hoverCell;
       
-      if(!buildStats?.buildSize || !hoverCell) return;
+      if(!ghostBuild || !hoverCell) return;
 
-      const { i: cell_i, j: cell_j } = hoverCell!;
-      const buildSize                = buildStats.buildSize;
+      const { buildSize, imgState } = ghostBuild;
 
-      // Reset previous ghost cells
-      for(const cell of this.ghostBuildList) {
-         if(!cell) continue;
-         
+      for(const cell of this.ghostZone) {
          cell.isValid   = false;
          cell.isUnvalid = false;
       }
-
-      this.ghostBuildList.clear();
       
-      let tempList: Cell[] = [];
+      const { i: cell_i, j: cell_j } = hoverCell;
+      ghostBuild.displayState        = imgState.valid;
+      ghostBuild.position            = hoverCell.center;
+      
+      let tempList:  Cell[] = [];
 
-      // Loop through the build zone
       for(let i = 0; i < buildSize; i++) {
          for(let j = 0; j < buildSize; j++) {
             
             const cellID = `${cell_i +i}-${cell_j -j}`;
             const cell   = GM.getCell(cellID);
 
-            if(!cell) continue;
+            if(!cell || !cell.isBlocked) continue;
             
-            cell.isValid   = !cell.isBlocked;
-            cell.isUnvalid =  cell.isBlocked;
-
             tempList.push(cell);
          }
       }
-      
-      this.ghostBuildList = new Set(tempList);
-      const ghostBuild    = GM.buildsList.get(this.ghostID);
 
-      if(!ghostBuild) return;
+      this.ghostZone = new Set(tempList);
 
-      ghostBuild.position = hoverCell.center;
+      if(tempList.length > 0) ghostBuild.displayState = imgState.unValid;
    }
 
    

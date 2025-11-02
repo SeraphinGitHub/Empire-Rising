@@ -57,10 +57,9 @@ export class GameManager {
    
    playerYield:            INumber    = {};
    teamID:                 number     = -1;
-   teamColor:              string     = "";
+   teamColor:              number     = -1;
    name:                   string     = "";
    buildID:                string     = "";
-   buildStats:             any        = null;
 
    gridPos:                IPosition  = {x:0, y:0};
    terrainPos:             IPosition  = {x:0, y:0};
@@ -84,6 +83,8 @@ export class GameManager {
    buildsList:             Map<number, Building> = new Map();
    buildSelectList_old:    Set<Building>         = new Set();
    buildSelectList_cur:    Set<Building>         = new Set();
+
+   ghostBuild:             Building | null       = null;
    
    // Classes instances
    Grid:                   Grid;
@@ -446,7 +447,7 @@ export class GameManager {
 
       return {
          x: elemX -vpX,
-         y: elemY -vpY +offsetY,
+         y: elemY -vpY -offsetY,
          radius,
       };
    }
@@ -486,16 +487,11 @@ export class GameManager {
       }
       
       if(classType === Node) {
-         elemCell.isNode    = true;
-         elemCell.isBlocked = true;
+         elemCell.isNode     = true;
+         elemCell.isBlocked  = true;
       }
 
       if(classType === Building) {
-         Object.assign( params,   {
-            i: Math.floor( initPack.position.x /this.cellSize ),
-            j: Math.floor( initPack.position.y /this.cellSize ),
-         });
-
          elemCell.isBuilding = true;
          elemCell.isBlocked  = true;
       }
@@ -503,36 +499,42 @@ export class GameManager {
       const newElem = new classType(params);
       clientList.set(newElem.id, newElem);
 
-      if(newElem instanceof Building) newElem.setZindex(this.getCell.bind(this));
+      if(newElem instanceof Building) newElem.setZindex({
+            i: Math.floor( initPack.position.x /this.cellSize ),
+            j: Math.floor( initPack.position.y /this.cellSize ),
+         },
+         this.getCell.bind(this)
+      );
    }
 
    setRenderList     (): Array<Agent | Node | Building> {
       
       let renderList: Array<Agent | Node | Building> = [];
+      const elemsList = [this.unitsList, this.nodesList, this.buildsList];
 
-      const allElemsList = [
-         ...this.unitsList .values(),
-         ...this.nodesList .values(),
-         ...this.buildsList.values(),
-      ];
+      if(this.ghostBuild) {
+         elemsList.push( new Map([[ this.Cursor.ghostID, this.ghostBuild ]]) );
+      }
 
-      for(const elem of allElemsList) {
-         const elemPos = this.gridPos_toScreenPos(elem.position);
+      for(const allElems of elemsList) {
+         for(const elem of allElems.values()) {
 
-         if(!this.isViewScope(elemPos)) continue;
+            const pos = this.gridPos_toScreenPos(elem.position);
+            if(!this.isViewScope(pos)) continue;
+      
+            if(elem.screenPos.x !== pos.x
+            || elem.screenPos.y !== pos.y) {
 
-         if(elem.screenPos.x !== elemPos.x
-         || elem.screenPos.y !== elemPos.y) {
-
-            elem.screenPos = elemPos;
+               elem.screenPos = pos;
+            }
+      
+            if(elem instanceof Agent) {
+               const newZindex = elem.position.x -elem.position.y;
+               if(elem.zIndex !== newZindex) elem.zIndex = newZindex;
+            }
+      
+            renderList.push(elem);
          }
-         
-         if(elem instanceof Agent) {
-            const newZindex = elem.position.x -elem.position.y;
-            if(elem.zIndex !== newZindex) elem.zIndex = newZindex;
-         }
-         
-         renderList.push(elem);
       }
 
       return renderList;
@@ -543,39 +545,40 @@ export class GameManager {
       isActive: boolean,
    ) {
 
-      const { hoverCell, ghostID } = this.Cursor;
+      const { hoverCell } = this.Cursor;
 
       if(!isActive) {
-
          this.buildID    = "";
-         this.buildStats = null;
-         this.Cursor.clearGhostBuild();
-         this.buildsList.delete(ghostID);
-
+         this.ghostBuild = null;
+         this.Cursor.clearGhostZone();
          return;
       }
 
       if(!hoverCell) return;
 
-      this.buildID        = property;
-      const buildStats    = this.buildStats = this.BUILD_STATS[this.buildID];
-
-      const ghostBuilding = new Building({
-         ...buildStats,
-         position:  hoverCell.center,
+      this.buildID    = property;
+      this.ghostBuild = new Building({
+         ...this.BUILD_STATS[this.buildID],
          teamColor: this.teamColor,
-      }); 
-      
-      this.buildsList.set(ghostID, ghostBuilding);
+         position:  hoverCell.center,
+      });
+
+      this.ghostBuild.displayState = this.ghostBuild.imgState.valid;
+      this.ghostBuild.zIndex       = -Infinity;
    }
 
    createBuilding    () {
-
-      if(!this.isBuildMode || this.buildID === "" || this.buildStats === null) return;
+      
+      if(!this.isBuildMode
+      ||  this.buildID    === ""
+      ||  this.ghostBuild === null) {
+         return;
+      }
 
       this.socket.emit("placeBuilding", {
-         buildID: this.buildID,
-         cellID:  this.Cursor.hoverCell!.id,
+         buildID:   this.buildID,
+         cellID:    this.Cursor.hoverCell!.id,
+         ghostZone: Array.from( this.Cursor.ghostZone, (cell: Cell) => cell.id ), 
       });
    }
 
@@ -650,14 +653,8 @@ export class GameManager {
          
          if(elem.isSelected || elem.isHover) elem.drawSelect(ctx_isometric, elem.isSelected);
 
-         if(elem instanceof Node) elem.drawSprite(ctx_assets, screenPos, Viewport);
-         
-         if(elem instanceof Building) {
-            // if(this.isBuildMode && this.buildID !== "") elem.isTransp = true;
-            
-            elem.drawSprite(ctx_assets, screenPos, Viewport);
-         }
-
+         if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport);
+         if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport);
          if(elem instanceof Agent   ) {
             elem.drawSprite   (ctx_assets, screenPos, Viewport);
             // elem.drawCollider (ctx_assets, screenPos, Viewport);

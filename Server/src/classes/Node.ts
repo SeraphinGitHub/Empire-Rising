@@ -17,7 +17,9 @@ export class Node {
    position:    IPosition;
 
    collider:    INumber;
-   
+   footPrint:   string[];
+
+   nodeSize:    number;
    spriteID:    number;
    yieldType:   number;
    baseAmount:  number;
@@ -33,6 +35,8 @@ export class Node {
       this.cellID     = params.cellID;
       this.position   = params.position;
       this.collider   = params.collider;
+      this.footPrint  = params.footPrint;
+      this.nodeSize   = params.nodeSize;
       this.spriteID   = params.spriteID;
       this.yieldType  = params.yieldType;
       this.baseAmount = params.amount;
@@ -47,6 +51,8 @@ export class Node {
          cellID:     this.cellID,
          position:   this.position,
          collider:   this.collider,
+         footPrint:  this.footPrint,
+         nodeSize:   this.nodeSize,
          spriteID:   this.spriteID,
          amount:     this.baseAmount,
          spritePath: this.spritePath,

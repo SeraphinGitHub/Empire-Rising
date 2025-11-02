@@ -27,8 +27,8 @@ export class Agent {
    id:            number;
    playerID:      string;
    teamID:        number;
+   teamColor:     number;
    
-   teamColor:     string;
    name:          string;
    nodeNebName:   string = "";
    spritePath:    string;

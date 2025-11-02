@@ -12,16 +12,13 @@ export class Building {
 
    id:            number;
    name:          string;
-   
-   i:             number;
-   j:             number;
-   zIndex:        number = Infinity;
-
    position:      IPosition;
    screenPos:     IPosition = { x:0, y:0 };
+   zIndex:        number    = Infinity;
    
    offset:        INumber;
    collider:      INumber;
+   footPrint:     string[];
    
    spriteID:      number;
    teamID:        number;
@@ -31,22 +28,39 @@ export class Building {
    spriteSize:    number;
    health:        number;
    baseHealth:    number;
+   displayState:  number;
+
+   imgState:      INumber  = {
+      normal:   1,
+      transp:   0,
+      valid:    2,
+      unValid: -1,
+   }
    
-   isSelected:    boolean = false;
-   isHover:       boolean = false;
-   isTransp:      boolean = false;
+   isSelected:    boolean  = false;
+   isHover:       boolean  = false;
 
    img:           HTMLImageElement = new Image();
+
+   colorType:     string[] = [
+      "Blue",
+      "Green",
+      "Orange",
+      "Pink",
+      "Purple",
+      "Red",
+      "Yellow",
+   ];
+
 
    constructor(params: any) {
 
       this.id           = params.id;
       this.name         = params.name;
-      this.i            = params.i;
-      this.j            = params.j;
       this.position     = params.position;
       this.offset       = params.offset;
       this.collider     = params.collider;
+      this.footPrint    = params.footPrint;
       this.spriteID     = params.spriteID;
       this.teamID       = params.teamID;
       this.buildTime    = params.buildTime;
@@ -55,6 +69,7 @@ export class Building {
       this.spriteSize   = params.spriteSize;
       this.health       = params.health;
       this.baseHealth   = params.baseHealth;
+      this.displayState = this.imgState.normal;
 
       this.setImageSource(params.spritePath, params.teamColor);
    }
@@ -63,31 +78,12 @@ export class Building {
    // =========================================================================================
    // Methods
    // =========================================================================================
-   setTransparency() {
-   
-      // if(!this.isBlocked) return;
-
-      // const {
-      //    top,
-      //    topRight,
-      //    right,
-      // } = this.getNeighbors(cellsList);
-      
-      // if(!top.isVacant
-      // || !topRight.isVacant
-      // || !right.isVacant) {
-         
-      //    return this.isTransp = true;
-      // }
-
-      // this.isTransp = false;
-   }
-
    setImageSource(
       spritePath: string,
-      teamColor:  string,
+      teamColor:  number,
    ) {
-      const imgSrc = `${spritePath}${teamColor}.png`;
+      const colorName = this.colorType[teamColor];
+      const imgSrc    = `${spritePath}${colorName}.png`;
       
       if(imgSrc.includes("undefined")) {
          console.log({ setImageSource_BuildingClass: "Path is broken - missing teamColor !" });
@@ -97,8 +93,12 @@ export class Building {
       this.img.src = imgSrc;
    }
 
-   setZindex(getCell: Function) {
-      const { i, j, buildSize } = this;
+   setZindex(
+      pos:     INumber,
+      getCell: Function,
+   ) {
+      const { buildSize } = this;
+      const { i, j      } = pos;
 
       const cellID = `${ i }-${ j -buildSize +1 }`;
       const cell   = getCell(cellID);
@@ -124,39 +124,77 @@ export class Building {
          offset,
          spriteRatio,
          spriteSize,
-         isTransp,
+         displayState,
+         imgState,
       } = this;
+
+      const { normal, transp, valid, unValid } = imgState;
+
+      const { x, y, size} = {
+         x:    pos.x -offset.x -VPpos.x,
+         y:    pos.y -offset.y -VPpos.y,
+         size: spriteSize *spriteRatio,
+      }
 
       const drawImg = () => {
          ctx.drawImage(
             img,
 
             // Source
-            spriteSize * (spriteID -1),
-            0,
-            spriteSize,
-            spriteSize,
+            spriteSize * (spriteID -1),  0,  spriteSize,  spriteSize,
             
             // Destination
-            pos.x -offset.x -VPpos.x,
-            pos.y -offset.y -VPpos.y,
-            spriteSize *spriteRatio,
-            spriteSize *spriteRatio,
+            x, y, size, size
          );
       }
 
-
-      if(isTransp) {
+      const drawTinted = (color: string) => {
+         
          ctx.save();
          ctx.globalAlpha = 0.5;
 
          drawImg();
          
+         const offScreen  = document.createElement("canvas");
+         const offCtx     = offScreen.getContext("2d")!;
+         
+         // Create offScreen canvas 
+         offScreen.width  = size;
+         offScreen.height = size;
+         offCtx.drawImage(img, 0, 0, size, size);
+
+         // Draw filter
+         offCtx.globalCompositeOperation = "source-atop";
+         offCtx.fillStyle                = color;
+         offCtx.fillRect(0, 0, size, size);
+
+         // Draw filtered sprite
+         ctx.drawImage(offScreen, x, y);
+
          ctx.restore();
-         return;
       };
 
-      drawImg();
+      switch(displayState) {
+
+         case normal:
+            drawImg();
+         break;
+
+         case transp:
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            drawImg();
+            ctx.restore();
+         break;
+
+         case valid:
+            drawTinted("rgba(0, 255, 0, 0.5)"); // Green transp
+         break;
+
+         case unValid:
+            drawTinted("rgba(255, 0, 0, 0.5)"); // Red transp
+         break;
+      }
    }
 
    drawSelect(
@@ -175,7 +213,7 @@ export class Building {
       ctx.arc(
          x,
          y,
-         this.collider.radius *2, 0, Math.PI *2
+         this.collider.radius *1.5, 0, Math.PI *2
       );
       ctx.fill();
       ctx.closePath();
@@ -192,7 +230,7 @@ export class Building {
       ctx.beginPath();
       ctx.arc(
          pos.x -VPpos.x,
-         pos.y -VPpos.y +offsetY,
+         pos.y -VPpos.y -offsetY,
          radius, 0, Math.PI *2
       );
       ctx.fill();

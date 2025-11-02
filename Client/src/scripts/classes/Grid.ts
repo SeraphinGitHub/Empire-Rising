@@ -30,12 +30,15 @@ export class Grid {
    }
    
    updateCell(params: any) {
-      const { cellID, varName, newState } = params;
+      const { cellsIDlist, property, state } = params;
 
-      const cell: any = this.cellsList.get(cellID);
-      if(!cell) return;
+      for(const cellID of cellsIDlist) {
+         const cell: any = this.cellsList.get(cellID);
 
-      cell[varName] = newState;
+         if(!cell) return;
+   
+         cell[property] = state;
+      }
    }
 
 

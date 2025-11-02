@@ -405,6 +405,11 @@ export class Battle {
       }
    }
 
+   updateGrid           () {
+
+      this.spread("updateGrid", this.Grid.setClient_CellsList());
+   }
+
    createNewPlayer      (props:  any) {
 
       const newPlayer = new Player({
@@ -456,7 +461,6 @@ export class Battle {
       data:     any,
       playerID: string,
    ): {[key: string]: any} | null {
-
       const { buildID, cellID } = data;
 
       const cell   = this.getCell(cellID);
@@ -485,17 +489,18 @@ export class Battle {
          teamColor: player.teamColor,
       };
 
-      this.setBuildOccupied(cell, stats.buildSize);
-      
       const newBuilding = new Building(params);
       
       cell.isVacant  = false;
       cell.isBlocked = true;
       cell.child     = newBuilding;
-      this.buildsList.set(newBuilding.id, newBuilding);
+      
+      player.buildsID_List.set(newBuilding.id, { name: newBuilding.name, cellID });
+      this.buildsList     .set(newBuilding.id, newBuilding);
 
       return {
-         initPack: newBuilding.initPack(),
+         initPack:  newBuilding.initPack(),
+         footPrint: this.Grid.setZoneOccupied(cell, stats.buildSize),
       };
    }
 
@@ -535,15 +540,15 @@ export class Battle {
                };
 
                if(classType === Node) {
-                  params["baseAmount"] = elemStats.amount;                  
+                  params["baseAmount"] = elemStats.amount;
+                  params["footPrint" ] = this.Grid.setZoneOccupied(elemCell, elemStats.nodeSize);
                }
                
                if(classType === Building) {
-                  params["teamID"    ] = 1;        // ==> Temp  ************************
-                  params["teamColor" ] = "Blue";   // ==> Temp  ************************
+                  params["teamID"    ] = 1;   // ==> Temp  ************************
+                  params["teamColor" ] = 0;   // ==> Temp  ************************
                   params["baseHealth"] = elemStats.baseHealth;
-
-                  this.setBuildOccupied(elemCell, elemStats.buildSize);
+                  params["footPrint" ] = this.Grid.setZoneOccupied(elemCell, elemStats.buildSize);
                }
                
                const newElem = new classType(params);
@@ -554,24 +559,6 @@ export class Battle {
                elemCell.isBlocked = true;
                elemList.set(newElem.id, newElem);
             }
-         }
-      }
-   }
-
-   setBuildOccupied(
-      mainCell:  Cell,
-      buildSize: number,
-   ) {
-
-      const { i: cell_i, j: cell_j } = mainCell;
-
-      for(let i = 0; i < buildSize; i++) {
-         for(let j = 0; j < buildSize; j++) {
-            
-            const cellID = `${cell_i +i}-${cell_j -j}`;
-            const cell   = this.getCell(cellID);
-
-            if(cell && !cell.isBlocked) cell.isBlocked = true;
          }
       }
    }
@@ -643,7 +630,7 @@ export class Battle {
       // Search path for node gathering position
       // ===========================================
       let sortedUnitList = new Set<Agent>();
-      const focusCell = this.getCell(targetCell?.id);
+      const focusCell    = this.getCell(targetCell?.id);
       
       if(focusCell && focusCell.child.isNode) {
          

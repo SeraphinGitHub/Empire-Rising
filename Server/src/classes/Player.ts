@@ -14,11 +14,11 @@ export class Player {
    id:               string;
    battleID:         string;
    name:             string;
-   teamColor:        string;
-
+   
    buildsID_List:    Map<number, {name: string, cellID: string}> = new Map<number, {name: string, cellID: string}>();
-
+   
    teamID:           number;
+   teamColor:        number;
    maxPop:           number  = 0;
    curPop:           number  = 0;
 
@@ -102,16 +102,25 @@ export class Player {
       data:   any,
       battle: Battle,
    ) {
+      const { ghostZone } = data;
 
-      const building = battle.createNewBuilding(data, this.id);
+      const hasBlocked = ghostZone.some((cellID: string) => {
+         const cell    = battle.getCell(cellID);
+         return !cell || cell.isBlocked
+      });
 
-      if(building === null) return;
+      if(hasBlocked) return;
 
-      const { id, name, cellID  } = building.initPack;
+      const result = battle.createNewBuilding(data, this.id);
 
-      this.buildsID_List.set(id, { name, cellID });
-
-      battle.spread("placeBuilding", building.initPack);
+      if(!result) return;
+      
+      battle.spread("placeBuilding", result.initPack);
+      battle.spread("updateCells",   {
+         cellsIDlist: result.footPrint,
+         property:   "isBlocked",
+         state:       true,
+      });
    }
 
    updateYield(

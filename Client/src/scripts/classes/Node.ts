@@ -18,10 +18,12 @@ export class Node {
    screenPos:   IPosition = { x:0, y:0 };
    
    name:        string;
+   nodeSize:    number;
    spriteID:    number;
    amount:      number;
    
    collider:    INumber;
+   footPrint:   string[];
 
    isSelected:  boolean = false;
    isHover:     boolean = false;
@@ -36,9 +38,11 @@ export class Node {
       this.position  = params.position;
       this.zIndex    = this.position.x - this.position.y;
       this.name      = params.name;
+      this.nodeSize  = params.nodeSize;
       this.spriteID  = params.spriteID;
       this.amount    = params.amount;
       this.collider  = params.collider;
+      this.footPrint = params.footPrint;
 
       this.setImageSource(params.spritePath);
    }
@@ -63,9 +67,9 @@ export class Node {
 
       const srcSize  = 400;
 
-      let destSize = 65;
-      let offsetX  = 32;
-      let offsetY  = 40;
+      let destSize = 70;
+      let offsetX  = 35;
+      let offsetY  = 60;
 
       if(this.spriteID > 4) {
          destSize = 120;
@@ -106,7 +110,7 @@ export class Node {
       ctx.arc(
          x,
          y,
-         this.collider.radius *2, 0, Math.PI *2
+         this.collider.radius *1.7, 0, Math.PI *2
       );
       ctx.fill();
       ctx.closePath();
@@ -123,7 +127,7 @@ export class Node {
       ctx.beginPath();
       ctx.arc(
          pos.x -VPpos.x,
-         pos.y -VPpos.y +offsetY,
+         pos.y -VPpos.y -offsetY,
          radius, 0, Math.PI *2
       );
       ctx.fill();

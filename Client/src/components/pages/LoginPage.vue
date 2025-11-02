@@ -24,6 +24,15 @@
    export default {
       name: "LoginPage",
 
+      // teamColor:
+      // Blue
+      // Green
+      // Orange
+      // Pink
+      // Purple
+      // Red
+      // Yellow
+
       methods: {
 
          loginBtn() {
@@ -38,7 +47,7 @@
                playerProps: {
                   name:       "Illidan",
                   teamID:      1,
-                  teamColor:  "Orange",
+                  teamColor:   2,
                },
 
                mapSettings: {
@@ -54,7 +63,7 @@
                playerProps: {
                   name:      "Malfurion",
                   teamID:     2,
-                  teamColor: "Purple",
+                  teamColor:  4,
                },
 
                battleID: "47",

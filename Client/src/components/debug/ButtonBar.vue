@@ -3,15 +3,16 @@
    <section class="flex btn-bar">
 
       <div class="flex bar-1">
-         <button class="flex bgd-blue"   @click="toggleGM('show_VP'  )">Viewport</button>
-         <button class="flex bgd-blue"   @click="toggleGM('show_Grid')">Grid    </button>
+         <button class="flex bgd-blue"   @click="toggleUI('show_VP'  )">Viewport</button>
+         <button class="flex bgd-blue"   @click="toggleUI('show_Grid')">Grid    </button>
       </div>
 
       <div class="flex bar-2">
-         <button class="flex bgd-orange" @click="toggleGM('castle',  $event)">Castle  </button>
-         <button class="flex bgd-orange" @click="toggleGM('barrack', $event)">Barrack </button>
-         <button class="flex bgd-orange" @click="toggleGM('wall',    $event)">Wall    </button>
-         <button class="flex bgd-orange" @click="toggleGM('unit',    $event)">Unit    </button>
+         <button class="flex bgd-orange" @click="toggleElem('castle',    $event)">Castle    </button>
+         <button class="flex bgd-orange" @click="toggleElem('barrack',   $event)">Barrack   </button>
+         <button class="flex bgd-orange" @click="toggleElem('warehouse', $event)">Warehouse </button>
+         <button class="flex bgd-orange" @click="toggleElem('wall',      $event)">Wall      </button>
+         <button class="flex bgd-orange" @click="toggleElem('unit',      $event)">Unit      </button>
       </div>
 
       <div class="flex bar-3">
@@ -70,47 +71,42 @@
 
       data() {
       return {
-         isActive:    false,
-         activeElems: {},
+         isUI:   false,
+         isElem: false,
       }},
 
       methods: {
 
-         toggleGM(
+         toggleUI(property: string) {
+            const GM     = this.$parent.GManager;
+            this.isUI    = !this.isUI;
+            GM[property] = !GM[property];
+         },
+
+         toggleElem(
             property: string,
-            event?:   Event,
+            event:    Event,
          ) {
+            const GM    = this.$parent.GManager;
+            this.isElem = !this.isElem;
 
-            const GM = this.$parent.GManager;
-            
-            if(property.includes("show_")) {
-               GM[property] = !GM[property];
-               return;
+            if(property !== "unit") {
+               GM.toggleGhostBuild(property, this.isElem);
+               GM.isBuildMode = !GM.isBuildMode;
+               
+               if(property === "wall") {
+                  GM.isWallMode        = !GM.isWallMode;
+                  GM.Cursor.selectCell = null;
+                  GM.Cursor.raycast    = null;
+               }
             }
+            else GM.isUnitMode = !GM.isUnitMode;
 
-            this.isActive  = !this.isActive;
-            GM.toggleGhostBuild(property, this.isActive);
-            GM.isBuildMode = !GM.isBuildMode;
-
-            if(property === "wall") {
-               GM.isWallMode        = !GM.isWallMode;
-               GM.Cursor.selectCell = null;
-               GM.Cursor.raycast    = null;
-            }
 
             if(!event) return;
 
             const elem = event.target as HTMLElement;
-            elem.classList.toggle("active", this.isActive);
-            
-            // if(this.activeElems.hasOwnProperty( property )) return;
-
-            // this.activeElems[property] = elem;
-
-            // for(const [key, elem] of Object.entries(this.activeElems)) {
-            //    if(key === property) continue;
-            //    (elem as HTMLElement).classList.toggle("active", !this.isActive);
-            // }
+            elem.classList.toggle("active", this.isElem);
          }
       },
    }
@@ -131,17 +127,19 @@
          justify-content: space-between;
          width: 22%;
          top: 165px;
+         // background: red;
       }
 
       .bar-2 {
          width: 100%;
+         // background: red;
       }
 
       .bar-1 button,
       .bar-2 button {
-         margin: 10px;
+         margin: 15px;
          height: 50px;
-         width: 100px;
+         width: 120px;
       }
 
       .bar-3 {

@@ -45,7 +45,7 @@
          Canvas:      {},
          Ctx:         {},
          playerName:  "",
-         teamColor:   "",
+         teamColor:   -1,
          playerYield: {},
       }},
 

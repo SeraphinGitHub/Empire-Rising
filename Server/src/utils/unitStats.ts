@@ -6,7 +6,7 @@
 const INFANTRY = {
    popCost:    1,
    isUnit:     true,
-   collider:   { offsetY: -15, radius: 15 },
+   collider:   { offsetY: 15, radius: 15 },
 }
 
 const CAVALRY = {

@@ -145,7 +145,7 @@ export class Viewport {
       const isRight:  boolean = GM.Collision.point_toSquare( mousePos, right  );
       const isBottom: boolean = GM.Collision.point_toSquare( mousePos, bottom );
       const isLeft:   boolean = GM.Collision.point_toSquare( mousePos, left   );
-   
+
       if(!isTop && !isRight && !isBottom && !isLeft) return this.isScrollDetect = false;
 
       this.scrollCam(GM, { isTop, isRight, isBottom, isLeft });
@@ -208,7 +208,7 @@ export class Viewport {
    
    mouseScrollCam (GM: GameManager) {
       
-      if(!GM.Cursor.isScollClick || !GM.isMouseGridScope()) return;
+      if(!GM.Cursor.isScollClick) return;
 
       const {    gridSize                } = GM;
       const {    oldPos,       curPos    } = GM.Cursor;
@@ -216,7 +216,7 @@ export class Viewport {
       const { x: curMouseX, y: curMouseY } = curPos.cart;
       const { x: VPgridX,   y: VPgridY   } = this.getGridPos();
       const { x: oldX,      y: oldY      } = this.oldPos;
-      const {    oldDelta,     curDelta  } = this.scroll;
+      const {    curDelta                } = this.scroll;
 
       const inner = {
          top:    VPgridY > 0,
@@ -225,17 +225,26 @@ export class Viewport {
          left:   VPgridX > 0,
       };
 
-      if(inner.right && inner.left
-      && inner.top   && inner.bottom) {
+      const curX = oldMouseX -curMouseX +oldX;
+      const curY = oldMouseY -curMouseY +oldY;
 
-         oldDelta.x = 0;
-         oldDelta.y = 0;
-         curDelta.x = oldMouseX -curMouseX +oldX;
-         curDelta.y = oldMouseY -curMouseY +oldY;
-         this.x     = curDelta.x;
-         this.y     = curDelta.y;
+      if(inner.left && inner.right) this.x = curX;
+
+      else {
+         if(!inner.left  && curX > this.x) this.x = curX;
+         if(!inner.right && curX < this.x) this.x = curX;
       }
       
+      if(inner.top && inner.bottom) this.y = curY;
+
+      else {
+         if(!inner.top    && curY > this.y) this.y = curY;
+         if(!inner.bottom && curY < this.y) this.y = curY;
+      }
+
+      curDelta.x = this.x;
+      curDelta.y = this.y;
+
       this.setComputed(GM);
    }
 

@@ -1,4 +1,3 @@
-
 import {
    Cell,
 } from "./_Export";
@@ -49,6 +48,31 @@ export class Grid {
 
       for(const [id, cell] of this.cellsList) {
          tempList[id] = cell.initPack();
+      }
+
+      return tempList;
+   }
+
+   setZoneOccupied(
+      mainCell: Cell,
+      elemSize: number,
+   ): string[] {
+      
+      const { i: cell_i, j: cell_j } = mainCell;
+      
+      let tempList: string[] = [];
+
+      for(let i = 0; i < elemSize; i++) {
+         for(let j = 0; j < elemSize; j++) {
+            
+            const cellID = `${cell_i +i}-${cell_j -j}`;
+            const cell   = this.cellsList.get(cellID);
+
+            if(!cell || cell.isBlocked) continue;
+            
+            cell.isBlocked = true;
+            tempList.push(cell.id);
+         }
       }
 
       return tempList;
