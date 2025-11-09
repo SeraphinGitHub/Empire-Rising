@@ -66,7 +66,7 @@ export class Agent {
    img:              HTMLImageElement = new Image();
    spriteSpecs:      INumberList;
    spriteParams:     INumber   = { srcY: 0, size: 0, offsetY: 25 };
-
+   selectRing:       INumber   = { offsetX: 29, offsetY: 28, size: 60 };
    colorType:        string[]  = [
       "Blue",
       "Green",
@@ -502,24 +502,33 @@ export class Agent {
       );
    }
 
-   drawSelect        (
+   drawSelect(
       ctx:      CanvasRenderingContext2D,
+      pos:      IPosition,
+      VPpos:    IPosition,
+      ringImg:  any,
       isSelect: boolean,
    ) {
       
-      let color = "yellow";
+      let ringType = isSelect ? 1 : 0;
 
-      if(isSelect) color = "cyan";
+      const { size: ringSize, offsetX, offsetY } = this.selectRing;
+      const { img, spriteSize } = ringImg;
+      const { x,   y,    size } = {
+         x:    pos.x -VPpos.x -offsetX,
+         y:    pos.y -VPpos.y -offsetY,
+         size: ringSize,
+      }
 
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(
-         this.position.x,
-         this.position.y,
-         this.collider.radius *2, 0, Math.PI * 2
+      ctx.drawImage(
+         img,
+
+         // Source
+         spriteSize *ringType,  0,  spriteSize,  spriteSize,
+         
+         // Destination
+         x, y, size, size
       );
-      ctx.fill();
-      ctx.closePath();
    }
 
    drawInfos         (

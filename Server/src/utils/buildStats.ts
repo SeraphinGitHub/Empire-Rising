@@ -22,6 +22,12 @@ export const BUILD_STATS: {[key: string]: any} = {
       spriteRatio:   0.84,
       spriteSize:    480, // pixels
       spritePath:   "Buildings/Castle/",
+      
+      selectRing:    {
+         size:       480,
+         offsetX:    235,
+         offsetY:    335,
+      }
    },
 
    warehouse: {
@@ -35,6 +41,12 @@ export const BUILD_STATS: {[key: string]: any} = {
       spriteRatio:   0.8,
       spriteSize:    190, // pixels
       spritePath:   "Buildings/Warehouse/",
+
+      selectRing:    {
+         size:       145,
+         offsetX:    72,
+         offsetY:    85,
+      }
    },
 
    barrack: {
@@ -48,6 +60,12 @@ export const BUILD_STATS: {[key: string]: any} = {
       spriteRatio:   0.87,
       spriteSize:    340, // pixels
       spritePath:   "Buildings/Barrack/",
+
+      selectRing:    {
+         size:       345,
+         offsetX:    170,
+         offsetY:    225,
+      }
    },
 
    farm: {
@@ -61,6 +79,12 @@ export const BUILD_STATS: {[key: string]: any} = {
       spriteRatio:   1,
       spriteSize:    0,  // pixels
       spritePath:   "Buildings/Farm/",
+
+      selectRing:    {
+         size:       300,
+         offsetX:    150,
+         offsetY:    200,
+      }
    },
 
    wall: {
@@ -74,6 +98,12 @@ export const BUILD_STATS: {[key: string]: any} = {
       spriteRatio:   0.37,
       spriteSize:    280, // pixels
       spritePath:   "Buildings/Wall/",
+
+      selectRing:    {
+         size:       80,
+         offsetX:    40,
+         offsetY:    40,
+      }
    },
 
 }

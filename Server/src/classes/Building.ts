@@ -19,6 +19,7 @@ export class Building {
 
    offset:        INumber;
    collider:      INumber;
+   selectRing:    INumber
    footPrint:     string[];
    
    spriteID:      number;
@@ -41,6 +42,7 @@ export class Building {
       this.position     = params.position;
       this.offset       = params.offset;
       this.collider     = params.collider;
+      this.selectRing   = params.selectRing;
       this.footPrint    = params.footPrint;
       this.spriteID     = params.spriteID;
       this.teamID       = params.teamID;
@@ -62,6 +64,7 @@ export class Building {
          position:      this.position,
          offset:        this.offset,
          collider:      this.collider,
+         selectRing:    this.selectRing,
          footPrint:     this.footPrint,
          spriteID:      this.spriteID,
          teamID:        this.teamID,

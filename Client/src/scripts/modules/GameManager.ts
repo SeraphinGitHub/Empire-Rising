@@ -65,7 +65,7 @@ export class GameManager {
    terrainPos:             IPosition  = {x:0, y:0};
    viewfieldPos:           IPosition  = {x:0, y:0};
    
-   show_Grid:              boolean    = true;
+   show_Grid:              boolean    = false;
    show_VP:                boolean    = false;
    
    isUnitMode:             boolean    = false;
@@ -85,6 +85,11 @@ export class GameManager {
    buildSelectList_cur:    Set<Building>         = new Set();
 
    ghostBuild:             Building | null       = null;
+
+   ringImg:                any = {
+      img:        Object.assign(new Image(), { src: "/GUI/ring.png" }),
+      spriteSize: 510,
+   }
    
    // Classes instances
    Grid:                   Grid;
@@ -221,7 +226,7 @@ export class GameManager {
          
          this.updateAllAgents    ();
          this.drawViewportElems  ();
-         this.drawHoverElems     ();
+         this.drawElemsInfos     ();
          
          this.Grid     .update   (this);
          this.Cursor   .update   (this);
@@ -604,7 +609,7 @@ export class GameManager {
    // =========================================================================================
    // Draw Methods
    // =========================================================================================
-   drawHoverElems    () {
+   drawElemsInfos    () {
       
       for(const elem of this.setRenderList()) {
          const elemPos = this.gridPos_toScreenPos(elem.position);
@@ -638,7 +643,7 @@ export class GameManager {
          isometric: ctx_isometric,
       } = this.Ctx;
 
-      const { Viewport } = this;
+      const { Viewport, ringImg } = this;
 
       const renderList: any = [] = this.setRenderList();
 
@@ -651,7 +656,11 @@ export class GameManager {
       renderList.forEach((elem: any) => {
          const { screenPos } = elem;
          
-         if(elem.isSelected || elem.isHover) elem.drawSelect(ctx_isometric, elem.isSelected);
+         if(elem.isHover
+         || elem.isSelected) {
+
+            elem.drawSelect(ctx_assets, screenPos, Viewport, ringImg, elem.isSelected);
+         }
 
          if(elem instanceof Node    ) elem.drawSprite(ctx_assets, screenPos, Viewport);
          if(elem instanceof Building) elem.drawSprite(ctx_assets, screenPos, Viewport);

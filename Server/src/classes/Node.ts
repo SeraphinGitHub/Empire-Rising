@@ -17,6 +17,7 @@ export class Node {
    position:    IPosition;
 
    collider:    INumber;
+   selectRing:  INumber;
    footPrint:   string[];
 
    nodeSize:    number;
@@ -35,6 +36,7 @@ export class Node {
       this.cellID     = params.cellID;
       this.position   = params.position;
       this.collider   = params.collider;
+      this.selectRing = params.selectRing;
       this.footPrint  = params.footPrint;
       this.nodeSize   = params.nodeSize;
       this.spriteID   = params.spriteID;
@@ -51,6 +53,7 @@ export class Node {
          cellID:     this.cellID,
          position:   this.position,
          collider:   this.collider,
+         selectRing: this.selectRing,
          footPrint:  this.footPrint,
          nodeSize:   this.nodeSize,
          spriteID:   this.spriteID,

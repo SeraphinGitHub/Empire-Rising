@@ -18,6 +18,7 @@ export class Building {
    
    offset:        INumber;
    collider:      INumber;
+   selectRing:    INumber;
    footPrint:     string[];
    
    spriteID:      number;
@@ -60,6 +61,7 @@ export class Building {
       this.position     = params.position;
       this.offset       = params.offset;
       this.collider     = params.collider;
+      this.selectRing   = params.selectRing;
       this.footPrint    = params.footPrint;
       this.spriteID     = params.spriteID;
       this.teamID       = params.teamID;
@@ -90,7 +92,7 @@ export class Building {
          return;
       }
 
-      this.img.src = imgSrc;
+      this.img.src  = imgSrc;
    }
 
    setZindex(
@@ -199,24 +201,31 @@ export class Building {
 
    drawSelect(
       ctx:      CanvasRenderingContext2D,
+      pos:      IPosition,
+      VPpos:    IPosition,
+      ringImg:  any,
       isSelect: boolean,
    ) {
       
-      let color = "yellow";
+      let ringType = isSelect ? 1 : 0;
 
-      if(isSelect) color = "cyan";
+      const { size: ringSize, offsetX, offsetY } = this.selectRing;
+      const { img, spriteSize } = ringImg;
+      const { x,   y,    size } = {
+         x:    pos.x -VPpos.x -offsetX,
+         y:    pos.y -VPpos.y -offsetY,
+         size: ringSize,
+      }
 
-      const { x, y } = this.position;
+      ctx.drawImage(
+         img,
 
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(
-         x,
-         y,
-         this.collider.radius *1.5, 0, Math.PI *2
+         // Source
+         spriteSize *ringType,  0,  spriteSize,  spriteSize,
+         
+         // Destination
+         x, y, size, size
       );
-      ctx.fill();
-      ctx.closePath();
    }
 
    drawCollider(

@@ -216,7 +216,7 @@ export class Viewport {
       const { x: curMouseX, y: curMouseY } = curPos.cart;
       const { x: VPgridX,   y: VPgridY   } = this.getGridPos();
       const { x: oldX,      y: oldY      } = this.oldPos;
-      const {    curDelta                } = this.scroll;
+      const {    oldDelta,     curDelta  } = this.scroll;
 
       const inner = {
          top:    VPgridY > 0,
@@ -225,25 +225,36 @@ export class Viewport {
          left:   VPgridX > 0,
       };
 
-      const curX = oldMouseX -curMouseX +oldX;
-      const curY = oldMouseY -curMouseY +oldY;
+      if(inner.right && inner.left
+      && inner.top   && inner.bottom) {
 
-      if(inner.left && inner.right) this.x = curX;
-
-      else {
-         if(!inner.left  && curX > this.x) this.x = curX;
-         if(!inner.right && curX < this.x) this.x = curX;
+         oldDelta.x = 0;
+         oldDelta.y = 0;
+         curDelta.x = oldMouseX -curMouseX +oldX;
+         curDelta.y = oldMouseY -curMouseY +oldY;
+         this.x     = curDelta.x;
+         this.y     = curDelta.y;
       }
+
+      // const curX = oldMouseX -curMouseX +oldX;
+      // const curY = oldMouseY -curMouseY +oldY;
+
+      // if(inner.left && inner.right) this.x = curX;
+
+      // else {
+      //    if(!inner.left  && curX > this.x) this.x = curX;
+      //    if(!inner.right && curX < this.x) this.x = curX;
+      // }
       
-      if(inner.top && inner.bottom) this.y = curY;
+      // if(inner.top && inner.bottom) this.y = curY;
 
-      else {
-         if(!inner.top    && curY > this.y) this.y = curY;
-         if(!inner.bottom && curY < this.y) this.y = curY;
-      }
+      // else {
+      //    if(!inner.top    && curY > this.y) this.y = curY;
+      //    if(!inner.bottom && curY < this.y) this.y = curY;
+      // }
 
-      curDelta.x = this.x;
-      curDelta.y = this.y;
+      // curDelta.x = this.x;
+      // curDelta.y = this.y;
 
       this.setComputed(GM);
    }

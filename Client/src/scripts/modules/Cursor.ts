@@ -65,7 +65,7 @@ export class Cursor {
    isTriggered:    boolean      = false;
    hasCreateWall:  boolean      = false;
    isAreaDisable:  boolean      = false;
-
+   
 
    constructor(GManager: GameManager) {
       this.GM       = GManager;

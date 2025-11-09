@@ -7,12 +7,16 @@ import {
 // ================================================================================================
 // Common Stats
 // ================================================================================================
-const farmCol:  INumber = { offsetY: 0,  radius: 60 };
-const oreCol:   INumber = { offsetY: 25, radius: 30 };
-const treeCol:  INumber = { offsetY: 5,  radius: 15 };
-const treeSize: number  = 1;
-const oresSize: number  = 2;
 const oresPath: string  = "Ressources/nodes";
+const farmCol:  INumber = { offsetY: 0,  radius:  60 };
+
+const oresSize: number  = 2;
+const oreCol:   INumber = { offsetY: 25, radius:  30 };
+const oreRing:  INumber = { offsetX: 54, offsetY: 65, size: 110 };
+
+const treeSize: number  = 1;
+const treeCol:  INumber = { offsetY:  5, radius:  15 };
+const treeRing: INumber = { offsetX: 35, offsetY: 35, size: 70 };
 
 
 // ================================================================================================
@@ -27,6 +31,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  1,
       spriteID:   1,  // ==> has to match with sprite order
       spritePath: oresPath,
+      selectRing: oreRing,
    },
 
    stone: {
@@ -37,6 +42,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  2,
       spriteID:   4,
       spritePath: oresPath,
+      selectRing: oreRing,
    },
 
    coal: {
@@ -47,6 +53,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  4,
       spriteID:   1,
       spritePath: oresPath,
+      selectRing: oreRing,
    },
    
    iron: {
@@ -57,6 +64,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  5,
       spriteID:   3,
       spritePath: oresPath,
+      selectRing: oreRing,
    },
    
    gold: {
@@ -67,6 +75,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  7,
       spriteID:   2,
       spritePath: oresPath,
+      selectRing: oreRing,
    },
    
    tree_1: {
@@ -77,6 +86,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  3,
       spriteID:   5,
       spritePath: oresPath,
+      selectRing: treeRing,
    },
 
    tree_2: {
@@ -87,6 +97,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  3,
       spriteID:   6,
       spritePath: oresPath,
+      selectRing: treeRing,
    },
 
    tree_3: {
@@ -97,6 +108,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  3,
       spriteID:   7,
       spritePath: oresPath,
+      selectRing: treeRing,
    },
 
    tree_4: {
@@ -107,6 +119,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  3,
       spriteID:   8,
       spritePath: oresPath,
+      selectRing: treeRing,
    },
 
    tree_5: {
@@ -117,6 +130,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  3,
       spriteID:   9,
       spritePath: oresPath,
+      selectRing: treeRing,
    },
 
    tree_6: {
@@ -127,6 +141,7 @@ export const NODE_STATS: {[key: string]: any} = {
       yieldType:  3,
       spriteID:   10,
       spritePath: oresPath,
+      selectRing: treeRing,
    },
 
 }
