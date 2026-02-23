@@ -9,7 +9,7 @@ import {
 } from "../classes/_Export";
 
 import { Server,  Socket } from "socket.io";
-import { Battle          } from "./_Export";
+import { Battle          } from "./Battle";
 
 
 // =====================================================================
@@ -99,6 +99,11 @@ export class ServerManager {
       battlesList       .delete(playerID);
       playBatList       .delete(playerID);
       battle.playersList.delete(playerID);
+
+      for(const unit of battle.unitsList.values()) {
+
+         if(unit && unit.playerID === playerID) battle.unitsList.delete(unit.id);
+      }
       
       console.log({ disconnect: "--SocketIO-- Player disconnected" });
    }
@@ -154,7 +159,19 @@ export class ServerManager {
       const battle = this.battlesList.get(battleID);
 
       if(!battle) return console.log({ loadBattle: "Could not load battle !" });
-      
+
+      // ******************************************************
+      // for(const [ playerID ] of this.playBatList) {
+         
+      //    const player = battle.playersList.get(playerID);
+
+      //    if(!player) continue;
+      //    player.teamID    = this.socketsList.size;
+      //    player.teamColor = this.socketsList.size -1;
+      // }
+      // ******************************************************
+
+
       battle.start();
    }
 

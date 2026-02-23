@@ -107,6 +107,7 @@ export class Cursor {
          this.createWalls (GM); // **************
          this.setWallsList(GM); // **************
          GM.createBuilding();
+         GM.createBuildingWalls();
          GM.TEST_UnitMode();
          GM.Viewport.resetScroll();
       }
@@ -519,11 +520,14 @@ export class Cursor {
 
    createWalls       (GM: GameManager) {
       
-      if(!this.isTriggered) return;
+      if(!this.isTriggered || !this.hoverCell) return;
+
+      GM.wallsListID = [this.hoverCell.id];
 
       for(const cell of this.ghostWallsList) {
          
          if(!cell
+         ||  cell.id === this.hoverCell.id
          ||  cell.isBlocked
          || !cell.isVacant
          || !GM.Collision.line_toSquare(this.raycast!, cell.collider)) {
@@ -531,7 +535,7 @@ export class Cursor {
             continue;
          }
 
-         cell.isBlocked = true;
+         GM.wallsListID.push(cell.id);
       }
 
       this.ghostWallsList.clear();
@@ -678,7 +682,7 @@ export class Cursor {
    // =========================================================================================
    update(GM: GameManager) {
 
-      this.drawHoverCell (GM);
+      // this.drawHoverCell (GM);
       this.drawTargetArea(GM);
       this.drawWallsList (GM);
    }

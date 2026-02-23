@@ -1,5 +1,11 @@
 {
   "compilerOptions": {
+     "outDir": "dist",
+     "baseUrl": "../src",
+     "paths": {
+       "modules/*": ["modules/*"],
+       "utils/*": ["utils/*"]
+     },
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */

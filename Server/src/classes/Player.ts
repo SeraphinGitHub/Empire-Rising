@@ -1,7 +1,7 @@
 
 import { Socket  } from "socket.io";
-import { Battle  } from "modules/Battle";
-import { INumber } from "utils/interfaces";
+import { Battle  } from "../modules/Battle";
+import { INumber } from "../utils/interfaces";
 
 
 // =====================================================================
@@ -57,6 +57,7 @@ export class Player {
       
       this.socket.on("recruitUnit",   (data: any) => this.recruitUnit    (data, battle));
       this.socket.on("placeBuilding", (data: any) => this.placeBuilding  (data, battle));
+      this.socket.on("placeWall",     (data: any) => this.placeWall      (data, battle));
       this.socket.on("startAgentPF",  (data: any) => battle.startAgentPF (data));
    }
    
@@ -121,6 +122,30 @@ export class Player {
          property:   "isBlocked",
          state:       true,
       });
+   }
+
+   placeWall(
+      data:   any,
+      battle: Battle,
+   ) {
+      const { wallsListID } = data;
+      
+      for(const cellID of wallsListID) {
+         const cell = battle.getCell(cellID);
+         
+         if(cell?.isBlocked) continue;
+         
+         const result = battle.createNewBuilding({ buildType: "wall", cellID }, this.id);
+   
+         if(!result) return;
+         
+         battle.spread("placeBuilding", result.initPack);
+         battle.spread("updateCells",   {
+            cellsIDlist: result.footPrint,
+            property:   "isBlocked",
+            state:       true,
+         });
+      }
    }
 
    updateYield(

@@ -2,7 +2,7 @@
 "use strict"
 
 import express, { Request, Response, NextFunction } from "express";
-import { ServerManager }   from "./modules/_Export";
+import { ServerManager }   from "./modules/ServerManager";
 import http                from "http";
 import cors                from "cors";
 import dotenv              from "dotenv";

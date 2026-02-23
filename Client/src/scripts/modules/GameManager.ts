@@ -59,7 +59,8 @@ export class GameManager {
    teamID:                 number     = -1;
    teamColor:              number     = -1;
    name:                   string     = "";
-   buildID:                string     = "";
+   buildType:              string     = "";
+   wallsListID:            string[]   = [];
 
    gridPos:                IPosition  = {x:0, y:0};
    terrainPos:             IPosition  = {x:0, y:0};
@@ -553,7 +554,7 @@ export class GameManager {
       const { hoverCell } = this.Cursor;
 
       if(!isActive) {
-         this.buildID    = "";
+         this.buildType  = "";
          this.ghostBuild = null;
          this.Cursor.clearGhostZone();
          return;
@@ -561,9 +562,9 @@ export class GameManager {
 
       if(!hoverCell) return;
 
-      this.buildID    = property;
+      this.buildType  = property;
       this.ghostBuild = new Building({
-         ...this.BUILD_STATS[this.buildID],
+         ...this.BUILD_STATS[this.buildType],
          teamColor: this.teamColor,
          position:  hoverCell.center,
       });
@@ -575,15 +576,28 @@ export class GameManager {
    createBuilding    () {
       
       if(!this.isBuildMode
-      ||  this.buildID    === ""
+      ||  this.buildType  === ""
       ||  this.ghostBuild === null) {
          return;
       }
 
       this.socket.emit("placeBuilding", {
-         buildID:   this.buildID,
+         buildType: this.buildType,
          cellID:    this.Cursor.hoverCell!.id,
          ghostZone: Array.from( this.Cursor.ghostZone, (cell: Cell) => cell.id ), 
+      });
+   }
+
+   createBuildingWalls() {
+      
+      if(!this.isBuildMode
+      ||  this.ghostBuild         === null
+      ||  this.wallsListID.length === 0) {
+         return;
+      }
+      
+      this.socket.emit("placeWall", {
+         wallsListID: this.wallsListID,
       });
    }
 

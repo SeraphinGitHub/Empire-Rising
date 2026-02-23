@@ -2,7 +2,7 @@
 import {
    INumber,
    IPosition,
-} from "utils/interfaces";
+} from "../utils/interfaces";
 
 
 // =====================================================================

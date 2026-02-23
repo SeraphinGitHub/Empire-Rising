@@ -461,12 +461,12 @@ export class Battle {
       data:     any,
       playerID: string,
    ): {[key: string]: any} | null {
-      const { buildID, cellID } = data;
+      const { buildType, cellID } = data;
 
       const cell   = this.getCell(cellID);
       const player = this.playersList.get(playerID);
 
-      if(!cell || !player || !buildID) {
+      if(!cell || !player || !buildType) {
          
          console.log({
             createNewBuilding: 
@@ -478,7 +478,7 @@ export class Battle {
          return null;
       }
       
-      const stats = BUILD_STATS[buildID];
+      const stats = BUILD_STATS[buildType];
 
       const params: any = {
          ...stats,

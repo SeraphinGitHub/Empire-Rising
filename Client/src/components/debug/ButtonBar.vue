@@ -8,11 +8,11 @@
       </div>
 
       <div class="flex bar-2">
-         <button class="flex bgd-orange" @click="toggleElem('castle',    $event)">Castle    </button>
-         <button class="flex bgd-orange" @click="toggleElem('barrack',   $event)">Barrack   </button>
-         <button class="flex bgd-orange" @click="toggleElem('warehouse', $event)">Warehouse </button>
-         <button class="flex bgd-orange" @click="toggleElem('wall',      $event)">Wall      </button>
-         <button class="flex bgd-orange" @click="toggleElem('unit',      $event)">Unit      </button>
+         <button v-if="!selected || selected === 'castle'"    class="flex bgd-orange" @click="toggleElem('castle',    $event)">Castle    </button>
+         <button v-if="!selected || selected === 'barrack'"   class="flex bgd-orange" @click="toggleElem('barrack',   $event)">Barrack   </button>
+         <button v-if="!selected || selected === 'warehouse'" class="flex bgd-orange" @click="toggleElem('warehouse', $event)">Warehouse </button>
+         <button v-if="!selected || selected === 'wall'"      class="flex bgd-orange" @click="toggleElem('wall',      $event)">Wall      </button>
+         <button v-if="!selected || selected === 'unit'"      class="flex bgd-orange" @click="toggleElem('unit',      $event)">Unit      </button>
       </div>
 
       <div class="flex bar-3">
@@ -71,8 +71,9 @@
 
       data() {
       return {
-         isUI:   false,
-         isElem: false,
+         isUI:     false,
+         isElem:   false,
+         selected: null,
       }},
 
       methods: {
@@ -87,8 +88,9 @@
             property: string,
             event:    Event,
          ) {
-            const GM    = this.$parent.GManager;
-            this.isElem = !this.isElem;
+            const GM      = this.$parent.GManager;
+            this.isElem   = !this.isElem;
+            this.selected = this.selected === property ? null : property;
 
             if(property !== "unit") {
                GM.toggleGhostBuild(property, this.isElem);
@@ -119,14 +121,15 @@
       position: fixed;
       justify-content: space-between;
       bottom: 30px;
-      width:  97%;
+      width:  90%;
       // background: white;
 
       .bar-1 {
          position: relative;
          justify-content: space-between;
-         width: 22%;
+         // width: 22%;
          top: 165px;
+         left: 30px;
          // background: red;
       }
 
@@ -146,7 +149,7 @@
          justify-content: space-around;
          margin: auto;
          height: 100px;
-         width: 55%;
+         width: 52%;
          border: 4px double black;
          border-radius: 10px;
          background: silver;
@@ -223,4 +226,5 @@
          green
       ) !important;
    }
+
 </style>

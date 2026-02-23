@@ -13,7 +13,7 @@ import {
 
 import {
    Battle,
-} from "modules/_Export";
+} from "../modules/Battle";
 
 import dotenv from "dotenv";
 dotenv.config();
